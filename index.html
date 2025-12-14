@@ -17,35 +17,38 @@
             box-shadow: 0 4px 6px -4px rgba(0,0,0,0.1);
         }
         
-        /* --- ปรับปรุงส่วนกล่องวันที่และเวลา ให้พอดีมือถือ --- */
+        /* --- ปรับปรุงใหม่: บีบขนาดช่องวันที่/เวลา --- */
         .date-input-container {
             display: flex; justify-content: center; align-items: center;
             background: white; border-radius: 50px; 
-            padding: 5px 12px; 
+            padding: 4px 10px; /* ลด Padding ลง */
             width: fit-content; 
-            max-width: 98%; /* กันล้นจอ */
+            max-width: 98%; 
             margin: 0 auto;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #dce0e4;
-            flex-wrap: nowrap; /* บังคับให้อยู่บรรทัดเดียว */
-            gap: 5px; /* ลดช่องว่างระหว่างไอคอนกับตัวหนังสือ */
+            flex-wrap: nowrap; 
+            gap: 2px; /* ลดช่องว่างระหว่าง element */
         }
         
         .date-input {
             border: none; 
-            font-size: 14px; /* ลดขนาดลงนิดนึง */
+            font-size: 13px; /* ลดขนาดตัวอักษรลงนิดนึงเพื่อประหยัดที่ */
             font-weight: bold; color: #0d6efd;
             outline: none; background: transparent; text-align: center;
             font-family: 'Sarabun', sans-serif;
-            width: auto;
-            padding: 0;
-            max-width: 110px; /* จำกัดความกว้าง input ไม่ให้กินที่ */
+            padding: 0; margin: 0;
+            line-height: 1.2;
         }
+
+        /* กำหนดความกว้างตายตัว เพื่อไม่ให้ยาวเกินไป */
+        #orderDate { width: 105px; } 
+        #orderTime { width: 75px; }
         
         /* เส้นคั่น */
-        .divider { color: #ccc; margin: 0 2px; font-size: 12px; }
+        .divider { color: #ccc; margin: 0 4px; font-size: 12px; }
         
-        /* ปรับไอคอนให้เล็กหน่อย */
-        .date-icon { font-size: 14px; margin-right: 2px; }
+        /* ไอคอน */
+        .date-icon { font-size: 13px; margin-right: 3px; color: #0d6efd; }
 
         /* --- จบส่วนปรับปรุง --- */
 
@@ -88,12 +91,12 @@
     <div class="header-section">
         <h4 class="text-center mb-2">🧊 สั่งน้ำแข็ง</h4>
         <div class="date-input-container">
-            <i class="fas fa-calendar-alt text-primary date-icon"></i>
+            <i class="fas fa-calendar-alt date-icon"></i>
             <input type="date" id="orderDate" class="date-input">
             
             <span class="divider">|</span>
             
-            <i class="fas fa-clock text-primary date-icon"></i>
+            <i class="fas fa-clock date-icon"></i>
             <input type="time" id="orderTime" class="date-input">
         </div>
     </div>
