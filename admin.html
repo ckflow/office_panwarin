@@ -119,7 +119,7 @@
                 if (!liff.isLoggedIn()) { liff.login(); return; }
 
                 const profile = await liff.getProfile();
-                if (profile.userId !== ADMIN_ID) {
+                if (profile.userId !== ALLOWED_ADMINS) {
                     document.getElementById('auth-check').innerHTML =
                         `<h3 class="text-danger">⛔ Access Denied</h3>
                     <p>คุณไม่มีสิทธิ์เข้าถึงหน้านี้ (User ID: ${profile.userId})</p>`;
@@ -244,4 +244,5 @@
     </script>
 </body>
 </html>
+
 
