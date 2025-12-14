@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>จัดการราคา (Admin)</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body { background-color: #f4f6f9; font-family: 'Sarabun', sans-serif; padding: 20px; padding-bottom: 80px; }
         
-        /* สไตล์การ์ดลูกค้า */
         .customer-card {
             background: white; border-radius: 12px; 
             box-shadow: 0 2px 6px rgba(0,0,0,0.05); 
@@ -22,7 +22,6 @@
         .card-header-custom:hover { background-color: #f9f9f9; }
         .card-body-custom { padding: 15px; display: none; background-color: #fafafa; }
         
-        /* รายการสินค้าข้างใน */
         .price-item {
             display: flex; justify-content: space-between; align-items: center;
             padding: 10px 0; border-bottom: 1px dashed #ddd;
@@ -30,14 +29,13 @@
         .price-item:last-child { border-bottom: none; }
         .price-tag { color: #198754; font-weight: bold; font-size: 18px; }
 
-        /* ปุ่มเพิ่มราคา */
         .btn-add-price {
             width: 100%; margin-top: 15px; border-radius: 8px;
             background-color: #e7f1ff; color: #0d6efd; border: 1px dashed #0d6efd;
         }
         .btn-add-price:hover { background-color: #0d6efd; color: white; }
 
-        /* Modal (Popup) */
+        /* Modal Overlay */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); z-index: 1050; display: none;
@@ -58,8 +56,17 @@
 
     <div id="content" class="container" style="display: none;">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="text-primary fw-bold">📋 ตั้งราคาสินค้า</h4>
-            <button class="btn btn-sm btn-secondary" onclick="window.location.reload()"><i class="fas fa-sync"></i> รีเฟรช</button>
+            <div>
+                <h4 class="text-primary fw-bold mb-0">📋 ตั้งราคาสินค้า</h4>
+            </div>
+            <div>
+                <button class="btn btn-success btn-sm shadow-sm" onclick="openCreateCustomerModal()">
+                    <i class="fas fa-user-plus"></i> ลูกค้าใหม่
+                </button>
+                <button class="btn btn-sm btn-outline-secondary ms-1" onclick="window.location.reload()">
+                    <i class="fas fa-sync"></i>
+                </button>
+            </div>
         </div>
 
         <div id="customer-list">
@@ -74,8 +81,7 @@
             
             <div class="mb-3">
                 <label class="form-label small text-muted">เลือกสินค้า</label>
-                <select id="modalProductCode" class="form-select form-select-lg">
-                    </select>
+                <select id="modalProductCode" class="form-select form-select-lg"></select>
             </div>
             
             <div class="mb-4">
@@ -84,8 +90,25 @@
             </div>
 
             <div class="d-flex gap-2">
-                <button class="btn btn-light flex-grow-1" onclick="closeModal()">ยกเลิก</button>
+                <button class="btn btn-light flex-grow-1" onclick="closeModal('addPriceModal')">ยกเลิก</button>
                 <button class="btn btn-primary flex-grow-1" onclick="savePrice()">บันทึก</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="createCustomerModal" class="modal-overlay">
+        <div class="modal-box">
+            <h5 class="mb-3 text-center text-success"><i class="fas fa-user-plus"></i> สร้างลูกค้าใหม่</h5>
+            <p class="text-center text-muted small mb-3">ชื่อต้องไม่ซ้ำกับที่มีอยู่แล้ว</p>
+            
+            <div class="mb-4">
+                <label class="form-label small text-muted">ชื่อลูกค้า / ร้านค้า</label>
+                <input type="text" id="newCustomerName" class="form-control form-control-lg" placeholder="เช่น ร้านป้าแดง">
+            </div>
+
+            <div class="d-flex gap-2">
+                <button class="btn btn-light flex-grow-1" onclick="closeModal('createCustomerModal')">ยกเลิก</button>
+                <button class="btn btn-success flex-grow-1" onclick="submitNewCustomer()">สร้างทันที</button>
             </div>
         </div>
     </div>
@@ -94,15 +117,17 @@
     <script>
         // --- ตั้งค่า ---
         const MY_LIFF_ID = "2008689090-CnrdxM5k";
+        
         const ALLOWED_ADMINS = [
-            "U4dc8fa32570dca3dfb4093b48a5c2093",  // คนที่ 1 (เจ้าของร้าน/ตัวคุณ)
-            //"Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", // คนที่ 2 (ใส่รหัสที่ก๊อปมาตรงนี้)
-            //"Uyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"  // คนที่ 3 (ถ้ามี)
+            "U4dc8fa32570dca3dfb4093b48a5c2093",  // คนที่ 1
+            // "U...", // คนที่ 2
         ]; 
-        const API_GET_PRICES = "https://n8n.ckflowsystem.com/webhook/get-prices"; // ลิงก์ดึงราคา (ที่คุณทำเสร็จแล้ว)
-        // const API_SAVE_PRICE = "..."; // เดี๋ยวเราทำลิงก์นี้กันต่อ
 
-        // รายชื่อสินค้ามาตรฐาน (สำหรับใส่ใน Dropdown)
+        // Webhook URLs
+        const API_GET_PRICES = "https://n8n.ckflowsystem.com/webhook/get-prices"; 
+        const API_ADD_CUSTOMER = "https://n8n.ckflowsystem.com/webhook/add-customer"; // 🔥 ลิงก์ใหม่ (ใส่ให้แล้ว)
+        // const API_SAVE_PRICE = "..."; // เดี๋ยวทำต่อ
+
         const masterProducts = [
             { code: 'tube_l', name: 'น้ำแข็งหลอดใหญ่' },
             { code: 'tube_s', name: 'น้ำแข็งหลอดเล็ก' },
@@ -111,7 +136,7 @@
             { code: 'crush_cube', name: 'น้ำแข็งบดก้อน' }
         ];
 
-        let currentCustomer = ''; // ตัวแปรจำว่ากำลังกดเพิ่มให้ใคร
+        let currentCustomerForPrice = ''; 
 
         async function main() {
             try {
@@ -119,10 +144,11 @@
                 if (!liff.isLoggedIn()) { liff.login(); return; }
 
                 const profile = await liff.getProfile();
+
                 if (!ALLOWED_ADMINS.includes(profile.userId)) {
                     document.getElementById('auth-check').innerHTML =
                         `<h3 class="text-danger">⛔ Access Denied</h3>
-                    <p>คุณไม่มีสิทธิ์เข้าถึงหน้านี้ (User ID: ${profile.userId})</p>`;
+                        <p>คุณไม่มีสิทธิ์เข้าถึงหน้านี้<br><small>(User ID: ${profile.userId})</small></p>`;
                     return;
                 }
 
@@ -138,7 +164,6 @@
         }
         main();
 
-        // 1. โหลดข้อมูลและสร้างการ์ด
         async function loadPrices() {
             try {
                 const response = await fetch(API_GET_PRICES);
@@ -149,33 +174,39 @@
             }
         }
 
-        // 2. สร้าง HTML การ์ดลูกค้า
         function renderCards(data) {
             const container = document.getElementById('customer-list');
             container.innerHTML = '';
 
             if (data.length === 0) {
-                container.innerHTML = `<p class="text-center text-muted">ยังไม่มีข้อมูลราคาพิเศษ</p>`;
+                container.innerHTML = `<div class="text-center mt-5"><p class="text-muted">ยังไม่มีข้อมูลลูกค้า</p></div>`;
                 return;
             }
 
-            // จัดกลุ่มข้อมูลตามชื่อลูกค้า
+            // จัดกลุ่มข้อมูล
             const grouped = {};
             data.forEach(item => {
                 if (!grouped[item.customer_name]) grouped[item.customer_name] = [];
-                grouped[item.customer_name].push(item);
+                // ถ้ามีสินค้า (product_code ไม่ใช่ null) ค่อยเก็บลง array
+                if (item.product_code) {
+                    grouped[item.customer_name].push(item);
+                }
             });
 
-            // วนลูปสร้างการ์ด
             Object.keys(grouped).forEach(customerName => {
                 const items = grouped[customerName];
                 
-                let itemsHtml = items.map(p => `
-                    <div class="price-item">
-                        <span>${p.product_name || p.product_code}</span>
-                        <span class="price-tag">${p.price}</span>
-                    </div>
-                `).join('');
+                let itemsHtml = '';
+                if (items.length > 0) {
+                    itemsHtml = items.map(p => `
+                        <div class="price-item">
+                            <span>${p.product_name || p.product_code}</span>
+                            <span class="price-tag">${p.price}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    itemsHtml = `<div class="text-center text-muted small my-3">ยังไม่มีรายการราคาพิเศษ</div>`;
+                }
 
                 const html = `
                     <div class="customer-card">
@@ -185,7 +216,7 @@
                         </div>
                         <div class="card-body-custom">
                             ${itemsHtml}
-                            <button class="btn btn-add-price" onclick="openModal('${customerName}')">
+                            <button class="btn btn-add-price" onclick="openAddPriceModal('${customerName}')">
                                 + เพิ่มราคาพิเศษ
                             </button>
                         </div>
@@ -195,15 +226,18 @@
             });
         }
 
-        // ฟังก์ชันเปิด/ปิดการ์ด
         function toggleCard(header) {
             const body = header.nextElementSibling;
             const isHidden = body.style.display === 'none' || body.style.display === '';
             body.style.display = isHidden ? 'block' : 'none';
         }
 
-        // --- ระบบ Popup Modal ---
+        // --- Helper สำหรับ Modal ---
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
 
+        // 1. Logic เพิ่มราคา (อันเดิม)
         function initModalDropdown() {
             const select = document.getElementById('modalProductCode');
             masterProducts.forEach(p => {
@@ -213,41 +247,63 @@
                 select.appendChild(option);
             });
         }
-
-        function openModal(customerName) {
-            currentCustomer = customerName;
+        function openAddPriceModal(customerName) {
+            currentCustomerForPrice = customerName;
             document.getElementById('modalCustomerName').innerText = customerName;
-            document.getElementById('modalPrice').value = ''; // ล้างช่องราคา
-            document.getElementById('addPriceModal').style.display = 'flex'; // แสดง Popup
+            document.getElementById('modalPrice').value = '';
+            document.getElementById('addPriceModal').style.display = 'flex';
         }
-
-        function closeModal() {
-            document.getElementById('addPriceModal').style.display = 'none';
-        }
-
-        // กดปุ่มบันทึก
         function savePrice() {
             const productCode = document.getElementById('modalProductCode').value;
             const price = document.getElementById('modalPrice').value;
-
             if (!price) { alert("กรุณากรอกราคาครับ"); return; }
+            
+            // TODO: เชื่อมต่อ Webhook บันทึกราคา
+            alert(`(จำลอง) บันทึกราคา: ${currentCustomerForPrice} - ${price} บาท`);
+            closeModal('addPriceModal');
+        }
 
-            // ตอนนี้ให้แจ้งเตือนก่อน (เดี๋ยวเราไปทำ Backend ต่อ)
-            alert(`💾 เตรียมบันทึก...\nลูกค้า: ${currentCustomer}\nสินค้า: ${productCode}\nราคา: ${price} บาท`);
-            
-            // ปิด Modal
-            closeModal();
-            
-            // TODO: ส่งข้อมูลไป n8n เพื่อบันทึกลง Database จริงๆ
+        // 2. Logic สร้างลูกค้าใหม่ (อันใหม่) 🔥
+        function openCreateCustomerModal() {
+            document.getElementById('newCustomerName').value = '';
+            document.getElementById('createCustomerModal').style.display = 'flex';
+        }
+
+        async function submitNewCustomer() {
+            const name = document.getElementById('newCustomerName').value.trim();
+            if (!name) { alert("กรุณาใส่ชื่อลูกค้าครับ"); return; }
+
+            // เช็คชื่อซ้ำเบื้องต้นในหน้าจอ
+            const currentCards = document.querySelectorAll('.card-header-custom span:first-child');
+            for (let span of currentCards) {
+                if (span.innerText.replace('👤 ', '') === name) {
+                    alert(`❌ ชื่อ "${name}" มีอยู่แล้วครับ`);
+                    return;
+                }
+            }
+
+            if(confirm(`ยืนยันสร้างลูกค้าใหม่: "${name}" ?`)) {
+                try {
+                    // ส่งข้อมูลไป n8n (POST)
+                    const response = await fetch(API_ADD_CUSTOMER, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: name })
+                    });
+
+                    if (response.ok) {
+                        alert(`✅ สร้างสำเร็จ: ${name}`);
+                        closeModal('createCustomerModal');
+                        location.reload(); // รีโหลดหน้าเพื่อดึงรายชื่อใหม่
+                    } else {
+                        alert("❌ เกิดข้อผิดพลาดที่ระบบหลังบ้าน");
+                    }
+                } catch (err) {
+                    alert("❌ เชื่อมต่อ Server ไม่ได้: " + err);
+                }
+            }
         }
 
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
