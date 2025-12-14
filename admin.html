@@ -94,7 +94,11 @@
     <script>
         // --- ตั้งค่า ---
         const MY_LIFF_ID = "2008689090-CnrdxM5k";
-        const ADMIN_ID = "U4dc8fa32570dca3dfb4093b48a5c2093"; 
+        const ALLOWED_ADMINS = [
+            "U4dc8fa32570dca3dfb4093b48a5c2093",  // คนที่ 1 (เจ้าของร้าน/ตัวคุณ)
+            "Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", // คนที่ 2 (ใส่รหัสที่ก๊อปมาตรงนี้)
+            "Uyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"  // คนที่ 3 (ถ้ามี)
+        ]; 
         const API_GET_PRICES = "https://n8n.ckflowsystem.com/webhook/get-prices"; // ลิงก์ดึงราคา (ที่คุณทำเสร็จแล้ว)
         // const API_SAVE_PRICE = "..."; // เดี๋ยวเราทำลิงก์นี้กันต่อ
 
@@ -116,7 +120,9 @@
 
                 const profile = await liff.getProfile();
                 if (profile.userId !== ADMIN_ID) {
-                    document.getElementById('auth-check').innerHTML = `<h3 class="text-danger">⛔ Access Denied</h3>`;
+                    document.getElementById('auth-check').innerHTML =
+                        `<h3 class="text-danger">⛔ Access Denied</h3>
+                    <p>คุณไม่มีสิทธิ์เข้าถึงหน้านี้ (User ID: ${profile.userId})</p>`;
                     return;
                 }
 
@@ -238,3 +244,4 @@
     </script>
 </body>
 </html>
+
