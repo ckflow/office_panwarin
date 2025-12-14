@@ -12,24 +12,33 @@
             background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between;
         }
-        .product-info { flex-grow: 1; }
+        .product-info { flex-grow: 1; padding-right: 15px; }
         .product-name { font-weight: bold; font-size: 16px; color: #333; margin-bottom: 2px; }
         .product-desc { font-size: 12px; color: #888; }
         
-        /* ปุ่มเพิ่มลดจำนวน */
-        .counter-box { display: flex; align-items: center; background: #f1f3f5; border-radius: 20px; padding: 2px; }
-        .btn-count {
-            width: 32px; height: 32px; border-radius: 50%; border: none;
-            display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer;
+        /* ช่องกรอกตัวเลขแบบใหม่ */
+        .qty-input {
+            width: 80px; 
+            text-align: center; 
+            font-size: 20px; 
+            font-weight: bold;
+            border: 1px solid #ced4da; 
+            border-radius: 10px; 
+            padding: 5px;
+            color: #0d6efd;
+            background-color: #f8f9fa;
         }
-        .btn-minus { background-color: transparent; color: #dc3545; }
-        .btn-plus { background-color: #0d6efd; color: white; }
-        .count-display { width: 35px; text-align: center; font-weight: bold; font-size: 16px; border: none; background: transparent; }
+        .qty-input:focus {
+            outline: none;
+            border-color: #0d6efd;
+            background-color: white;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
 
         /* ปุ่มสั่งซื้อด้านล่าง */
         .bottom-bar {
             position: fixed; bottom: 0; left: 0; right: 0; background: white;
-            padding: 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); text-align: center;
+            padding: 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); text-align: center; z-index: 1000;
         }
         .btn-confirm { width: 100%; border-radius: 30px; padding: 12px; font-size: 18px; font-weight: bold; }
         
@@ -39,7 +48,7 @@
 <body>
 
     <div class="container mt-3">
-        <h4 class="text-center mb-4">🧊 เลือกจำนวนที่ต้องการ</h4>
+        <h4 class="text-center mb-4">🧊 กรอกจำนวนที่ต้องการ</h4>
 
         <div class="cat-title">น้ำแข็งหลอด & แพ็ค</div>
         
@@ -48,10 +57,8 @@
                 <div class="product-name">🥤 หลอดใหญ่</div>
                 <div class="product-desc">กระสอบละ 40 บาท</div>
             </div>
-            <div class="counter-box">
-                <button class="btn-count btn-minus" onclick="updateQty('tube_l', -1)"><i class="fas fa-minus"></i></button>
-                <input type="text" id="qty_tube_l" value="0" class="count-display" readonly>
-                <button class="btn-count btn-plus" onclick="updateQty('tube_l', 1)"><i class="fas fa-plus"></i></button>
+            <div>
+                <input type="number" id="qty_tube_l" class="qty-input" placeholder="0" min="0" oninput="updateTotalBadge()">
             </div>
         </div>
 
@@ -60,10 +67,8 @@
                 <div class="product-name">🧋 หลอดเล็ก</div>
                 <div class="product-desc">กระสอบละ 40 บาท</div>
             </div>
-            <div class="counter-box">
-                <button class="btn-count btn-minus" onclick="updateQty('tube_s', -1)"><i class="fas fa-minus"></i></button>
-                <input type="text" id="qty_tube_s" value="0" class="count-display" readonly>
-                <button class="btn-count btn-plus" onclick="updateQty('tube_s', 1)"><i class="fas fa-plus"></i></button>
+            <div>
+                <input type="number" id="qty_tube_s" class="qty-input" placeholder="0" min="0" oninput="updateTotalBadge()">
             </div>
         </div>
 
@@ -72,10 +77,8 @@
                 <div class="product-name">📦 น้ำแข็งแพ็ค</div>
                 <div class="product-desc">แพ็คละ 8 บาท</div>
             </div>
-            <div class="counter-box">
-                <button class="btn-count btn-minus" onclick="updateQty('pack', -1)"><i class="fas fa-minus"></i></button>
-                <input type="text" id="qty_pack" value="0" class="count-display" readonly>
-                <button class="btn-count btn-plus" onclick="updateQty('pack', 1)"><i class="fas fa-plus"></i></button>
+            <div>
+                <input type="number" id="qty_pack" class="qty-input" placeholder="0" min="0" oninput="updateTotalBadge()">
             </div>
         </div>
 
@@ -86,10 +89,8 @@
                 <div class="product-name">🍧 บดหลอด</div>
                 <div class="product-desc">กระสอบละ 35 บาท</div>
             </div>
-            <div class="counter-box">
-                <button class="btn-count btn-minus" onclick="updateQty('crush_tube', -1)"><i class="fas fa-minus"></i></button>
-                <input type="text" id="qty_crush_tube" value="0" class="count-display" readonly>
-                <button class="btn-count btn-plus" onclick="updateQty('crush_tube', 1)"><i class="fas fa-plus"></i></button>
+            <div>
+                <input type="number" id="qty_crush_tube" class="qty-input" placeholder="0" min="0" oninput="updateTotalBadge()">
             </div>
         </div>
         
@@ -98,10 +99,8 @@
                 <div class="product-name">❄️ บดก้อน</div>
                 <div class="product-desc">กระสอบละ 35 บาท</div>
             </div>
-            <div class="counter-box">
-                <button class="btn-count btn-minus" onclick="updateQty('crush_cube', -1)"><i class="fas fa-minus"></i></button>
-                <input type="text" id="qty_crush_cube" value="0" class="count-display" readonly>
-                <button class="btn-count btn-plus" onclick="updateQty('crush_cube', 1)"><i class="fas fa-plus"></i></button>
+            <div>
+                <input type="number" id="qty_crush_cube" class="qty-input" placeholder="0" min="0" oninput="updateTotalBadge()">
             </div>
         </div>
 
@@ -110,10 +109,8 @@
             <div class="product-info">
                 <div class="product-name">♻️ คืนถุง (ใบ)</div>
             </div>
-            <div class="counter-box">
-                <button class="btn-count btn-minus" onclick="updateQty('bag_return', -1)"><i class="fas fa-minus"></i></button>
-                <input type="text" id="qty_bag_return" value="0" class="count-display" readonly>
-                <button class="btn-count btn-plus" onclick="updateQty('bag_return', 1)"><i class="fas fa-plus"></i></button>
+            <div>
+                <input type="number" id="qty_bag_return" class="qty-input" placeholder="0" min="0" oninput="updateTotalBadge()">
             </div>
         </div>
 
@@ -121,7 +118,7 @@
 
     <div class="bottom-bar">
         <button class="btn btn-primary btn-confirm" onclick="submitOrder()">
-            ยืนยันการสั่งซื้อ <span id="total-items" style="display:none; background:white; color:#0d6efd; padding:0 8px; border-radius:10px; font-size:14px;">0</span>
+            ยืนยันการสั่งซื้อ <span id="total-items" style="display:none; background:white; color:#0d6efd; padding:0 8px; border-radius:10px; font-size:14px; margin-left: 5px;">0</span>
         </button>
     </div>
 
@@ -141,27 +138,26 @@
         };
 
         async function main() {
-            await liff.init({ liffId: MY_LIFF_ID });
-            if (!liff.isLoggedIn()) { liff.login(); }
+            try {
+                await liff.init({ liffId: MY_LIFF_ID });
+                if (!liff.isLoggedIn()) { liff.login(); }
+            } catch (err) {
+                console.error(err);
+            }
         }
         main();
 
-        // ฟังก์ชัน เพิ่ม/ลด ตัวเลข
-        function updateQty(id, change) {
-            let el = document.getElementById('qty_' + id);
-            let current = parseInt(el.value);
-            let newVal = current + change;
-            if (newVal < 0) newVal = 0;
-            el.value = newVal;
-            
-            updateTotalBadge();
+        // ฟังก์ชันช่วยดึงตัวเลขจาก input (ถ้าว่างให้เป็น 0)
+        function getQty(id) {
+            let val = document.getElementById('qty_' + id).value;
+            return val ? parseInt(val) : 0;
         }
 
-        // อัพเดทตัวเลขรวมที่ปุ่ม
+        // อัพเดทตัวเลขรวมที่ปุ่ม (ทำงานทันทีที่พิมพ์)
         function updateTotalBadge() {
             let total = 0;
             for (let key in products) {
-                total += parseInt(document.getElementById('qty_' + key).value);
+                total += getQty(key);
             }
             let badge = document.getElementById('total-items');
             if (total > 0) {
@@ -178,7 +174,7 @@
             
             // วนลูปรวบรวมยอด
             for (let key in products) {
-                let qty = parseInt(document.getElementById('qty_' + key).value);
+                let qty = getQty(key);
                 if (qty > 0) {
                     // รูปแบบ: - หลอดใหญ่: 5 กระสอบ
                     let unit = (key === 'pack') ? 'แพ็ค' : (key === 'bag_return') ? 'ใบ' : 'กระสอบ';
@@ -187,7 +183,7 @@
             }
 
             if (orderLines.length === 0) {
-                alert("กรุณาเลือกจำนวนสินค้าอย่างน้อย 1 รายการครับ");
+                alert("กรุณากรอกจำนวนสินค้าอย่างน้อย 1 รายการครับ");
                 return;
             }
 
@@ -196,7 +192,7 @@
 
             try {
                 if (!liff.isInClient()) {
-                    alert("Order Summary:\n" + messageText);
+                    alert("Order Summary (Test):\n" + messageText);
                 } else {
                     await liff.sendMessages([{ type: 'text', text: messageText }]);
                     liff.closeWindow();
