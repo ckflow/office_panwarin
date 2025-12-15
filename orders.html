@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>จัดการออเดอร์</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Sarabun', sans-serif; padding: 20px; padding-bottom: 80px; }
+        .order-card { background: white; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 12px; overflow: hidden; }
+        .order-header { padding: 12px 15px; background: #fff; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .order-header:hover { background-color: #f9f9f9; }
+        .order-body { padding: 15px; display: none; background-color: #fafafa; }
+        
+        .order-invoice { font-weight: bold; color: #0d6efd; font-size: 14px; }
+        .order-customer { font-size: 13px; color: #333; }
+        .order-date { font-size: 11px; color: #888; }
+        .order-total { font-weight: bold; color: #198754; font-size: 14px; }
+        
+        .order-item { padding: 6px 0; border-bottom: 1px solid #eee; font-size: 13px; }
+        .order-item:last-child { border-bottom: none; }
+        
+        .status-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-confirmed { background: #d1e7dd; color: #0f5132; }
+        .status-delivered { background: #cff4fc; color: #055160; }
+        .status-cancelled { background: #f8d7da; color: #842029; }
+        
+        .btn-delete-order { font-size: 11px; padding: 4px 10px; }
+        
+        .filter-section { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        
+        .pending-delete { background: #fff3cd; border-left: 4px solid #ffc107; }
+    </style>
+</head>
+<body>
+
+    <div id="auth-check" class="text-center mt-5"><h4>🔒 กำลังตรวจสอบสิทธิ์...</h4></div>
+
+    <div id="content" class="container" style="display: none;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="text-primary fw-bold mb-0">📋 จัดการออเดอร์</h4>
+            <div>
+                <a href="admin.html" class="btn btn-outline-secondary btn-sm"><i class="fas fa-users"></i> ลูกค้า</a>
+                <button class="btn btn-sm btn-outline-secondary ms-1" onclick="window.location.reload()"><i class="fas fa-sync"></i></button>
+            </div>
+        </div>
+        
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="row g-2">
+                <div class="col-6">
+                    <label class="small text-muted">วันที่</label>
+                    <input type="date" id="filterDate" class="form-control form-control-sm" onchange="loadOrders()">
+                </div>
+                <div class="col-6">
+                    <label class="small text-muted">สถานะ</label>
+                    <select id="filterStatus" class="form-select form-select-sm" onchange="loadOrders()">
+                        <option value="">ทั้งหมด</option>
+                        <option value="pending">รอดำเนินการ</option>
+                        <option value="confirmed">ยืนยันแล้ว</option>
+                        <option value="delivered">ส่งแล้ว</option>
+                        <option value="cancelled">ยกเลิก</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div id="order-list">
+            <div class="text-center text-muted mt-5">⏳ กำลังโหลดข้อมูล...</div>
+        </div>
+    </div>
+
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script>
+        const MY_LIFF_ID = "2008689090-CnrdxM5k";
+        const ALLOWED_ADMINS = ["U4dc8fa32570dca3dfb4093b48a5c2093"];
+        const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
+        
+        const API = {
+            GET_ORDERS: `${BASE_URL}/get-orders`,
+            REQUEST_DELETE: `${BASE_URL}/request-delete-order`
+        };
+
+        let currentUserId = null;
+
+        async function main() {
+            try {
+                await liff.init({ liffId: MY_LIFF_ID });
+                if (!liff.isLoggedIn()) { liff.login(); return; }
+                
+                const profile = await liff.getProfile();
+                currentUserId = profile.userId;
+                
+                if (!ALLOWED_ADMINS.includes(currentUserId)) {
+                    document.getElementById('auth-check').innerHTML = `<h3 class="text-danger">⛔ Access Denied</h3>`;
+                    return;
+                }
+                
+                document.getElementById('auth-check').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+                
+                // Set default date to today
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('filterDate').value = today;
+                
+                await loadOrders();
+            } catch (err) {
+                alert("Error: " + err);
+            }
+        }
+        main();
+
+        async function loadOrders() {
+            const container = document.getElementById('order-list');
+            container.innerHTML = '<div class="text-center text-muted">⏳ กำลังโหลด...</div>';
+            
+            try {
+                const filterDate = document.getElementById('filterDate').value;
+                const filterStatus = document.getElementById('filterStatus').value;
+                
+                const res = await fetch(API.GET_ORDERS, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ date: filterDate, status: filterStatus })
+                });
+                const orders = await res.json();
+                
+                if (orders.length === 0) {
+                    container.innerHTML = '<div class="text-center text-muted mt-4">📭 ไม่มีออเดอร์</div>';
+                    return;
+                }
+                
+                container.innerHTML = '';
+                orders.forEach(order => {
+                    const isPendingDelete = order.pending_delete == 1;
+                    const statusClass = getStatusClass(order.status);
+                    const statusText = getStatusText(order.status);
+                    
+                    const html = `
+                        <div class="order-card ${isPendingDelete ? 'pending-delete' : ''}">
+                            <div class="order-header" onclick="toggleOrder(this)">
+                                <div>
+                                    <div class="order-invoice">${order.invoice_no || 'N/A'}</div>
+                                    <div class="order-customer">👤 ${order.customer_name}</div>
+                                    <div class="order-date">📅 ${formatDate(order.order_date)} ${order.order_time || ''}</div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="order-total">${parseFloat(order.grand_total || 0).toLocaleString()} บาท</div>
+                                    <span class="status-badge ${statusClass}">${statusText}</span>
+                                    ${isPendingDelete ? '<br><span class="status-badge status-pending mt-1">⏳ รอยืนยันลบ</span>' : ''}
+                                </div>
+                            </div>
+                            <div class="order-body">
+                                <div class="mb-2">
+                                    <strong>รายการสินค้า:</strong>
+                                    <div class="order-items mt-1">
+                                        ${formatItems(order.items)}
+                                    </div>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-muted">
+                                        ยอดรวม: ${parseFloat(order.subtotal || 0).toLocaleString()} บาท
+                                        ${order.discount > 0 ? `<br>ส่วนลด: -${parseFloat(order.discount).toLocaleString()} บาท` : ''}
+                                        <br><strong>สุทธิ: ${parseFloat(order.grand_total || 0).toLocaleString()} บาท</strong>
+                                    </small>
+                                </div>
+                                ${order.bags_borrowed > 0 ? `<div class="mb-2"><small>👜 ยืมถุง: ${order.bags_borrowed} ใบ</small></div>` : ''}
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">Order ID: ${order.id}</small>
+                                    ${!isPendingDelete ? `
+                                        <button class="btn btn-outline-danger btn-delete-order" onclick="requestDeleteOrder(${order.id}, '${order.invoice_no}', '${order.customer_name}')">
+                                            🗑️ ขอลบ
+                                        </button>
+                                    ` : '<span class="text-warning"><i class="fas fa-clock"></i> รอยืนยัน</span>'}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += html;
+                });
+                
+            } catch (e) {
+                console.error('Error loading orders:', e);
+                container.innerHTML = '<div class="text-center text-danger">❌ โหลดข้อมูลไม่สำเร็จ</div>';
+            }
+        }
+
+        function toggleOrder(el) {
+            const body = el.nextElementSibling;
+            body.style.display = body.style.display === 'none' || body.style.display === '' ? 'block' : 'none';
+        }
+
+        function getStatusClass(status) {
+            const classes = {
+                'pending': 'status-pending',
+                'confirmed': 'status-confirmed',
+                'delivered': 'status-delivered',
+                'cancelled': 'status-cancelled'
+            };
+            return classes[status] || 'status-pending';
+        }
+
+        function getStatusText(status) {
+            const texts = {
+                'pending': 'รอดำเนินการ',
+                'confirmed': 'ยืนยันแล้ว',
+                'delivered': 'ส่งแล้ว',
+                'cancelled': 'ยกเลิก'
+            };
+            return texts[status] || 'รอดำเนินการ';
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            const day = date.getDate();
+            const month = date.toLocaleDateString('th-TH', { month: 'short' });
+            const year = date.getFullYear() + 543;
+            return `${day} ${month} ${year}`;
+        }
+
+        function formatItems(items) {
+            if (!items) return '<div class="order-item text-muted">ไม่มีรายการ</div>';
+            
+            // items อาจเป็น string หรือ array
+            if (typeof items === 'string') {
+                try {
+                    items = JSON.parse(items);
+                } catch (e) {
+                    // ถ้าเป็น string ธรรมดา
+                    return items.split('\n').map(line => 
+                        `<div class="order-item">${line}</div>`
+                    ).join('');
+                }
+            }
+            
+            if (Array.isArray(items)) {
+                return items.map(item => `<div class="order-item">${item}</div>`).join('');
+            }
+            
+            return '<div class="order-item text-muted">ไม่มีรายการ</div>';
+        }
+
+        async function requestDeleteOrder(orderId, invoiceNo, customerName) {
+            if (!confirm(`⚠️ ขอลบออเดอร์ ${invoiceNo}?\n\nลูกค้า: ${customerName}\n\nจะส่งข้อความขอยืนยันไปยังผู้มีสิทธิ์`)) return;
+            
+            try {
+                const res = await fetch(API.REQUEST_DELETE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        orderId,
+                        requestedBy: currentUserId
+                    })
+                });
+                
+                const result = await res.json();
+                
+                if (result.success) {
+                    alert("✅ ส่งคำขอลบแล้ว\nรอการยืนยันจากผู้มีสิทธิ์");
+                    loadOrders();
+                } else {
+                    alert("❌ " + (result.message || "เกิดข้อผิดพลาด"));
+                }
+            } catch (e) {
+                alert("Error: " + e);
+            }
+        }
+    </script>
+</body>
+</html>
