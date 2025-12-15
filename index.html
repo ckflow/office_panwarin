@@ -51,6 +51,7 @@
     </div>
 
     <div class="container mt-2">
+        <!-- น้ำแข็งหลอด -->
         <div class="cat-title">น้ำแข็งหลอด</div>
         <div class="product-card">
             <div class="product-info"><div class="product-name">🍻 หลอดใหญ่</div></div>
@@ -61,6 +62,7 @@
             <div><input type="number" id="qty_tube_s" class="qty-input calculate-trigger" placeholder="0" min="0"></div>
         </div>
 
+        <!-- น้ำแข็งแพ็ค -->
         <div class="cat-title">น้ำแข็งแพ็ค</div>
         <div class="product-card">
             <div class="product-info"><div class="product-name">🅿️ แพ็คกระสอบ</div></div>
@@ -71,35 +73,37 @@
             <div><input type="number" id="qty_pack_s" class="qty-input" placeholder="0" min="0"></div>
         </div>
 
+        <!-- น้ำแข็งบด -->
         <div class="cat-title">น้ำแข็งบด</div>
         <div class="product-card">
-            <div class="product-info"><div class="product-name">❄️ หลอดบด</div></div>
-            <div><input type="number" id="qty_crush_snow" class="qty-input calculate-trigger" placeholder="0" min="0"></div>
+            <div class="product-info"><div class="product-name">🛍️ บด(ถุง)</div></div>
+            <div><input type="number" id="qty_crush_sack" class="qty-input calculate-trigger" placeholder="0" min="0"></div>
         </div>
         <div class="product-card">
-            <div class="product-info"><div class="product-name">🧊 ก้อนบด</div></div>
-            <div><input type="number" id="qty_crush_cube" class="qty-input calculate-trigger" placeholder="0" min="0"></div>
+            <div class="product-info"><div class="product-name">📦 บด(ซอง)</div></div>
+            <div><input type="number" id="qty_crush_sachet" class="qty-input" placeholder="0" min="0"></div>
         </div>
 
+        <!-- ก้อน & อื่นๆ -->
         <div class="cat-title">ก้อน & อื่นๆ</div>
         <div class="product-card">
-            <div class="product-info"><div class="product-name">🧊 ก้อน (ซอง)</div></div>
+            <div class="product-info"><div class="product-name">🧊 ก้อน(ซอง)</div></div>
             <div><input type="number" id="qty_cube_sachet" class="qty-input" placeholder="0" min="0"></div>
         </div>
-
         <div class="product-card">
-            <div class="product-info"><div class="product-name">🧊 ก้อน (กั๊ก)</div></div>
+            <div class="product-info"><div class="product-name">🧊 ก้อน(กั๊ก)</div></div>
             <div><input type="number" id="qty_cube_kak" class="qty-input calculate-trigger" placeholder="0" min="0"></div>
         </div>
         <div class="product-card">
-            <div class="product-info"><div class="product-name">🖐️ ก้อน (มือ)</div></div>
+            <div class="product-info"><div class="product-name">🖐️ ก้อน(มือ)</div></div>
             <div><input type="number" id="qty_cube_hand" class="qty-input calculate-trigger" placeholder="0" min="0"></div>
         </div>
         <div class="product-card">
-            <div class="product-info"><div class="product-name">📦 กระสอบ (มัดละ)</div></div>
+            <div class="product-info"><div class="product-name">📦 กระสอบ(มัด)</div></div>
             <div><input type="number" id="qty_sack" class="qty-input calculate-trigger" placeholder="0" min="0"></div>
         </div>
 
+        <!-- จัดการถุง -->
         <div class="cat-title">จัดการถุง</div>
         <div class="product-card">
             <div class="product-info"><div class="product-name">♻️ คืนถุง (ใบ)</div></div>
@@ -112,9 +116,9 @@
                 <div class="product-desc">รวมให้อัตโนมัติ</div>
             </div>
             <div class="stepper-container">
-                <button class="stepper-btn minus" onclick="manualAdjustBag(-1)"><i class="fas fa-minus"></i></button>
-                <input type="number" id="qty_bag_borrow" class="qty-input" value="0" min="0">
-                <button class="stepper-btn plus" onclick="manualAdjustBag(1)"><i class="fas fa-plus"></i></button>
+                <button class="stepper-btn minus admin-only" style="display:none;" onclick="manualAdjustBag(-1)"><i class="fas fa-minus"></i></button>
+                <input type="number" id="qty_bag_borrow" class="qty-input" value="0" min="0" readonly>
+                <button class="stepper-btn plus admin-only" style="display:none;" onclick="manualAdjustBag(1)"><i class="fas fa-plus"></i></button>
             </div>
         </div>
     </div>
@@ -134,15 +138,25 @@
             // "Uyyyyyyyyyyyyyyyyyyyyyyyyyyyy", // คนที่ 2 (ก๊อปมาวางเพิ่มตรงนี้)
         ]; 
 
+        // 🔥 ตรงกับ products ในฐานข้อมูล
         const products = {
-            'tube_l': 'หลอดใหญ่', 'tube_s': 'หลอดเล็ก', 'pack_l': 'แพ็คใหญ่', 'pack_s': 'แพ็คเล็ก',
-            'crush_snow': 'บดละเอียด(เกล็ดหิมะ)', 'crush_cube': 'บดก้อน', 'cube_sachet': 'ก้อน(ซอง)',
-            'cube_kak': 'ก้อน(กั๊ก)', 'cube_hand': 'ก้อน(มือ)', 'sack': 'กระสอบ',
-            'bag_return': 'คืนถุง', 'bag_borrow': 'ยืมถุง'
+            'tube_l': 'หลอดใหญ่',
+            'tube_s': 'หลอดเล็ก',
+            'pack_l': 'แพ็คกระสอบ',
+            'pack_s': 'แพ็คเล็ก',
+            'crush_sack': 'บด(ถุง)',
+            'crush_sachet': 'บด(ซอง)',
+            'cube_sachet': 'ก้อน(ซอง)',
+            'cube_kak': 'ก้อน(กั๊ก)',
+            'cube_hand': 'ก้อน(มือ)',
+            'sack': 'กระสอบ(มัด)',
+            'bag_return': 'คืนถุง',
+            'bag_borrow': 'ยืมถุง'
         };
 
+        // สินค้าที่ใช้ถุง (คิดถุงยืมอัตโนมัติ)
         const productsUseBag = [
-            'tube_l', 'tube_s', 'crush_snow', 'crush_cube', 
+            'tube_l', 'tube_s', 'crush_sack',
             'cube_kak', 'cube_hand', 'sack'
         ];
 
@@ -165,6 +179,9 @@
                 const currentUserId = profile.userId;
                 if (ADMIN_IDS.includes(currentUserId)) {
                     document.getElementById('adminInputSection').style.display = 'block';
+                    // แสดงปุ่ม +/- ยืมถุง และให้แก้ไขได้
+                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
+                    document.getElementById('qty_bag_borrow').removeAttribute('readonly');
                 } else {
                     document.getElementById('adminInputSection').style.display = 'none';
                 }
@@ -196,7 +213,9 @@
         }
 
         function getQty(id) {
-            let val = document.getElementById('qty_' + id).value;
+            const el = document.getElementById('qty_' + id);
+            if (!el) return 0;
+            let val = el.value;
             return val ? parseInt(val) : 0;
         }
 
@@ -221,13 +240,18 @@
         async function submitOrder() {
             let orderLines = [];
             for (let key in products) {
-                if(key === 'bag_borrow') continue;
+                if (key === 'bag_borrow') continue;
                 let qty = getQty(key);
                 if (qty > 0) {
+                    // กำหนดหน่วยตาม product
                     let unit = 'กระสอบ';
-                    if (['pack_l', 'pack_s', 'cube_sachet'].includes(key)) unit = 'แพ็ค/ซอง';
+                    if (['pack_l', 'pack_s'].includes(key)) unit = 'แพ็ค';
+                    if (['cube_sachet', 'crush_sachet'].includes(key)) unit = 'ซอง';
                     if (key === 'cube_kak') unit = 'กั๊ก';
+                    if (key === 'cube_hand') unit = 'มือ';
+                    if (key === 'sack') unit = 'มัด';
                     if (key === 'bag_return') unit = 'ใบ';
+                    if (key === 'crush_sack') unit = 'ถุง';
                     orderLines.push(`- ${products[key]}: ${qty} ${unit}`);
                 }
             }
