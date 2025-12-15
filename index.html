@@ -3,161 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>สั่งน้ำแข็ง (ระบบเสมียน)</title>
+    <title>สั่งน้ำแข็ง</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background-color: #f4f6f9; padding-bottom: 90px; font-family: 'Sarabun', sans-serif; }
+        body { background-color: #f4f6f9; padding-bottom: 120px; font-family: 'Sarabun', sans-serif; }
         .header-section { position: sticky; top: 0; z-index: 999; background-color: #f4f6f9; padding-top: 10px; padding-bottom: 5px; box-shadow: 0 4px 6px -4px rgba(0,0,0,0.1); }
         .date-input-container { display: flex; justify-content: center; align-items: center; background: white; border-radius: 50px; padding: 4px 10px; width: fit-content; max-width: 98%; margin: 0 auto; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #dce0e4; flex-wrap: nowrap; gap: 2px; }
         .date-input { border: none; font-size: 13px; font-weight: bold; color: #0d6efd; outline: none; background: transparent; text-align: center; font-family: 'Sarabun', sans-serif; padding: 0; margin: 0; line-height: 1.2; }
         #orderDate { width: 105px; } #orderTime { width: 75px; }
         .divider { color: #ccc; margin: 0 4px; font-size: 12px; }
         .date-icon { font-size: 13px; margin-right: 3px; color: #0d6efd; }
-        .product-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between; }
+        
+        .product-card { background: white; border-radius: 15px; padding: 12px 15px; margin-bottom: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .product-row { display: flex; align-items: center; justify-content: space-between; }
+        .product-info { flex-grow: 1; }
+        .product-name { font-weight: bold; font-size: 15px; color: #333; margin-bottom: 0; }
+        .product-price { font-size: 12px; color: #666; }
+        .product-right { display: flex; align-items: center; gap: 10px; }
+        .line-total { font-size: 14px; font-weight: bold; color: #198754; min-width: 70px; text-align: right; }
+        .promo-line { font-size: 12px; color: #dc3545; margin-top: 4px; }
+        .promo-line i { margin-right: 3px; }
+        
+        .qty-input { width: 60px; text-align: center; font-size: 18px; font-weight: bold; border: 1px solid #ced4da; border-radius: 8px; padding: 4px; color: #0d6efd; background-color: #fff; }
+        
         .borrow-card { background: #e7f1ff; border: 1px solid #b6d4fe; }
-        .product-info { flex-grow: 1; padding-right: 15px; }
-        .product-name { font-weight: bold; font-size: 16px; color: #333; margin-bottom: 0; }
-        .qty-input { width: 70px; text-align: center; font-size: 20px; font-weight: bold; border: 1px solid #ced4da; border-radius: 8px; padding: 5px; color: #0d6efd; background-color: #fff; }
-        .stepper-btn { width: 35px; height: 35px; border-radius: 50%; border: none; background-color: #6c757d; color: white; font-size: 18px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .stepper-btn { width: 32px; height: 32px; border-radius: 50%; border: none; background-color: #6c757d; color: white; font-size: 16px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .stepper-btn:active { transform: scale(0.95); }
         .stepper-btn.plus { background-color: #198754; } .stepper-btn.minus { background-color: #dc3545; } 
-        .stepper-container { display: flex; align-items: center; gap: 8px; }
-        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); text-align: center; z-index: 1000; }
+        .stepper-container { display: flex; align-items: center; gap: 6px; }
+        
+        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 12px 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
+        .total-section { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+        .total-section .label { color: #666; }
+        .total-section .value { font-weight: bold; }
+        .total-section .discount { color: #dc3545; }
+        .total-section .grand-total { font-size: 18px; color: #198754; }
         .btn-confirm { width: 100%; border-radius: 30px; padding: 12px; font-size: 18px; font-weight: bold; }
-        .cat-title { font-size: 15px; color: #0d6efd; margin: 15px 0 5px 5px; font-weight: bold; border-left: 4px solid #0d6efd; padding-left: 8px; }
+        
+        .cat-title { font-size: 14px; color: #0d6efd; margin: 12px 0 5px 5px; font-weight: bold; border-left: 4px solid #0d6efd; padding-left: 8px; }
+        
+        .loading-screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #f4f6f9; display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .no-price-msg { text-align: center; padding: 40px 20px; color: #666; }
     </style>
 </head>
 <body>
 
-    <div class="header-section">
-        <h4 class="text-center mb-2">🧊 สั่งน้ำแข็ง</h4>
-        <div class="date-input-container">
-            <i class="fas fa-calendar-alt date-icon"></i>
-            <input type="date" id="orderDate" class="date-input">
-            <span class="divider">|</span>
-            <i class="fas fa-clock date-icon"></i>
-            <input type="time" id="orderTime" class="date-input">
+    <div id="loadingScreen" class="loading-screen">
+        <h4>🧊 กำลังโหลด...</h4>
+    </div>
+
+    <div id="mainContent" style="display: none;">
+        <div class="header-section">
+            <h4 class="text-center mb-2">🧊 สั่งน้ำแข็ง</h4>
+            <div class="date-input-container">
+                <i class="fas fa-calendar-alt date-icon"></i>
+                <input type="date" id="orderDate" class="date-input" onchange="checkFirstBill()">
+                <span class="divider">|</span>
+                <i class="fas fa-clock date-icon"></i>
+                <input type="time" id="orderTime" class="date-input">
+            </div>
+        </div>
+
+        <div class="container mt-2" id="adminInputSection" style="display: none;">
+            <div class="product-card" style="background: #fff3cd; border: 1px solid #ffe69c;">
+                <div class="product-info">
+                    <div class="product-name text-warning-emphasis">👤 ชื่อลูกค้า (เสมียนคีย์)</div>
+                    <input type="text" id="customerName" class="form-control mt-2" placeholder="ระบุชื่อร้าน/ลูกค้า...">
+                </div>
+            </div>
+        </div>
+
+        <div class="container mt-2" id="productList">
+            <!-- Products will be rendered here -->
+        </div>
+
+        <div class="container mt-2">
+            <div class="cat-title">จัดการถุง</div>
+            <div class="product-card">
+                <div class="product-row">
+                    <div class="product-info"><div class="product-name">♻️ คืนถุง (ใบ)</div></div>
+                    <div><input type="number" id="qty_bag_return" class="qty-input" placeholder="0" min="0"></div>
+                </div>
+            </div>
+
+            <div class="product-card borrow-card">
+                <div class="product-row">
+                    <div class="product-info">
+                        <div class="product-name text-primary">👜 ยืมถุง (ใบ)</div>
+                        <div class="product-price">รวมให้อัตโนมัติ</div>
+                    </div>
+                    <div class="stepper-container">
+                        <button class="stepper-btn minus admin-only" style="display:none;" onclick="manualAdjustBag(-1)"><i class="fas fa-minus"></i></button>
+                        <input type="number" id="qty_bag_borrow" class="qty-input" value="0" min="0" readonly>
+                        <button class="stepper-btn plus admin-only" style="display:none;" onclick="manualAdjustBag(1)"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-bar">
+            <div class="total-section">
+                <span class="label">ยอดรวม</span>
+                <span class="value" id="subtotalDisplay">0 บาท</span>
+            </div>
+            <div class="total-section" id="discountRow" style="display: none;">
+                <span class="label">🎁 ส่วนลดโปร</span>
+                <span class="value discount" id="discountDisplay">-0 บาท</span>
+            </div>
+            <div class="total-section">
+                <span class="label">รวมสุทธิ</span>
+                <span class="value grand-total" id="grandTotalDisplay">0 บาท</span>
+            </div>
+            <button class="btn btn-primary btn-confirm" onclick="submitOrder()">ยืนยันการสั่งซื้อ</button>
         </div>
     </div>
 
-    <div class="container mt-2" id="adminInputSection" style="display: none;">
-        <div class="product-card" style="background: #fff3cd; border: 1px solid #ffe69c;">
-            <div class="product-info">
-                <div class="product-name text-warning-emphasis">👤 ชื่อลูกค้า (เสมียนคีย์)</div>
-                <input type="text" id="customerName" class="form-control mt-2" placeholder="ระบุชื่อร้าน/ลูกค้า...">
-            </div>
+    <div id="noPriceScreen" style="display: none;">
+        <div class="no-price-msg">
+            <h4>😕 ไม่พบข้อมูลราคา</h4>
+            <p>กรุณาติดต่อร้านเพื่อตั้งราคาก่อนใช้งาน</p>
         </div>
-    </div>
-
-    <div class="container mt-2">
-        <!-- น้ำแข็งหลอด -->
-        <div class="cat-title">น้ำแข็งหลอด</div>
-        <div class="product-card">
-            <div class="product-info"><div class="product-name">🍻 หลอดใหญ่</div></div>
-            <div><input type="number" id="qty_tube_l" class="qty-input calculate-trigger" placeholder="0" min="0"></div>
-        </div>
-        <div class="product-card">
-            <div class="product-info"><div class="product-name">🥤 หลอดเล็ก</div></div>
-            <div><input type="number" id="qty_tube_s" class="qty-input calculate-trigger" placeholder="0" min="0"></div>
-        </div>
-
-        <!-- น้ำแข็งแพ็ค -->
-        <div class="cat-title">น้ำแข็งแพ็ค</div>
-        <div class="product-card">
-            <div class="product-info"><div class="product-name">🅿️ แพ็คกระสอบ</div></div>
-            <div><input type="number" id="qty_pack_l" class="qty-input calculate-trigger" placeholder="0" min="0"></div>
-        </div>
-        <div class="product-card">
-            <div class="product-info"><div class="product-name">🅿️ แพ็คเล็ก</div></div>
-            <div><input type="number" id="qty_pack_s" class="qty-input" placeholder="0" min="0"></div>
-        </div>
-
-        <!-- น้ำแข็งบด -->
-        <div class="cat-title">น้ำแข็งบด</div>
-        <div class="product-card">
-            <div class="product-info"><div class="product-name">🛍️ บด(ถุง)</div></div>
-            <div><input type="number" id="qty_crush_sack" class="qty-input calculate-trigger" placeholder="0" min="0"></div>
-        </div>
-        <div class="product-card">
-            <div class="product-info"><div class="product-name">📦 บด(ซอง)</div></div>
-            <div><input type="number" id="qty_crush_sachet" class="qty-input" placeholder="0" min="0"></div>
-        </div>
-
-        <!-- ก้อน & อื่นๆ -->
-        <div class="cat-title">ก้อน & อื่นๆ</div>
-        <div class="product-card">
-            <div class="product-info"><div class="product-name">🧊 ก้อน(ซอง)</div></div>
-            <div><input type="number" id="qty_cube_sachet" class="qty-input" placeholder="0" min="0"></div>
-        </div>
-        <div class="product-card">
-            <div class="product-info"><div class="product-name">🧊 ก้อน(กั๊ก)</div></div>
-            <div><input type="number" id="qty_cube_kak" class="qty-input" placeholder="0" min="0"></div>
-        </div>
-        <div class="product-card">
-            <div class="product-info"><div class="product-name">🖐️ ก้อน(มือ)</div></div>
-            <div><input type="number" id="qty_cube_hand" class="qty-input" placeholder="0" min="0"></div>
-        </div>
-        <div class="product-card">
-            <div class="product-info"><div class="product-name">📦 กระสอบ(มัด)</div></div>
-            <div><input type="number" id="qty_sack" class="qty-input" placeholder="0" min="0"></div>
-        </div>
-
-        <!-- จัดการถุง -->
-        <div class="cat-title">จัดการถุง</div>
-        <div class="product-card">
-            <div class="product-info"><div class="product-name">♻️ คืนถุง (ใบ)</div></div>
-            <div><input type="number" id="qty_bag_return" class="qty-input" placeholder="0" min="0"></div>
-        </div>
-
-        <div class="product-card borrow-card">
-            <div class="product-info">
-                <div class="product-name text-primary">👜 ยืมถุง (ใบ)</div>
-                <div class="product-desc">รวมให้อัตโนมัติ</div>
-            </div>
-            <div class="stepper-container">
-                <button class="stepper-btn minus admin-only" style="display:none;" onclick="manualAdjustBag(-1)"><i class="fas fa-minus"></i></button>
-                <input type="number" id="qty_bag_borrow" class="qty-input" value="0" min="0" readonly>
-                <button class="stepper-btn plus admin-only" style="display:none;" onclick="manualAdjustBag(1)"><i class="fas fa-plus"></i></button>
-            </div>
-        </div>
-    </div>
-
-    <div class="bottom-bar">
-        <button class="btn btn-primary btn-confirm" onclick="submitOrder()">ยืนยันการสั่งซื้อ</button>
     </div>
 
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script>
         const MY_LIFF_ID = "2008689090-CnrdxM5k"; 
-        const N8N_WEBHOOK_URL = "https://n8n.ckflowsystem.com/webhook/order-id"; 
-
-        // ⚠️⚠️⚠️ รายชื่อ Admin (เพิ่มได้เรื่อยๆ แค่คั่นด้วยลูกน้ำ) ⚠️⚠️⚠️
+        const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
+        
         const ADMIN_IDS = [
             "U4dc8fa32570dca3dfb4093b48a5c2093",
-            // "Uyyyyyyyyyyyyyyyyyyyyyyyyyyyy", // คนที่ 2 (ก๊อปมาวางเพิ่มตรงนี้)
         ]; 
 
-        // 🔥 ตรงกับ products ในฐานข้อมูล
-        const products = {
-            'tube_l': 'หลอดใหญ่',
-            'tube_s': 'หลอดเล็ก',
-            'pack_l': 'แพ็คกระสอบ',
-            'pack_s': 'แพ็คเล็ก',
-            'crush_sack': 'บด(ถุง)',
-            'crush_sachet': 'บด(ซอง)',
-            'cube_sachet': 'ก้อน(ซอง)',
-            'cube_kak': 'ก้อน(กั๊ก)',
-            'cube_hand': 'ก้อน(มือ)',
-            'sack': 'กระสอบ(มัด)',
-            'bag_return': 'คืนถุง',
-            'bag_borrow': 'ยืมถุง'
+        // Product icons
+        const productIcons = {
+            'tube_l': '🍻', 'tube_s': '🥤', 'pack_l': '🅿️', 'pack_s': '🅿️',
+            'crush_sack': '🛍️', 'crush_sachet': '📦', 'cube_sachet': '🧊',
+            'cube_kak': '🧊', 'cube_hand': '🖐️', 'sack': '📦'
         };
 
-        // สินค้าที่ใช้ถุง (คิดถุงยืมอัตโนมัติ)
-        const productsUseBag = [
-            'tube_l', 'tube_s', 'pack_l', 'crush_sack'
-        ];
+        // Product categories
+        const productCategories = {
+            'น้ำแข็งหลอด': ['tube_l', 'tube_s'],
+            'น้ำแข็งแพ็ค': ['pack_l', 'pack_s'],
+            'น้ำแข็งบด': ['crush_sack', 'crush_sachet'],
+            'ก้อน & อื่นๆ': ['cube_sachet', 'cube_kak', 'cube_hand', 'sack']
+        };
+
+        // สินค้าที่ใช้ถุง
+        const productsUseBag = ['tube_l', 'tube_s', 'pack_l', 'crush_sack'];
+
+        let currentUserId = null;
+        let currentCustomerId = null;
+        let currentCustomerName = null;
+        let isAdmin = false;
+        let isFirstBill = false;
+        let customerPrices = {}; // { product_code: { price, promo_type, buy_qty, free_qty } }
 
         async function main() {
             try {
@@ -165,26 +166,259 @@
                 await liff.init({ liffId: MY_LIFF_ID });
                 if (!liff.isLoggedIn()) { 
                     liff.login(); 
-                } else {
-                    checkAdminPermission();
+                    return;
                 }
-            } catch (err) { console.error(err); }
+                
+                const profile = await liff.getProfile();
+                currentUserId = profile.userId;
+                isAdmin = ADMIN_IDS.includes(currentUserId);
+                
+                if (isAdmin) {
+                    document.getElementById('adminInputSection').style.display = 'block';
+                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
+                    document.getElementById('qty_bag_borrow').removeAttribute('readonly');
+                }
+                
+                await loadCustomerPrices();
+                
+            } catch (err) { 
+                console.error(err);
+                document.getElementById('loadingScreen').innerHTML = '<h4>❌ เกิดข้อผิดพลาด</h4>';
+            }
         }
         main();
 
-        async function checkAdminPermission() {
+        async function loadCustomerPrices() {
             try {
-                const profile = await liff.getProfile();
-                const currentUserId = profile.userId;
-                if (ADMIN_IDS.includes(currentUserId)) {
-                    document.getElementById('adminInputSection').style.display = 'block';
-                    // แสดงปุ่ม +/- ยืมถุง และให้แก้ไขได้
-                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
-                    document.getElementById('qty_bag_borrow').removeAttribute('readonly');
+                const res = await fetch(`${BASE_URL}/get-customer-prices`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lineId: currentUserId })
+                });
+                const data = await res.json();
+                
+                if (data.length === 0 || !data[0].product_code) {
+                    // ไม่มีราคา
+                    if (isAdmin) {
+                        // Admin ยังใช้งานได้ แต่ไม่แสดงราคา
+                        renderProductsForAdmin();
+                    } else {
+                        document.getElementById('loadingScreen').style.display = 'none';
+                        document.getElementById('noPriceScreen').style.display = 'block';
+                        return;
+                    }
                 } else {
-                    document.getElementById('adminInputSection').style.display = 'none';
+                    currentCustomerId = data[0].customer_id;
+                    currentCustomerName = data[0].customer_name;
+                    
+                    // Map prices and promos
+                    data.forEach(item => {
+                        if (item.product_code) {
+                            customerPrices[item.product_code] = {
+                                price: parseFloat(item.price) || 0,
+                                promo_type: item.promo_type,
+                                buy_qty: item.buy_qty,
+                                free_qty: item.free_qty
+                            };
+                        }
+                    });
+                    
+                    await checkFirstBill();
+                    renderProducts();
                 }
-            } catch (err) { console.error(err); }
+                
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                
+            } catch (e) {
+                console.error('Error loading prices:', e);
+                document.getElementById('loadingScreen').innerHTML = '<h4>❌ โหลดข้อมูลไม่สำเร็จ</h4>';
+            }
+        }
+
+        async function checkFirstBill() {
+            if (!currentCustomerId) return;
+            
+            try {
+                const orderDate = document.getElementById('orderDate').value;
+                const res = await fetch(`${BASE_URL}/check-first-bill`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customerId: currentCustomerId, orderDate })
+                });
+                const data = await res.json();
+                isFirstBill = data.isFirstBill;
+            } catch (e) {
+                console.error('Error checking first bill:', e);
+                isFirstBill = false;
+            }
+        }
+
+        function renderProducts() {
+            const container = document.getElementById('productList');
+            container.innerHTML = '';
+            
+            for (const [category, codes] of Object.entries(productCategories)) {
+                const availableProducts = codes.filter(code => customerPrices[code]);
+                
+                if (availableProducts.length === 0) continue;
+                
+                let html = `<div class="cat-title">${category}</div>`;
+                
+                availableProducts.forEach(code => {
+                    const p = customerPrices[code];
+                    const icon = productIcons[code] || '📦';
+                    const useBag = productsUseBag.includes(code);
+                    
+                    html += `
+                        <div class="product-card" id="card_${code}">
+                            <div class="product-row">
+                                <div class="product-info">
+                                    <div class="product-name">${icon} ${getProductName(code)}</div>
+                                    <div class="product-price">${p.price} บาท</div>
+                                </div>
+                                <div class="product-right">
+                                    <span class="line-total" id="total_${code}">0</span>
+                                    <input type="number" id="qty_${code}" class="qty-input ${useBag ? 'calculate-trigger' : ''}" 
+                                        placeholder="0" min="0" onchange="calculateAll()" oninput="calculateAll()">
+                                </div>
+                            </div>
+                            <div class="promo-line" id="promo_${code}" style="display:none;"></div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML += html;
+            }
+            
+            // Add event listeners for bag calculation
+            document.querySelectorAll('.calculate-trigger').forEach(input => {
+                input.addEventListener('input', autoCalculateBags);
+            });
+        }
+
+        function renderProductsForAdmin() {
+            // Admin mode without customer prices - show all products
+            const container = document.getElementById('productList');
+            container.innerHTML = '';
+            
+            for (const [category, codes] of Object.entries(productCategories)) {
+                let html = `<div class="cat-title">${category}</div>`;
+                
+                codes.forEach(code => {
+                    const icon = productIcons[code] || '📦';
+                    const useBag = productsUseBag.includes(code);
+                    
+                    html += `
+                        <div class="product-card" id="card_${code}">
+                            <div class="product-row">
+                                <div class="product-info">
+                                    <div class="product-name">${icon} ${getProductName(code)}</div>
+                                    <div class="product-price" style="color:#999;">ไม่มีราคา</div>
+                                </div>
+                                <div class="product-right">
+                                    <input type="number" id="qty_${code}" class="qty-input ${useBag ? 'calculate-trigger' : ''}" 
+                                        placeholder="0" min="0">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML += html;
+            }
+            
+            document.querySelectorAll('.calculate-trigger').forEach(input => {
+                input.addEventListener('input', autoCalculateBags);
+            });
+        }
+
+        function getProductName(code) {
+            const names = {
+                'tube_l': 'หลอดใหญ่', 'tube_s': 'หลอดเล็ก',
+                'pack_l': 'แพ็คกระสอบ', 'pack_s': 'แพ็คเล็ก',
+                'crush_sack': 'บด(ถุง)', 'crush_sachet': 'บด(ซอง)',
+                'cube_sachet': 'ก้อน(ซอง)', 'cube_kak': 'ก้อน(กั๊ก)',
+                'cube_hand': 'ก้อน(มือ)', 'sack': 'กระสอบ(มัด)'
+            };
+            return names[code] || code;
+        }
+
+        function getUnit(code) {
+            const units = {
+                'tube_l': 'กระสอบ', 'tube_s': 'กระสอบ',
+                'pack_l': 'แพ็ค', 'pack_s': 'แพ็ค',
+                'crush_sack': 'ถุง', 'crush_sachet': 'ซอง',
+                'cube_sachet': 'ซอง', 'cube_kak': 'กั๊ก',
+                'cube_hand': 'มือ', 'sack': 'มัด'
+            };
+            return units[code] || 'หน่วย';
+        }
+
+        function calculateAll() {
+            let subtotal = 0;
+            let totalDiscount = 0;
+            
+            for (const code in customerPrices) {
+                const qtyEl = document.getElementById(`qty_${code}`);
+                if (!qtyEl) continue;
+                
+                const qty = parseInt(qtyEl.value) || 0;
+                const p = customerPrices[code];
+                const price = p.price;
+                
+                let lineTotal = qty * price;
+                let discount = 0;
+                let promoText = '';
+                
+                if (qty > 0 && p.promo_type) {
+                    if (p.promo_type === 'buy_x_free_y' && p.buy_qty && p.free_qty) {
+                        // เช่น ซื้อ 10 แถม 1 → qty ÷ (buy+free) = จำนวนแถม
+                        const freeCount = Math.floor(qty / (p.buy_qty + p.free_qty)) * p.free_qty;
+                        if (freeCount > 0) {
+                            discount = freeCount * price;
+                            promoText = `🎁 แถม ${freeCount} (-${discount.toLocaleString()})`;
+                        }
+                    } else if (p.promo_type === 'first_bill_free' && isFirstBill && p.free_qty) {
+                        discount = p.free_qty * price;
+                        promoText = `🎁 บิลแรกแถม ${p.free_qty} (-${discount.toLocaleString()})`;
+                    }
+                }
+                
+                lineTotal -= discount;
+                subtotal += qty * price;
+                totalDiscount += discount;
+                
+                // Update display
+                const totalEl = document.getElementById(`total_${code}`);
+                const promoEl = document.getElementById(`promo_${code}`);
+                
+                if (totalEl) {
+                    totalEl.textContent = qty > 0 ? (qty * price).toLocaleString() : '0';
+                }
+                if (promoEl) {
+                    if (promoText) {
+                        promoEl.textContent = promoText;
+                        promoEl.style.display = 'block';
+                    } else {
+                        promoEl.style.display = 'none';
+                    }
+                }
+            }
+            
+            const grandTotal = subtotal - totalDiscount;
+            
+            document.getElementById('subtotalDisplay').textContent = subtotal.toLocaleString() + ' บาท';
+            document.getElementById('discountDisplay').textContent = '-' + totalDiscount.toLocaleString() + ' บาท';
+            document.getElementById('grandTotalDisplay').textContent = grandTotal.toLocaleString() + ' บาท';
+            
+            if (totalDiscount > 0) {
+                document.getElementById('discountRow').style.display = 'flex';
+            } else {
+                document.getElementById('discountRow').style.display = 'none';
+            }
+            
+            autoCalculateBags();
         }
 
         function initDateTimeInput() {
@@ -214,8 +448,7 @@
         function getQty(id) {
             const el = document.getElementById('qty_' + id);
             if (!el) return 0;
-            let val = el.value;
-            return val ? parseInt(val) : 0;
+            return parseInt(el.value) || 0;
         }
 
         function autoCalculateBags() {
@@ -223,10 +456,6 @@
             productsUseBag.forEach(id => { totalBags += getQty(id); });
             document.getElementById('qty_bag_borrow').value = totalBags;
         }
-
-        document.querySelectorAll('.calculate-trigger').forEach(input => {
-            input.addEventListener('input', autoCalculateBags);
-        });
 
         function manualAdjustBag(amount) {
             let bagInput = document.getElementById('qty_bag_borrow');
@@ -238,27 +467,41 @@
 
         async function submitOrder() {
             let orderLines = [];
-            for (let key in products) {
-                if (key === 'bag_borrow') continue;
-                let qty = getQty(key);
+            let hasItems = false;
+            
+            for (const code in customerPrices) {
+                const qty = getQty(code);
                 if (qty > 0) {
-                    // กำหนดหน่วยตาม product
-                    let unit = 'กระสอบ';
-                    if (['pack_l', 'pack_s'].includes(key)) unit = 'แพ็ค';
-                    if (['cube_sachet', 'crush_sachet'].includes(key)) unit = 'ซอง';
-                    if (key === 'cube_kak') unit = 'กั๊ก';
-                    if (key === 'cube_hand') unit = 'มือ';
-                    if (key === 'sack') unit = 'มัด';
-                    if (key === 'bag_return') unit = 'ใบ';
-                    if (key === 'crush_sack') unit = 'ถุง';
-                    orderLines.push(`- ${products[key]}: ${qty} ${unit}`);
+                    hasItems = true;
+                    const p = customerPrices[code];
+                    const unit = getUnit(code);
+                    let line = `- ${getProductName(code)}: ${qty} ${unit} (${(qty * p.price).toLocaleString()} บาท)`;
+                    
+                    // Add promo info
+                    if (p.promo_type === 'buy_x_free_y' && p.buy_qty && p.free_qty) {
+                        const freeCount = Math.floor(qty / (p.buy_qty + p.free_qty)) * p.free_qty;
+                        if (freeCount > 0) {
+                            line += `\n  🎁 แถม ${freeCount} (-${(freeCount * p.price).toLocaleString()})`;
+                        }
+                    } else if (p.promo_type === 'first_bill_free' && isFirstBill && p.free_qty) {
+                        line += `\n  🎁 บิลแรกแถม ${p.free_qty} (-${(p.free_qty * p.price).toLocaleString()})`;
+                    }
+                    
+                    orderLines.push(line);
                 }
             }
 
-            let borrowQty = getQty('bag_borrow');
-            if (borrowQty > 0) orderLines.push(`------------------\n👜 ยืมถุง: ${borrowQty} ใบ`);
+            const bagReturnQty = getQty('bag_return');
+            if (bagReturnQty > 0) {
+                orderLines.push(`- คืนถุง: ${bagReturnQty} ใบ`);
+            }
 
-            if (orderLines.length === 0 && borrowQty === 0) {
+            const borrowQty = getQty('bag_borrow');
+            if (borrowQty > 0) {
+                orderLines.push(`------------------\n👜 ยืมถุง: ${borrowQty} ใบ`);
+            }
+
+            if (!hasItems && borrowQty === 0) {
                 alert("กรุณากรอกจำนวนสินค้าครับ");
                 return;
             }
@@ -269,27 +512,45 @@
             btn.disabled = true;
 
             try {
-                const profile = await liff.getProfile();
-                const currentUserId = profile.userId;
-                let finalCustomerName = "";
+                let finalCustomerName = currentCustomerName || "";
                 
-                if (ADMIN_IDS.includes(currentUserId)) {
-                    let inputName = document.getElementById('customerName').value.trim();
+                if (isAdmin) {
+                    const inputName = document.getElementById('customerName').value.trim();
                     finalCustomerName = inputName || "ลูกค้าหน้าร้าน (ไม่ได้ระบุชื่อ)";
-                } else {
-                    finalCustomerName = profile.displayName; 
                 }
+
+                // Calculate totals for payload
+                let subtotal = 0, totalDiscount = 0;
+                for (const code in customerPrices) {
+                    const qty = getQty(code);
+                    const p = customerPrices[code];
+                    subtotal += qty * p.price;
+                    
+                    if (qty > 0 && p.promo_type) {
+                        if (p.promo_type === 'buy_x_free_y' && p.buy_qty && p.free_qty) {
+                            const freeCount = Math.floor(qty / (p.buy_qty + p.free_qty)) * p.free_qty;
+                            totalDiscount += freeCount * p.price;
+                        } else if (p.promo_type === 'first_bill_free' && isFirstBill && p.free_qty) {
+                            totalDiscount += p.free_qty * p.price;
+                        }
+                    }
+                }
+                const grandTotal = subtotal - totalDiscount;
 
                 let payload = {
                     lineId: currentUserId,
+                    customerId: currentCustomerId,
                     customerName: finalCustomerName,
                     items: orderLines,
                     totalBags: borrowQty,
+                    subtotal: subtotal,
+                    discount: totalDiscount,
+                    grandTotal: grandTotal,
                     orderDate: document.getElementById('orderDate').value,
                     orderTime: document.getElementById('orderTime').value
                 };
 
-                const response = await fetch(N8N_WEBHOOK_URL, { 
+                const response = await fetch(`${BASE_URL}/order-id`, { 
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -298,19 +559,20 @@
                 if (!response.ok) throw new Error("Server ตอบกลับผิดพลาด");
                 
                 const data = await response.json(); 
-                
-                // 🔥 ใช้ invoiceNo จาก server โดยตรง
                 let invoiceNo = data.invoiceNo;
 
-                const selectedDate = document.getElementById('orderDate').value;
+                const thaiDate = formatDateThai(document.getElementById('orderDate').value);
                 const selectedTime = document.getElementById('orderTime').value;
-                const thaiDate = formatDateThai(selectedDate);
 
                 let messageText = `🧾 บิลเลขที่: ${invoiceNo}\n` + 
                                   `👤 ลูกค้า: ${finalCustomerName}\n` +
                                   `📋 วันที่: ${thaiDate} (${selectedTime} น.)\n` + 
                                   `------------------\n` +
-                                  orderLines.join("\n");
+                                  orderLines.join("\n") +
+                                  `\n------------------\n` +
+                                  `💰 รวม: ${subtotal.toLocaleString()} บาท\n` +
+                                  (totalDiscount > 0 ? `🎁 ส่วนลด: -${totalDiscount.toLocaleString()} บาท\n` : '') +
+                                  `✅ สุทธิ: ${grandTotal.toLocaleString()} บาท`;
 
                 if (liff.isInClient()) {
                     await liff.sendMessages([{ type: 'text', text: messageText }]);
