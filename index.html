@@ -92,15 +92,15 @@
         </div>
         <div class="product-card">
             <div class="product-info"><div class="product-name">🧊 ก้อน(กั๊ก)</div></div>
-            <div><input type="number" id="qty_cube_kak" class="qty-input calculate-trigger" placeholder="0" min="0"></div>
+            <div><input type="number" id="qty_cube_kak" class="qty-input" placeholder="0" min="0"></div>
         </div>
         <div class="product-card">
             <div class="product-info"><div class="product-name">🖐️ ก้อน(มือ)</div></div>
-            <div><input type="number" id="qty_cube_hand" class="qty-input calculate-trigger" placeholder="0" min="0"></div>
+            <div><input type="number" id="qty_cube_hand" class="qty-input" placeholder="0" min="0"></div>
         </div>
         <div class="product-card">
             <div class="product-info"><div class="product-name">📦 กระสอบ(มัด)</div></div>
-            <div><input type="number" id="qty_sack" class="qty-input calculate-trigger" placeholder="0" min="0"></div>
+            <div><input type="number" id="qty_sack" class="qty-input" placeholder="0" min="0"></div>
         </div>
 
         <!-- จัดการถุง -->
@@ -156,8 +156,7 @@
 
         // สินค้าที่ใช้ถุง (คิดถุงยืมอัตโนมัติ)
         const productsUseBag = [
-            'tube_l', 'tube_s', 'crush_sack',
-            'cube_kak', 'cube_hand', 'sack'
+            'tube_l', 'tube_s', 'crush_sack'
         ];
 
         async function main() {
