@@ -326,7 +326,7 @@
                             <div class="section-title">
                                 <span class="title-text">🎁 โปรโมชั่น</span>
                                 <span class="title-btn">
-                                    <button class="btn btn-sm btn-warning" style="font-size:11px;padding:2px 12px;" onclick="togglePromoSection(this, ${customer.id})">เพิ่มโปรโมชั่น ▼</button>
+                                    <button class="btn btn-sm btn-warning" style="font-size:11px;padding:2px 12px;" onclick="togglePromoSection(this, ${customer.id})">ดูโปรโมชั่น ▼</button>
                                 </span>
                                 <span class="title-space"></span>
                             </div>
@@ -363,11 +363,11 @@
             
             if (body.style.display === 'none' || body.style.display === '') {
                 body.style.display = 'block';
-                btn.innerHTML = 'เพิ่มโปรโมชั่น ▲';
+                btn.innerHTML = 'ดูโปรโมชั่น ▲';
                 await loadPromos(customerId);
             } else {
                 body.style.display = 'none';
-                btn.innerHTML = 'เพิ่มโปรโมชั่น ▼';
+                btn.innerHTML = 'ดูโปรโมชั่น ▼';
             }
         }
 
