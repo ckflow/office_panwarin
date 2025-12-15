@@ -13,9 +13,11 @@
         .card-header-custom:hover { background-color: #f9f9f9; }
         .card-body-custom { padding: 15px; display: none; background-color: #fafafa; }
         
-        .section-title { font-size: 13px; color: #888; margin: 12px 0 6px 0; font-weight: bold; }
+        .section-title { font-size: 13px; color: #888; margin: 12px 0 6px 0; font-weight: bold; display: flex; align-items: center; }
+        .section-title .title-text { width: 33%; }
+        .section-title .title-btn { width: 34%; text-align: center; }
+        .section-title .title-space { width: 33%; }
         .section-title:first-child { margin-top: 0; }
-        .section-btn { text-align: center; margin-bottom: 8px; }
         
         .price-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: white; border-radius: 8px; margin-bottom: 4px; border: 1px solid #eee; }
         .price-item .name { font-size: 14px; }
@@ -311,11 +313,12 @@
                         </div>
                         <div class="card-body-custom">
                             <!-- LINE ID -->
-                            <div class="section-title">📱 LINE ID</div>
-                            <div class="section-btn">
-                                <button class="btn btn-sm btn-outline-primary" style="font-size:11px;padding:2px 12px;" onclick="openManageLineModal(${customer.id}, '${customer.name}')">
-                                    จัดการ
-                                </button>
+                            <div class="section-title">
+                                <span class="title-text">📱 LINE ID</span>
+                                <span class="title-btn">
+                                    <button class="btn btn-sm btn-outline-primary" style="font-size:11px;padding:2px 12px;" onclick="openManageLineModal(${customer.id}, '${customer.name}')">จัดการ</button>
+                                </span>
+                                <span class="title-space"></span>
                             </div>
                             <div id="lines-${customer.id}" style="margin-bottom:10px;"></div>
 
@@ -331,11 +334,12 @@
                             </div>
 
                             <!-- ตั้งราคา -->
-                            <div class="section-title mt-3">💰 ตั้งราคา</div>
-                            <div class="section-btn">
-                                <button class="btn btn-sm btn-primary" style="font-size:11px;padding:2px 12px;" onclick="openAddPriceModal(${customer.id}, '${customer.name}')">
-                                    + เพิ่ม
-                                </button>
+                            <div class="section-title mt-3">
+                                <span class="title-text">💰 ตั้งราคา</span>
+                                <span class="title-btn">
+                                    <button class="btn btn-sm btn-primary" style="font-size:11px;padding:2px 12px;" onclick="openAddPriceModal(${customer.id}, '${customer.name}')">+ เพิ่ม</button>
+                                </span>
+                                <span class="title-space"></span>
                             </div>
                             <div style="margin-bottom:10px;">
                                 ${pricesHtml}
