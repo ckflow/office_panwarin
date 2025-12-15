@@ -3,80 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>สั่งน้ำแข็ง</title>
+    <title>สั่งน้ำแข็ง (ระบบเสมียน)</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body { background-color: #f4f6f9; padding-bottom: 90px; font-family: 'Sarabun', sans-serif; }
-        
-        /* ส่วนหัวและวันที่แบบ Floating */
-        .header-section {
-            position: sticky; top: 0; z-index: 999;
-            background-color: #f4f6f9;
-            padding-top: 10px; padding-bottom: 5px;
-            box-shadow: 0 4px 6px -4px rgba(0,0,0,0.1);
-        }
-        
-        /* บีบขนาดช่องวันที่/เวลา */
-        .date-input-container {
-            display: flex; justify-content: center; align-items: center;
-            background: white; border-radius: 50px; 
-            padding: 4px 10px;
-            width: fit-content; 
-            max-width: 98%; 
-            margin: 0 auto;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #dce0e4;
-            flex-wrap: nowrap; 
-            gap: 2px;
-        }
-        
-        .date-input {
-            border: none; 
-            font-size: 13px;
-            font-weight: bold; color: #0d6efd;
-            outline: none; background: transparent; text-align: center;
-            font-family: 'Sarabun', sans-serif;
-            padding: 0; margin: 0;
-            line-height: 1.2;
-        }
-
-        #orderDate { width: 105px; } 
-        #orderTime { width: 75px; }
-        
+        .header-section { position: sticky; top: 0; z-index: 999; background-color: #f4f6f9; padding-top: 10px; padding-bottom: 5px; box-shadow: 0 4px 6px -4px rgba(0,0,0,0.1); }
+        .date-input-container { display: flex; justify-content: center; align-items: center; background: white; border-radius: 50px; padding: 4px 10px; width: fit-content; max-width: 98%; margin: 0 auto; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #dce0e4; flex-wrap: nowrap; gap: 2px; }
+        .date-input { border: none; font-size: 13px; font-weight: bold; color: #0d6efd; outline: none; background: transparent; text-align: center; font-family: 'Sarabun', sans-serif; padding: 0; margin: 0; line-height: 1.2; }
+        #orderDate { width: 105px; } #orderTime { width: 75px; }
         .divider { color: #ccc; margin: 0 4px; font-size: 12px; }
         .date-icon { font-size: 13px; margin-right: 3px; color: #0d6efd; }
-
-        .product-card {
-            background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between;
-        }
+        .product-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between; }
         .borrow-card { background: #e7f1ff; border: 1px solid #b6d4fe; }
-
         .product-info { flex-grow: 1; padding-right: 15px; }
         .product-name { font-weight: bold; font-size: 16px; color: #333; margin-bottom: 0; }
-        
-        .qty-input {
-            width: 70px; text-align: center; font-size: 20px; font-weight: bold;
-            border: 1px solid #ced4da; border-radius: 8px; padding: 5px;
-            color: #0d6efd; background-color: #fff;
-        }
-        
-        .stepper-btn {
-            width: 35px; height: 35px; border-radius: 50%; border: none;
-            background-color: #6c757d; color: white; font-size: 18px; font-weight: bold;
-            display: flex; align-items: center; justify-content: center; cursor: pointer;
-        }
+        .qty-input { width: 70px; text-align: center; font-size: 20px; font-weight: bold; border: 1px solid #ced4da; border-radius: 8px; padding: 5px; color: #0d6efd; background-color: #fff; }
+        .stepper-btn { width: 35px; height: 35px; border-radius: 50%; border: none; background-color: #6c757d; color: white; font-size: 18px; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .stepper-btn:active { transform: scale(0.95); }
-        .stepper-btn.plus { background-color: #198754; } 
-        .stepper-btn.minus { background-color: #dc3545; } 
+        .stepper-btn.plus { background-color: #198754; } .stepper-btn.minus { background-color: #dc3545; } 
         .stepper-container { display: flex; align-items: center; gap: 8px; }
-
-        .bottom-bar {
-            position: fixed; bottom: 0; left: 0; right: 0; background: white;
-            padding: 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); text-align: center; z-index: 1000;
-        }
+        .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); text-align: center; z-index: 1000; }
         .btn-confirm { width: 100%; border-radius: 30px; padding: 12px; font-size: 18px; font-weight: bold; }
-        
         .cat-title { font-size: 15px; color: #0d6efd; margin: 15px 0 5px 5px; font-weight: bold; border-left: 4px solid #0d6efd; padding-left: 8px; }
     </style>
 </head>
@@ -93,8 +41,16 @@
         </div>
     </div>
 
+    <div class="container mt-2" id="adminInputSection" style="display: none;">
+        <div class="product-card" style="background: #fff3cd; border: 1px solid #ffe69c;">
+            <div class="product-info">
+                <div class="product-name text-warning-emphasis">👤 ชื่อลูกค้า (เสมียนคีย์)</div>
+                <input type="text" id="customerName" class="form-control mt-2" placeholder="ระบุชื่อร้าน/ลูกค้า...">
+            </div>
+        </div>
+    </div>
+
     <div class="container mt-2">
-        
         <div class="cat-title">น้ำแข็งหลอด</div>
         <div class="product-card">
             <div class="product-info"><div class="product-name">🍻 หลอดใหญ่</div></div>
@@ -170,23 +126,19 @@
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script>
         const MY_LIFF_ID = "2008689090-CnrdxM5k"; 
-        
-        // ⚠️⚠️⚠️ อย่าลืมเอา URL ของ n8n มาใส่ตรงนี้นะครับ ⚠️⚠️⚠️
         const N8N_WEBHOOK_URL = "https://n8n.ckflowsystem.com/webhook/order-id"; 
 
+        // ⚠️⚠️⚠️ รายชื่อ Admin (เพิ่มได้เรื่อยๆ แค่คั่นด้วยลูกน้ำ) ⚠️⚠️⚠️
+        const ADMIN_IDS = [
+            "Uxxxxxxxxxxxxxxxxxxxxxxxxxxxx", // คนที่ 1 (พี่)
+            // "Uyyyyyyyyyyyyyyyyyyyyyyyyyyyy", // คนที่ 2 (ก๊อปมาวางเพิ่มตรงนี้)
+        ]; 
+
         const products = {
-            'tube_l': 'หลอดใหญ่',
-            'tube_s': 'หลอดเล็ก',
-            'pack_l': 'แพ็คใหญ่',
-            'pack_s': 'แพ็คเล็ก',
-            'crush_snow': 'บดละเอียด(เกล็ดหิมะ)',
-            'crush_cube': 'บดก้อน',
-            'cube_sachet': 'ก้อน(ซอง)',
-            'cube_kak': 'ก้อน(กั๊ก)', 
-            'cube_hand': 'ก้อน(มือ)',
-            'sack': 'กระสอบ',
-            'bag_return': 'คืนถุง',
-            'bag_borrow': 'ยืมถุง'
+            'tube_l': 'หลอดใหญ่', 'tube_s': 'หลอดเล็ก', 'pack_l': 'แพ็คใหญ่', 'pack_s': 'แพ็คเล็ก',
+            'crush_snow': 'บดละเอียด(เกล็ดหิมะ)', 'crush_cube': 'บดก้อน', 'cube_sachet': 'ก้อน(ซอง)',
+            'cube_kak': 'ก้อน(กั๊ก)', 'cube_hand': 'ก้อน(มือ)', 'sack': 'กระสอบ',
+            'bag_return': 'คืนถุง', 'bag_borrow': 'ยืมถุง'
         };
 
         const productsUseBag = [
@@ -198,10 +150,29 @@
             try {
                 initDateTimeInput();
                 await liff.init({ liffId: MY_LIFF_ID });
-                if (!liff.isLoggedIn()) { liff.login(); }
+                if (!liff.isLoggedIn()) { 
+                    liff.login(); 
+                } else {
+                    checkAdminPermission();
+                }
             } catch (err) { console.error(err); }
         }
         main();
+
+        // 🕵️‍♂️ ฟังก์ชันตรวจสอบ Admin แบบหลายคน (Array)
+        async function checkAdminPermission() {
+            try {
+                const profile = await liff.getProfile();
+                const currentUserId = profile.userId;
+
+                // ใช้ .includes() เพื่อเช็คว่า ID นี้ มีอยู่ในลิสต์ไหม
+                if (ADMIN_IDS.includes(currentUserId)) {
+                    document.getElementById('adminInputSection').style.display = 'block';
+                } else {
+                    document.getElementById('adminInputSection').style.display = 'none';
+                }
+            } catch (err) { console.error(err); }
+        }
 
         function initDateTimeInput() {
             const dateInput = document.getElementById('orderDate');
@@ -228,7 +199,6 @@
         }
 
         function formatInvoiceId(id) {
-            // แปลง ID เป็น INV-000XXX
             let paddedId = String(id).padStart(6, '0'); 
             return `INV-${paddedId}`;
         }
@@ -240,9 +210,7 @@
 
         function autoCalculateBags() {
             let totalBags = 0;
-            productsUseBag.forEach(id => {
-                totalBags += getQty(id);
-            });
+            productsUseBag.forEach(id => { totalBags += getQty(id); });
             document.getElementById('qty_bag_borrow').value = totalBags;
         }
 
@@ -260,8 +228,6 @@
 
         async function submitOrder() {
             let orderLines = [];
-            
-            // 1. รวบรวมสินค้า
             for (let key in products) {
                 if(key === 'bag_borrow') continue;
                 let qty = getQty(key);
@@ -275,60 +241,61 @@
             }
 
             let borrowQty = getQty('bag_borrow');
-            if (borrowQty > 0) {
-                orderLines.push(`------------------\n👜 ยืมถุง: ${borrowQty} ใบ`);
-            }
+            if (borrowQty > 0) orderLines.push(`------------------\n👜 ยืมถุง: ${borrowQty} ใบ`);
 
             if (orderLines.length === 0 && borrowQty === 0) {
                 alert("กรุณากรอกจำนวนสินค้าครับ");
                 return;
             }
 
-            // 2. เตรียมข้อมูลส่ง n8n
-            let lineUserId = liff.getDecodedIDToken() ? liff.getDecodedIDToken().sub : "GUEST"; 
-            
-            let payload = {
-                lineId: lineUserId,
-                items: orderLines,
-                totalBags: borrowQty,
-                orderDate: document.getElementById('orderDate').value,
-                orderTime: document.getElementById('orderTime').value
-            };
-
-            // แสดงสถานะ Loading
             let btn = document.querySelector('.btn-confirm');
             let oldText = btn.innerText;
             btn.innerText = "⏳ กำลังบันทึก...";
             btn.disabled = true;
 
             try {
-                // 3. ยิงข้อมูลไปหา n8n
+                const profile = await liff.getProfile();
+                const currentUserId = profile.userId;
+                let finalCustomerName = "";
+                
+                // 🔥 Logic เลือกชื่อลูกค้า (รองรับหลาย Admin)
+                if (ADMIN_IDS.includes(currentUserId)) {
+                    let inputName = document.getElementById('customerName').value.trim();
+                    finalCustomerName = inputName || "ลูกค้าหน้าร้าน (ไม่ได้ระบุชื่อ)";
+                } else {
+                    finalCustomerName = profile.displayName; 
+                }
+
+                let payload = {
+                    lineId: currentUserId,
+                    customerName: finalCustomerName,
+                    items: orderLines,
+                    totalBags: borrowQty,
+                    orderDate: document.getElementById('orderDate').value,
+                    orderTime: document.getElementById('orderTime').value
+                };
+
                 const response = await fetch(N8N_WEBHOOK_URL, { 
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
-                if (!response.ok) {
-                    throw new Error("Server ตอบกลับผิดพลาด");
-                }
+                if (!response.ok) throw new Error("Server ตอบกลับผิดพลาด");
                 
-                // 4. รับเลข ID กลับมา
                 const data = await response.json(); 
-                let realId = data.orderId; 
-                let invoiceNo = formatInvoiceId(realId); // สร้างเลขบิล
+                let invoiceNo = formatInvoiceId(data.orderId);
 
-                // 5. สร้างข้อความ LINE พร้อมเลขบิล
                 const selectedDate = document.getElementById('orderDate').value;
                 const selectedTime = document.getElementById('orderTime').value;
                 const thaiDate = formatDateThai(selectedDate);
 
                 let messageText = `🧾 บิลเลขที่: ${invoiceNo}\n` + 
+                                  `👤 ลูกค้า: ${finalCustomerName}\n` +
                                   `📋 วันที่: ${thaiDate} (${selectedTime} น.)\n` + 
                                   `------------------\n` +
                                   orderLines.join("\n");
 
-                // 6. ส่งเข้าห้องแชท
                 if (liff.isInClient()) {
                     await liff.sendMessages([{ type: 'text', text: messageText }]);
                     liff.closeWindow();
@@ -339,7 +306,7 @@
 
             } catch (err) {
                 alert("เกิดข้อผิดพลาด: " + err.message);
-                btn.innerText = oldText; // คืนค่าปุ่มเดิม
+                btn.innerText = oldText;
                 btn.disabled = false;
             }
         }
