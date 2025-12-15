@@ -489,7 +489,9 @@
                     })
                 });
                 alert("✅ บันทึกแล้ว");
-                closeModal('addPriceModal');
+                // เคลียร์แค่ราคา ไม่ปิด modal
+                document.getElementById('priceValue').value = '';
+                // โหลดข้อมูลใหม่ในพื้นหลัง
                 await loadCustomers();
                 // เปิดการ์ดเดิม
                 setTimeout(() => {
