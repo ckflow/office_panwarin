@@ -298,7 +298,7 @@
                         <div class="price-item">
                             <span class="name">${p.product_name}</span>
                             <span class="value">${p.price} บาท</span>
-                            <button class="btn-del" onclick="deletePrice(${p.id}, '${p.product_name}')">✕</button>
+                            <button class="btn-del" onclick="deletePrice(${p.id}, '${p.product_name}', ${customer.id}, '${customer.name}')">✕</button>
                         </div>
                     `).join('');
                 } else {
@@ -476,25 +476,36 @@
             const price = document.getElementById('priceValue').value;
             if (!price) return alert("กรุณาใส่ราคา");
             
+            const customerId = currentCustomer.id;
+            
             try {
                 await fetch(API.SAVE_PRICE, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        customerId: currentCustomer.id,
+                        customerId: customerId,
                         productCode,
                         price: parseFloat(price)
                     })
                 });
                 alert("✅ บันทึกแล้ว");
                 closeModal('addPriceModal');
-                loadCustomers();
+                await loadCustomers();
+                // เปิดการ์ดเดิม
+                setTimeout(() => {
+                    const cards = document.querySelectorAll('.customer-card');
+                    cards.forEach(card => {
+                        if (card.querySelector('.card-header-custom span').textContent.includes(currentCustomer.name)) {
+                            card.querySelector('.card-body-custom').style.display = 'block';
+                        }
+                    });
+                }, 100);
             } catch (e) {
                 alert("Error: " + e);
             }
         }
 
-        async function deletePrice(priceId, productName) {
+        async function deletePrice(priceId, productName, customerId, customerName) {
             if (!confirm(`ลบราคา ${productName}?`)) return;
             
             try {
@@ -504,7 +515,16 @@
                     body: JSON.stringify({ priceId })
                 });
                 alert("✅ ลบแล้ว");
-                loadCustomers();
+                await loadCustomers();
+                // เปิดการ์ดเดิม
+                setTimeout(() => {
+                    const cards = document.querySelectorAll('.customer-card');
+                    cards.forEach(card => {
+                        if (card.querySelector('.card-header-custom span').textContent.includes(customerName)) {
+                            card.querySelector('.card-body-custom').style.display = 'block';
+                        }
+                    });
+                }, 100);
             } catch (e) {
                 alert("Error: " + e);
             }
