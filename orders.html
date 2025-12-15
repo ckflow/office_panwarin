@@ -147,7 +147,7 @@
                                     <div class="order-date">📅 ${formatDate(order.order_date)} ${order.order_time || ''}</div>
                                 </div>
                                 <div class="text-end">
-                                    <div class="order-total">${parseFloat(order.grand_total || 0).toLocaleString()} บาท</div>
+                                    <div class="order-total">${parseFloat(order.total || 0).toLocaleString()} บาท</div>
                                     <span class="status-badge ${statusClass}">${statusText}</span>
                                     ${isPendingDelete ? '<br><span class="status-badge status-pending mt-1">⏳ รอยืนยันลบ</span>' : ''}
                                 </div>
@@ -156,17 +156,17 @@
                                 <div class="mb-2">
                                     <strong>รายการสินค้า:</strong>
                                     <div class="order-items mt-1">
-                                        ${formatItems(order.items)}
+                                        ${formatItems(order.order_items)}
                                     </div>
                                 </div>
                                 <div class="mb-2">
                                     <small class="text-muted">
                                         ยอดรวม: ${parseFloat(order.subtotal || 0).toLocaleString()} บาท
                                         ${order.discount > 0 ? `<br>ส่วนลด: -${parseFloat(order.discount).toLocaleString()} บาท` : ''}
-                                        <br><strong>สุทธิ: ${parseFloat(order.grand_total || 0).toLocaleString()} บาท</strong>
+                                        <br><strong>สุทธิ: ${parseFloat(order.total || 0).toLocaleString()} บาท</strong>
                                     </small>
                                 </div>
-                                ${order.bags_borrowed > 0 ? `<div class="mb-2"><small>👜 ยืมถุง: ${order.bags_borrowed} ใบ</small></div>` : ''}
+                                ${order.total_bags > 0 ? `<div class="mb-2"><small>👜 ยืมถุง: ${order.total_bags} ใบ</small></div>` : ''}
                                 <hr>
                                 <div class="d-flex justify-content-between">
                                     <small class="text-muted">Order ID: ${order.id}</small>
