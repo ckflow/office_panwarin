@@ -102,10 +102,7 @@
                 document.getElementById('content').style.display = 'block';
                 
                 // Set default date to today (Thailand timezone)
-                const now = new Date();
-                const thailandOffset = 7 * 60; // UTC+7
-                const localTime = new Date(now.getTime() + (thailandOffset + now.getTimezoneOffset()) * 60000);
-                const today = localTime.toISOString().split('T')[0];
+                const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
                 document.getElementById('filterDate').value = today;
                 
                 await loadOrders();
