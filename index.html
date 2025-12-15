@@ -68,8 +68,10 @@
         <div class="container mt-2" id="adminInputSection" style="display: none;">
             <div class="product-card" style="background: #fff3cd; border: 1px solid #ffe69c;">
                 <div class="product-info">
-                    <div class="product-name text-warning-emphasis">👤 ชื่อลูกค้า (เสมียนคีย์)</div>
-                    <input type="text" id="customerName" class="form-control mt-2" placeholder="ระบุชื่อร้าน/ลูกค้า...">
+                    <div class="product-name text-warning-emphasis">👤 เลือกลูกค้า (เสมียนคีย์)</div>
+                    <select id="customerSelect" class="form-select mt-2" onchange="onCustomerSelect()">
+                        <option value="">-- เลือกลูกค้า --</option>
+                    </select>
                 </div>
             </div>
         </div>
@@ -159,6 +161,7 @@
         let isAdmin = false;
         let isFirstBill = false;
         let customerPrices = {}; // { product_code: { price, promo_type, buy_qty, free_qty } }
+        let allCustomers = []; // รายชื่อลูกค้าทั้งหมด (สำหรับ Admin)
 
         async function main() {
             try {
@@ -177,9 +180,17 @@
                     document.getElementById('adminInputSection').style.display = 'block';
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
                     document.getElementById('qty_bag_borrow').removeAttribute('readonly');
+                    
+                    // โหลดรายชื่อลูกค้าสำหรับ Admin
+                    await loadAllCustomers();
+                    renderProductsForAdmin();
+                    
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                } else {
+                    // ลูกค้าทั่วไป - โหลดราคาตาม LINE ID
+                    await loadCustomerPrices();
                 }
-                
-                await loadCustomerPrices();
                 
             } catch (err) { 
                 console.error(err);
@@ -187,6 +198,68 @@
             }
         }
         main();
+
+        async function loadAllCustomers() {
+            try {
+                const res = await fetch(`${BASE_URL}/get-all-customers`);
+                allCustomers = await res.json();
+                
+                const select = document.getElementById('customerSelect');
+                select.innerHTML = '<option value="">-- เลือกลูกค้า --</option>';
+                allCustomers.forEach(c => {
+                    select.innerHTML += `<option value="${c.id}" data-name="${c.name}">${c.name}</option>`;
+                });
+            } catch (e) {
+                console.error('Error loading customers:', e);
+            }
+        }
+
+        async function onCustomerSelect() {
+            const select = document.getElementById('customerSelect');
+            const customerId = select.value;
+            
+            if (!customerId) {
+                // ยกเลิกการเลือก - แสดงแบบไม่มีราคา
+                currentCustomerId = null;
+                currentCustomerName = null;
+                customerPrices = {};
+                renderProductsForAdmin();
+                updateTotals();
+                return;
+            }
+            
+            currentCustomerId = parseInt(customerId);
+            currentCustomerName = select.options[select.selectedIndex].dataset.name;
+            
+            // โหลดราคาของลูกค้าที่เลือก
+            try {
+                const res = await fetch(`${BASE_URL}/get-prices-by-customer`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customerId: currentCustomerId })
+                });
+                const data = await res.json();
+                
+                customerPrices = {};
+                data.forEach(item => {
+                    if (item.product_code) {
+                        customerPrices[item.product_code] = {
+                            price: parseFloat(item.price) || 0,
+                            promo_type: item.promo_type,
+                            buy_qty: item.buy_qty,
+                            free_qty: item.free_qty
+                        };
+                    }
+                });
+                
+                await checkFirstBill();
+                renderProducts();
+                
+            } catch (e) {
+                console.error('Error loading customer prices:', e);
+                alert('โหลดราคาไม่สำเร็จ');
+            }
+        }
 
         async function loadCustomerPrices() {
             try {
@@ -356,6 +429,10 @@
         }
 
         function calculateAll() {
+            updateTotals();
+        }
+
+        function updateTotals() {
             let subtotal = 0;
             let totalDiscount = 0;
             
@@ -373,7 +450,6 @@
                 
                 if (qty > 0 && p.promo_type) {
                     if (p.promo_type === 'buy_x_free_y' && p.buy_qty && p.free_qty) {
-                        // เช่น ซื้อ 10 แถม 1 → qty ÷ (buy+free) = จำนวนแถม
                         const freeCount = Math.floor(qty / (p.buy_qty + p.free_qty)) * p.free_qty;
                         if (freeCount > 0) {
                             discount = freeCount * price;
@@ -389,7 +465,6 @@
                 subtotal += qty * price;
                 totalDiscount += discount;
                 
-                // Update display
                 const totalEl = document.getElementById(`total_${code}`);
                 const promoEl = document.getElementById(`promo_${code}`);
                 
@@ -466,6 +541,12 @@
         }
 
         async function submitOrder() {
+            // Admin ต้องเลือกลูกค้าก่อน
+            if (isAdmin && !currentCustomerId) {
+                alert("กรุณาเลือกลูกค้าก่อนครับ");
+                return;
+            }
+            
             let orderLines = [];
             let hasItems = false;
             
@@ -512,12 +593,7 @@
             btn.disabled = true;
 
             try {
-                let finalCustomerName = currentCustomerName || "";
-                
-                if (isAdmin) {
-                    const inputName = document.getElementById('customerName').value.trim();
-                    finalCustomerName = inputName || "ลูกค้าหน้าร้าน (ไม่ได้ระบุชื่อ)";
-                }
+                let finalCustomerName = currentCustomerName || "ลูกค้าหน้าร้าน";
 
                 // Calculate totals for payload
                 let subtotal = 0, totalDiscount = 0;
