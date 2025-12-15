@@ -323,14 +323,15 @@
                             <div id="lines-${customer.id}" style="margin-bottom:10px;"></div>
 
                             <!-- โปรโมชั่น -->
-                            <div class="promo-section">
-                                <div class="promo-header" onclick="togglePromoSection(this, ${customer.id})">
-                                    <h6>🎁 โปรโมชั่น</h6>
-                                    <i class="fas fa-chevron-down"></i>
-                                </div>
-                                <div class="promo-body" id="promos-${customer.id}">
-                                    <div class="empty-text">กำลังโหลด...</div>
-                                </div>
+                            <div class="section-title">
+                                <span class="title-text">🎁 โปรโมชั่น</span>
+                                <span class="title-btn">
+                                    <button class="btn btn-sm btn-warning" style="font-size:11px;padding:2px 12px;" onclick="togglePromoSection(this, ${customer.id})">เพิ่มโปรโมชั่น ▼</button>
+                                </span>
+                                <span class="title-space"></span>
+                            </div>
+                            <div class="promo-body" id="promos-${customer.id}" style="display:none; margin-top:8px;">
+                                <div class="empty-text">กำลังโหลด...</div>
                             </div>
 
                             <!-- ตั้งราคา -->
@@ -357,17 +358,16 @@
         }
 
         // ==================== PROMO SECTION ====================
-        async function togglePromoSection(el, customerId) {
-            const body = el.nextElementSibling;
-            const icon = el.querySelector('i');
+        async function togglePromoSection(btn, customerId) {
+            const body = document.getElementById(`promos-${customerId}`);
             
             if (body.style.display === 'none' || body.style.display === '') {
                 body.style.display = 'block';
-                icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+                btn.innerHTML = 'เพิ่มโปรโมชั่น ▲';
                 await loadPromos(customerId);
             } else {
                 body.style.display = 'none';
-                icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+                btn.innerHTML = 'เพิ่มโปรโมชั่น ▼';
             }
         }
 
