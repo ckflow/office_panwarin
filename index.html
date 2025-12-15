@@ -159,13 +159,10 @@
         }
         main();
 
-        // 🕵️‍♂️ ฟังก์ชันตรวจสอบ Admin แบบหลายคน (Array)
         async function checkAdminPermission() {
             try {
                 const profile = await liff.getProfile();
                 const currentUserId = profile.userId;
-
-                // ใช้ .includes() เพื่อเช็คว่า ID นี้ มีอยู่ในลิสต์ไหม
                 if (ADMIN_IDS.includes(currentUserId)) {
                     document.getElementById('adminInputSection').style.display = 'block';
                 } else {
@@ -196,11 +193,6 @@
             const month = date.toLocaleDateString('th-TH', { month: 'long' });
             const year = date.getFullYear() + 543;
             return `${day} ${month} ${year}`;
-        }
-
-        function formatInvoiceId(id) {
-            let paddedId = String(id).padStart(6, '0'); 
-            return `INV-${paddedId}`;
         }
 
         function getQty(id) {
@@ -258,7 +250,6 @@
                 const currentUserId = profile.userId;
                 let finalCustomerName = "";
                 
-                // 🔥 Logic เลือกชื่อลูกค้า (รองรับหลาย Admin)
                 if (ADMIN_IDS.includes(currentUserId)) {
                     let inputName = document.getElementById('customerName').value.trim();
                     finalCustomerName = inputName || "ลูกค้าหน้าร้าน (ไม่ได้ระบุชื่อ)";
@@ -284,7 +275,9 @@
                 if (!response.ok) throw new Error("Server ตอบกลับผิดพลาด");
                 
                 const data = await response.json(); 
-                let invoiceNo = formatInvoiceId(data.orderId);
+                
+                // 🔥 ใช้ invoiceNo จาก server โดยตรง
+                let invoiceNo = data.invoiceNo;
 
                 const selectedDate = document.getElementById('orderDate').value;
                 const selectedTime = document.getElementById('orderTime').value;
@@ -313,4 +306,3 @@
     </script>
 </body>
 </html>
-
