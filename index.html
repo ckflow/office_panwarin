@@ -170,6 +170,9 @@
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script>
         const MY_LIFF_ID = "2008689090-CnrdxM5k"; 
+        
+        // ⚠️⚠️⚠️ อย่าลืมเอา URL ของ n8n มาใส่ตรงนี้นะครับ ⚠️⚠️⚠️
+        const N8N_WEBHOOK_URL = "https://n8n.ckflowsystem.com/webhook/order-id"; 
 
         const products = {
             'tube_l': 'หลอดใหญ่',
@@ -179,14 +182,13 @@
             'crush_snow': 'บดละเอียด(เกล็ดหิมะ)',
             'crush_cube': 'บดก้อน',
             'cube_sachet': 'ก้อน(ซอง)',
-            'cube_kak': 'ก้อน(กั๊ก)', // 🔥 เพิ่มในรายการสินค้า
+            'cube_kak': 'ก้อน(กั๊ก)', 
             'cube_hand': 'ก้อน(มือ)',
             'sack': 'กระสอบ',
             'bag_return': 'คืนถุง',
             'bag_borrow': 'ยืมถุง'
         };
 
-        // รายการที่ต้องนับยอดถุง (เพิ่ม cube_kak เข้าไป)
         const productsUseBag = [
             'tube_l', 'tube_s', 'crush_snow', 'crush_cube', 
             'cube_kak', 'cube_hand', 'sack'
@@ -225,6 +227,12 @@
             return `${day} ${month} ${year}`;
         }
 
+        function formatInvoiceId(id) {
+            // แปลง ID เป็น INV-000XXX
+            let paddedId = String(id).padStart(6, '0'); 
+            return `INV-${paddedId}`;
+        }
+
         function getQty(id) {
             let val = document.getElementById('qty_' + id).value;
             return val ? parseInt(val) : 0;
@@ -253,17 +261,15 @@
         async function submitOrder() {
             let orderLines = [];
             
+            // 1. รวบรวมสินค้า
             for (let key in products) {
                 if(key === 'bag_borrow') continue;
-
                 let qty = getQty(key);
                 if (qty > 0) {
                     let unit = 'กระสอบ';
-                    // เพิ่มเงื่อนไขหน่วยนับ
                     if (['pack_l', 'pack_s', 'cube_sachet'].includes(key)) unit = 'แพ็ค/ซอง';
-                    if (key === 'cube_kak') unit = 'กั๊ก'; // 🔥 หน่วยนับเฉพาะของกั๊ก
+                    if (key === 'cube_kak') unit = 'กั๊ก';
                     if (key === 'bag_return') unit = 'ใบ';
-                    
                     orderLines.push(`- ${products[key]}: ${qty} ${unit}`);
                 }
             }
@@ -278,25 +284,65 @@
                 return;
             }
 
-            const selectedDate = document.getElementById('orderDate').value;
-            const selectedTime = document.getElementById('orderTime').value;
-            const thaiDate = formatDateThai(selectedDate);
+            // 2. เตรียมข้อมูลส่ง n8n
+            let lineUserId = liff.getDecodedIDToken() ? liff.getDecodedIDToken().sub : "GUEST"; 
+            
+            let payload = {
+                lineId: lineUserId,
+                items: orderLines,
+                totalBags: borrowQty,
+                orderDate: document.getElementById('orderDate').value,
+                orderTime: document.getElementById('orderTime').value
+            };
 
-            let messageText = `📋 ออเดอร์สำหรับ: ${thaiDate}\n⏰ เวลา: ${selectedTime} น.\n` + orderLines.join("\n");
+            // แสดงสถานะ Loading
+            let btn = document.querySelector('.btn-confirm');
+            let oldText = btn.innerText;
+            btn.innerText = "⏳ กำลังบันทึก...";
+            btn.disabled = true;
 
             try {
-                if (!liff.isInClient()) {
-                    alert("ตัวอย่างข้อความ:\n" + messageText);
-                } else {
+                // 3. ยิงข้อมูลไปหา n8n
+                const response = await fetch(N8N_WEBHOOK_URL, { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error("Server ตอบกลับผิดพลาด");
+                }
+                
+                // 4. รับเลข ID กลับมา
+                const data = await response.json(); 
+                let realId = data.orderId; 
+                let invoiceNo = formatInvoiceId(realId); // สร้างเลขบิล
+
+                // 5. สร้างข้อความ LINE พร้อมเลขบิล
+                const selectedDate = document.getElementById('orderDate').value;
+                const selectedTime = document.getElementById('orderTime').value;
+                const thaiDate = formatDateThai(selectedDate);
+
+                let messageText = `🧾 บิลเลขที่: ${invoiceNo}\n` + 
+                                  `📋 วันที่: ${thaiDate} (${selectedTime} น.)\n` + 
+                                  `------------------\n` +
+                                  orderLines.join("\n");
+
+                // 6. ส่งเข้าห้องแชท
+                if (liff.isInClient()) {
                     await liff.sendMessages([{ type: 'text', text: messageText }]);
                     liff.closeWindow();
+                } else {
+                    alert("บันทึกสำเร็จ!\n" + messageText);
+                    location.reload(); 
                 }
+
             } catch (err) {
-                alert("เกิดข้อผิดพลาด: " + err);
+                alert("เกิดข้อผิดพลาด: " + err.message);
+                btn.innerText = oldText; // คืนค่าปุ่มเดิม
+                btn.disabled = false;
             }
         }
     </script>
 </body>
 </html>
-
-
