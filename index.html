@@ -66,7 +66,7 @@
         <div class="cat-title">น้ำแข็งแพ็ค</div>
         <div class="product-card">
             <div class="product-info"><div class="product-name">🅿️ แพ็คกระสอบ</div></div>
-            <div><input type="number" id="qty_pack_l" class="qty-input" placeholder="0" min="0"></div>
+            <div><input type="number" id="qty_pack_l" class="qty-input calculate-trigger" placeholder="0" min="0"></div>
         </div>
         <div class="product-card">
             <div class="product-info"><div class="product-name">🅿️ แพ็คเล็ก</div></div>
@@ -156,7 +156,7 @@
 
         // สินค้าที่ใช้ถุง (คิดถุงยืมอัตโนมัติ)
         const productsUseBag = [
-            'tube_l', 'tube_s', 'crush_sack'
+            'tube_l', 'tube_s', 'pack_l', 'crush_sack'
         ];
 
         async function main() {
