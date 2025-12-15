@@ -268,12 +268,6 @@
                 }
             }
 
-            function formatInvoiceId(id) {
-             // แปลง ID เป็นข้อความ แล้วเติม 0 ข้างหน้าให้ครบ 6 หลัก
-                    let paddedId = String(id).padStart(6, '0'); 
-                        return `INV-${paddedId}`; // จะเปลี่ยน INV เป็น RC หรือ BILL ก็ได้ตามใจชอบ
-                    }
-
             let borrowQty = getQty('bag_borrow');
             if (borrowQty > 0) {
                 orderLines.push(`------------------\n👜 ยืมถุง: ${borrowQty} ใบ`);
@@ -304,4 +298,5 @@
     </script>
 </body>
 </html>
+
 
