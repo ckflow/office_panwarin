@@ -13,8 +13,9 @@
         .card-header-custom:hover { background-color: #f9f9f9; }
         .card-body-custom { padding: 15px; display: none; background-color: #fafafa; }
         
-        .section-title { font-size: 13px; color: #888; margin: 12px 0 6px 0; font-weight: bold; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .section-title { font-size: 13px; color: #888; margin: 12px 0 6px 0; font-weight: bold; }
         .section-title:first-child { margin-top: 0; }
+        .section-btn { text-align: center; margin-bottom: 8px; }
         
         .price-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: white; border-radius: 8px; margin-bottom: 4px; border: 1px solid #eee; }
         .price-item .name { font-size: 14px; }
@@ -309,10 +310,10 @@
                             <span>▼</span>
                         </div>
                         <div class="card-body-custom">
-                            <!-- LINE IDs -->
-                            <div class="section-title">
-                                📱 LINE IDs
-                                <button class="btn btn-sm btn-outline-primary" style="font-size:11px;padding:2px 8px;" onclick="openManageLineModal(${customer.id}, '${customer.name}')">
+                            <!-- LINE ID -->
+                            <div class="section-title">📱 LINE ID</div>
+                            <div class="section-btn">
+                                <button class="btn btn-sm btn-outline-primary" style="font-size:11px;padding:2px 12px;" onclick="openManageLineModal(${customer.id}, '${customer.name}')">
                                     จัดการ
                                 </button>
                             </div>
@@ -330,9 +331,9 @@
                             </div>
 
                             <!-- ตั้งราคา -->
-                            <div class="section-title mt-3">
-                                💰 ตั้งราคา
-                                <button class="btn btn-sm btn-primary" style="font-size:11px;padding:2px 8px;" onclick="openAddPriceModal(${customer.id}, '${customer.name}')">
+                            <div class="section-title mt-3">💰 ตั้งราคา</div>
+                            <div class="section-btn">
+                                <button class="btn btn-sm btn-primary" style="font-size:11px;padding:2px 12px;" onclick="openAddPriceModal(${customer.id}, '${customer.name}')">
                                     + เพิ่ม
                                 </button>
                             </div>
