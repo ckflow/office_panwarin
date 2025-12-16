@@ -636,10 +636,13 @@
                 });
                 const lines = await res.json();
                 
-                if (lines.length === 0) {
-                    document.getElementById('lineIdList').innerHTML = '<div class="text-center text-muted small">- ยังไม่ผูก LINE ID -</div>';
+                // กรองเอาเฉพาะที่มี line_user_id จริงๆ
+                const validLines = lines.filter(l => l.line_user_id && l.line_user_id !== 'undefined');
+                
+                if (validLines.length === 0) {
+                    document.getElementById('lineIdList').innerHTML = '<div class="text-center text-muted small">- ยังไม่ได้เพิ่ม LINE ID -</div>';
                 } else {
-                    document.getElementById('lineIdList').innerHTML = lines.map(l => 
+                    document.getElementById('lineIdList').innerHTML = validLines.map(l => 
                         `<div class="line-id-tag">
                             <span style="font-size:10px; word-break:break-all;">${l.line_user_id}</span>
                             <button onclick="deleteLineId(${l.id}, '${l.line_user_id}')" style="background:none;border:none;color:#dc3545;cursor:pointer;padding:0 2px;font-size:12px;" title="ลบ">✕</button>
