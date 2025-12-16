@@ -61,6 +61,8 @@
         
         .shift-required { font-size: 12px; color: #dc3545; margin-bottom: 10px; display: none; }
         .shift-required.show { display: block; }
+        
+        .view-only-badge { background: #6c757d; color: white; padding: 3px 10px; border-radius: 15px; font-size: 11px; }
     </style>
 </head>
 <body>
@@ -71,8 +73,8 @@
     </div>
 
     <div id="noPermissionScreen" class="no-permission" style="display: none;">
-        <h4>🚫 ไม่มีสิทธิ์เข้าถึง</h4>
-        <p>คุณไม่มีสิทธิ์ใช้งานระบบฝาก</p>
+        <h4>😕 ไม่พบข้อมูลร้านค้า</h4>
+        <p>LINE ID ของคุณยังไม่ได้ผูกกับร้านค้า<br>กรุณาติดต่อโรงงาน</p>
     </div>
 
     <div id="mainContent" style="display: none;">
@@ -96,8 +98,25 @@
             <!-- ข้อมูลลูกค้า (สำหรับลูกค้าดูของตัวเอง) -->
             <div id="customerInfoSection" style="display: none;">
                 <div class="customer-info">
-                    <div class="name" id="customerNameDisplay">-</div>
-                    <div style="font-size: 12px; opacity: 0.8;">ข้อมูลการฝาก-เหลือของคุณ</div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="name" id="customerNameDisplay">-</div>
+                            <div style="font-size: 12px; opacity: 0.8;">ข้อมูลการฝาก-เหลือของคุณ</div>
+                        </div>
+                        <span class="view-only-badge" id="viewOnlyBadge" style="display: none;">👁️ ดูอย่างเดียว</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- เลือกร้าน (สำหรับลูกค้าที่มีหลายร้าน) -->
+            <div id="shopSelectSection" style="display: none;">
+                <div class="card" style="background: #e7f1ff; border: 1px solid #b6d4fe;">
+                    <div class="card-body">
+                        <div class="product-name text-primary mb-2">🏪 เลือกร้านของคุณ</div>
+                        <select id="myShopSelect" class="form-select" onchange="onMyShopSelect()">
+                            <option value="">-- เลือกร้าน --</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -301,6 +320,7 @@
         let currentCustomerName = null;
         let isAdmin = false;
         let depositCustomers = [];
+        let myShops = [];
         let selectedDate = null;
 
         async function main() {
@@ -317,6 +337,7 @@
                 isAdmin = ADMIN_IDS.includes(currentUserId);
 
                 if (isAdmin) {
+                    // Admin: เลือกลูกค้าได้ + เพิ่ม/ลบได้
                     await loadDepositCustomers();
                     document.getElementById('adminSelectSection').style.display = 'block';
                     document.getElementById('addDepositSection').style.display = 'block';
@@ -325,7 +346,8 @@
                     document.getElementById('loadingScreen').style.display = 'none';
                     document.getElementById('mainContent').style.display = 'block';
                 } else {
-                    await checkCustomerPermission();
+                    // ลูกค้า: ดูได้อย่างเดียว
+                    await loadMyShops();
                 }
 
             } catch (err) {
@@ -334,6 +356,87 @@
             }
         }
         main();
+
+        // โหลดร้านของลูกค้า (ใช้ API เดียวกับหน้า index)
+        async function loadMyShops() {
+            try {
+                const res = await fetch(`${BASE_URL}/get-my-shops`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lineId: currentUserId })
+                });
+                myShops = await res.json();
+                
+                if (myShops.length === 0) {
+                    // ไม่พบร้านค้า
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('noPermissionScreen').style.display = 'block';
+                } else if (myShops.length === 1) {
+                    // มีร้านเดียว - โหลดเลย
+                    currentCustomerId = myShops[0].id;
+                    currentCustomerName = myShops[0].name;
+                    
+                    await showCustomerData();
+                } else {
+                    // มีหลายร้าน - ให้เลือก
+                    const select = document.getElementById('myShopSelect');
+                    select.innerHTML = '<option value="">-- เลือกร้าน --</option>';
+                    myShops.forEach(s => {
+                        select.innerHTML += `<option value="${s.id}" data-name="${s.name}">${s.name}</option>`;
+                    });
+                    
+                    document.getElementById('shopSelectSection').style.display = 'block';
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                }
+                
+            } catch (e) {
+                console.error('Error loading my shops:', e);
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('noPermissionScreen').style.display = 'block';
+            }
+        }
+
+        // เมื่อลูกค้าเลือกร้าน
+        async function onMyShopSelect() {
+            const select = document.getElementById('myShopSelect');
+            const shopId = select.value;
+            
+            if (!shopId) {
+                currentCustomerId = null;
+                currentCustomerName = null;
+                document.getElementById('customerInfoSection').style.display = 'none';
+                document.getElementById('dateFilterSection').style.display = 'none';
+                document.getElementById('depositSection').style.display = 'none';
+                document.getElementById('leftoverSection').style.display = 'none';
+                return;
+            }
+            
+            currentCustomerId = parseInt(shopId);
+            currentCustomerName = select.options[select.selectedIndex].dataset.name;
+            
+            await showCustomerData();
+        }
+
+        // แสดงข้อมูลลูกค้า
+        async function showCustomerData() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('filterDate').value = today;
+            selectedDate = today;
+            
+            document.getElementById('customerNameDisplay').textContent = currentCustomerName;
+            document.getElementById('customerInfoSection').style.display = 'block';
+            document.getElementById('viewOnlyBadge').style.display = isAdmin ? 'none' : 'inline';
+            document.getElementById('dateFilterSection').style.display = 'block';
+            document.getElementById('depositSection').style.display = 'block';
+            document.getElementById('leftoverSection').style.display = 'block';
+            
+            await loadDepositData(currentCustomerId, selectedDate);
+            await loadLeftoverData(currentCustomerId, selectedDate);
+            
+            document.getElementById('loadingScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+        }
 
         // เลือกรอบ
         function selectShift(btn, type) {
@@ -360,45 +463,6 @@
                 });
             } catch (e) {
                 console.error('Error loading deposit customers:', e);
-            }
-        }
-
-        async function checkCustomerPermission() {
-            try {
-                const res = await fetch(`${BASE_URL}/check-deposit-permission`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lineId: currentUserId })
-                });
-                const data = await res.json();
-
-                if (data.hasPermission) {
-                    currentCustomerId = data.customerId;
-                    currentCustomerName = data.customerName;
-                    
-                    const today = new Date().toISOString().split('T')[0];
-                    document.getElementById('filterDate').value = today;
-                    selectedDate = today;
-                    
-                    document.getElementById('customerNameDisplay').textContent = currentCustomerName;
-                    document.getElementById('customerInfoSection').style.display = 'block';
-                    document.getElementById('dateFilterSection').style.display = 'block';
-                    document.getElementById('depositSection').style.display = 'block';
-                    document.getElementById('leftoverSection').style.display = 'block';
-                    
-                    await loadDepositData(currentCustomerId, selectedDate);
-                    await loadLeftoverData(currentCustomerId, selectedDate);
-                    
-                    document.getElementById('loadingScreen').style.display = 'none';
-                    document.getElementById('mainContent').style.display = 'block';
-                } else {
-                    document.getElementById('loadingScreen').style.display = 'none';
-                    document.getElementById('noPermissionScreen').style.display = 'block';
-                }
-            } catch (e) {
-                console.error('Error checking permission:', e);
-                document.getElementById('loadingScreen').style.display = 'none';
-                document.getElementById('noPermissionScreen').style.display = 'block';
             }
         }
 
@@ -474,6 +538,11 @@
                             ? `<span class="shift-badge shift-${d.shift}">${shiftNames[d.shift] || d.shift}</span>`
                             : '';
                         
+                        // แสดงปุ่มลบเฉพาะ Admin และยังไม่ถูกใช้
+                        const deleteBtn = (isAdmin && !isUsed) 
+                            ? `<button class="delete-btn" onclick="deleteDeposit(${d.id})"><i class="fas fa-trash"></i></button>` 
+                            : '';
+                        
                         return `
                             <div class="history-item ${isUsed ? 'used' : ''}">
                                 <div class="d-flex justify-content-between align-items-center">
@@ -483,7 +552,7 @@
                                         ${shiftBadge}
                                         ${statusBadge}
                                     </div>
-                                    ${isAdmin && !isUsed ? `<button class="delete-btn" onclick="deleteDeposit(${d.id})"><i class="fas fa-trash"></i></button>` : ''}
+                                    ${deleteBtn}
                                 </div>
                                 <div class="history-date">${formatDate(d.created_at)} ${d.note ? '| ' + d.note : ''}</div>
                             </div>
@@ -522,6 +591,11 @@
                             ? `<span class="shift-badge shift-${l.shift}">${shiftNames[l.shift] || l.shift}</span>`
                             : '';
                         
+                        // แสดงปุ่มลบเฉพาะ Admin
+                        const deleteBtn = isAdmin 
+                            ? `<button class="delete-btn" onclick="deleteLeftover(${l.id})"><i class="fas fa-trash"></i></button>` 
+                            : '';
+                        
                         return `
                             <div class="history-item">
                                 <div class="d-flex justify-content-between align-items-center">
@@ -530,7 +604,7 @@
                                         <span class="history-qty ms-2">${l.quantity || 0} ถุง</span>
                                         ${shiftBadge}
                                     </div>
-                                    ${isAdmin ? `<button class="delete-btn" onclick="deleteLeftover(${l.id})"><i class="fas fa-trash"></i></button>` : ''}
+                                    ${deleteBtn}
                                 </div>
                                 <div class="history-date">${formatDate(l.created_at)} ${l.note ? '| ' + l.note : ''}</div>
                             </div>
