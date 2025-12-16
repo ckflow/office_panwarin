@@ -128,6 +128,10 @@
                 <span class="label">🎁 ส่วนลดโปร</span>
                 <span class="value discount" id="discountDisplay">-0 บาท</span>
             </div>
+            <div class="total-section" id="depositRow" style="display: none;">
+                <span class="label">📦 หักยอดฝาก</span>
+                <span class="value" style="color: #0d6efd;" id="depositDisplay">-0 บาท</span>
+            </div>
             <div class="total-section">
                 <span class="label">รวมสุทธิ</span>
                 <span class="value grand-total" id="grandTotalDisplay">0 บาท</span>
@@ -151,7 +155,6 @@
         const ADMIN_IDS = [
             "U4dc8fa32570dca3dfb4093b48a5c2093", //แชมป์
             "U4cc74cb6346dece926adf6b2a3b7cb77", //บี
-            "Ufab5bb133c511730b583f47104965370", //ก้อย
         ]; 
 
         // Product icons
@@ -184,6 +187,8 @@
         let customerMultipliers = {}; // { product_code: multiplier }
         let allCustomers = []; // รายชื่อลูกค้าทั้งหมด (สำหรับ Admin)
         let myShops = []; // ร้านที่ผูกกับ LINE ID นี้ (สำหรับลูกค้าที่มีหลายร้าน)
+        let pendingDeposits = []; // ยอดฝากค้าง
+        let depositTotal = 0; // ยอดฝากรวมเป็นเงิน
 
         async function main() {
             try {
@@ -271,6 +276,8 @@
                 currentCustomerName = null;
                 customerPrices = {};
                 customerMultipliers = {};
+                pendingDeposits = [];
+                depositTotal = 0;
                 renderProductsForAdmin();
                 updateTotals();
                 return;
@@ -307,6 +314,9 @@
                 // โหลดตัวคูณถุงด้วย
                 await loadMultipliers(customerId);
                 
+                // โหลดยอดฝากค้าง
+                await loadPendingDeposits(customerId);
+                
                 await checkFirstBill();
                 renderProducts();
                 
@@ -341,6 +351,29 @@
             }
         }
 
+        // โหลดยอดฝากค้างของลูกค้า
+        async function loadPendingDeposits(customerId) {
+            try {
+                const res = await fetch(`${BASE_URL}/get-pending-deposits`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customerId: customerId })
+                });
+                pendingDeposits = await res.json();
+                
+                // คำนวณยอดฝากรวมเป็นเงิน
+                depositTotal = 0;
+                pendingDeposits.forEach(d => {
+                    const price = customerPrices[d.product_code]?.price || 0;
+                    depositTotal += d.quantity * price;
+                });
+            } catch (e) {
+                console.error('Error loading pending deposits:', e);
+                pendingDeposits = [];
+                depositTotal = 0;
+            }
+        }
+
         // ===================== Admin Functions =====================
         async function loadAllCustomers() {
             try {
@@ -366,6 +399,8 @@
                 currentCustomerName = null;
                 customerPrices = {};
                 customerMultipliers = {};
+                pendingDeposits = [];
+                depositTotal = 0;
                 renderProductsForAdmin();
                 updateTotals();
                 return;
@@ -555,16 +590,23 @@
                 }
             }
             
-            const grandTotal = subtotal - totalDiscount;
+            const grandTotal = Math.max(0, subtotal - totalDiscount - depositTotal);
             
             document.getElementById('subtotalDisplay').textContent = subtotal.toLocaleString() + ' บาท';
             document.getElementById('discountDisplay').textContent = '-' + totalDiscount.toLocaleString() + ' บาท';
+            document.getElementById('depositDisplay').textContent = '-' + depositTotal.toLocaleString() + ' บาท';
             document.getElementById('grandTotalDisplay').textContent = grandTotal.toLocaleString() + ' บาท';
             
             if (totalDiscount > 0) {
                 document.getElementById('discountRow').style.display = 'flex';
             } else {
                 document.getElementById('discountRow').style.display = 'none';
+            }
+            
+            if (depositTotal > 0) {
+                document.getElementById('depositRow').style.display = 'flex';
+            } else {
+                document.getElementById('depositRow').style.display = 'none';
             }
             
             autoCalculateBags();
@@ -712,7 +754,7 @@
                         }
                     }
                 }
-                const grandTotal = subtotal - totalDiscount;
+                const grandTotal = Math.max(0, subtotal - totalDiscount - depositTotal);
 
                 let payload = {
                     lineId: currentUserId,
@@ -722,6 +764,7 @@
                     totalBags: borrowQty,
                     subtotal: subtotal,
                     discount: totalDiscount,
+                    depositDeduction: depositTotal,
                     total: grandTotal,
                     orderDate: document.getElementById('orderDate').value,
                     orderTime: document.getElementById('orderTime').value
@@ -738,6 +781,20 @@
                 const data = await response.json(); 
                 let invoiceNo = data.invoiceNo;
 
+                // Mark deposits as used
+                if (pendingDeposits.length > 0) {
+                    for (const dep of pendingDeposits) {
+                        await fetch(`${BASE_URL}/use-deposit`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ 
+                                depositId: dep.id,
+                                orderId: data.orderId || invoiceNo
+                            })
+                        });
+                    }
+                }
+
                 const thaiDate = formatDateThai(document.getElementById('orderDate').value);
                 const selectedTime = document.getElementById('orderTime').value;
 
@@ -749,6 +806,7 @@
                                   `\n------------------\n` +
                                   `💰 รวม: ${subtotal.toLocaleString()} บาท\n` +
                                   (totalDiscount > 0 ? `🎁 ส่วนลด: -${totalDiscount.toLocaleString()} บาท\n` : '') +
+                                  (depositTotal > 0 ? `📦 หักยอดฝาก: -${depositTotal.toLocaleString()} บาท\n` : '') +
                                   `✅ สุทธิ: ${grandTotal.toLocaleString()} บาท`;
 
                 if (liff.isInClient()) {
@@ -768,4 +826,3 @@
     </script>
 </body>
 </html>
-
