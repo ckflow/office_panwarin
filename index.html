@@ -89,6 +89,27 @@
             border-color: #dee2e6;
             color: #adb5bd;
         }
+        .round-btn.pickup {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+        .round-btn.pickup.active {
+            background: #ffc107;
+            border-color: #e0a800;
+            color: #000;
+        }
+        .pickup-time-container {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: #fff3cd;
+            border-radius: 8px;
+            border: 1px solid #ffc107;
+        }
+        .pickup-time-container.show {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -322,10 +343,19 @@
             selectedRound = round;
             document.querySelectorAll('.round-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector(`.round-btn[data-round="${round}"]`).classList.add('active');
+            
+            // ซ่อน pickup time container
+            const pickupContainer = document.getElementById('pickupTimeContainer');
+            if (pickupContainer) pickupContainer.classList.remove('show');
         }
 
         // แปลงรอบเป็นข้อความ
         function getRoundText(round) {
+            if (round === 'pickup') {
+                const time = getPickupTime();
+                return `รับเองหน้าโรง (${time} น.)`;
+            }
+            
             const roundData = customerRounds.find(r => r.round_number == round);
             if (round === 1 || round === '1') {
                 const time = roundData ? `(${formatTime(roundData.time_start)}-${formatTime(roundData.time_end)})` : '';
@@ -371,48 +401,93 @@
             const container = document.getElementById('roundButtonGroup');
             if (!container) return;
             
+            // ปุ่มรับเองหน้าโรงแสดงเสมอ
+            let html = '';
+            
             if (customerRounds.length === 0) {
-                container.innerHTML = `
-                    <div class="alert alert-warning mb-0" style="font-size: 13px;">
-                        ⚠️ ยังไม่ได้ตั้งรอบจัดส่ง กรุณาติดต่อโรงงาน 0949592455
+                html += `
+                    <div class="alert alert-warning mb-2" style="font-size: 13px;">
+                        ⚠️ ยังไม่ได้ตั้งรอบจัดส่ง (ส่งไม่ได้ แต่รับเองหน้าโรงได้)
                     </div>
                 `;
-                selectedRound = null;
-                return;
+            } else {
+                // Sort: 1, 2, 3, extra
+                const order = { '1': 1, '2': 2, '3': 3, 'extra': 4 };
+                customerRounds.sort((a, b) => (order[a.round_number] || 99) - (order[b.round_number] || 99));
+                
+                customerRounds.forEach(r => {
+                    const isExtra = r.round_number === 'extra';
+                    const isLocked = isExtra && !r.is_unlocked;
+                    const roundName = isExtra ? 'เสริม' : `รอบ ${r.round_number}`;
+                    const timeText = isExtra ? '' : `${formatTime(r.time_start)}-${formatTime(r.time_end)}`;
+                    const icon = isExtra ? '➕' : ['①', '②', '③'][parseInt(r.round_number) - 1] || '●';
+                    
+                    html += `
+                        <button type="button" 
+                            class="round-btn ${isLocked ? 'locked' : ''}" 
+                            data-round="${r.round_number}" 
+                            onclick="selectRound('${r.round_number}')"
+                            ${isLocked ? 'title="🔒 รอบเสริมยังไม่ได้ปลดล็อค"' : ''}>
+                            <span class="round-icon">${isLocked ? '🔒' : icon}</span>
+                            ${roundName}
+                            ${timeText ? `<br><small style="font-size:10px;">${timeText}</small>` : ''}
+                        </button>
+                    `;
+                });
             }
             
-            // Sort: 1, 2, 3, extra
-            const order = { '1': 1, '2': 2, '3': 3, 'extra': 4 };
-            customerRounds.sort((a, b) => (order[a.round_number] || 99) - (order[b.round_number] || 99));
+            // เพิ่มปุ่มรับเองหน้าโรง (แสดงเสมอ)
+            html += `
+                <button type="button" 
+                    class="round-btn pickup" 
+                    data-round="pickup" 
+                    onclick="selectPickup()">
+                    <span class="round-icon">🏭</span>
+                    รับเอง
+                </button>
+            `;
             
-            let html = '';
-            customerRounds.forEach(r => {
-                const isExtra = r.round_number === 'extra';
-                const isLocked = isExtra && !r.is_unlocked;
-                const roundName = isExtra ? 'เสริม' : `รอบ ${r.round_number}`;
-                const timeText = isExtra ? '' : `${formatTime(r.time_start)}-${formatTime(r.time_end)}`;
-                const icon = isExtra ? '➕' : ['①', '②', '③'][parseInt(r.round_number) - 1] || '●';
-                
-                html += `
-                    <button type="button" 
-                        class="round-btn ${isLocked ? 'locked' : ''}" 
-                        data-round="${r.round_number}" 
-                        onclick="selectRound('${r.round_number}')"
-                        ${isLocked ? 'title="🔒 รอบเสริมยังไม่ได้ปลดล็อค"' : ''}>
-                        <span class="round-icon">${isLocked ? '🔒' : icon}</span>
-                        ${roundName}
-                        ${timeText ? `<br><small style="font-size:10px;">${timeText}</small>` : ''}
-                    </button>
-                `;
-            });
+            // เพิ่มช่องเลือกเวลารับเอง
+            html += `
+                <div class="pickup-time-container" id="pickupTimeContainer">
+                    <label class="small text-muted">⏰ เลือกเวลารับ:</label>
+                    <input type="time" id="pickupTime" class="form-control mt-1" value="10:00" onchange="updatePickupTime()">
+                </div>
+            `;
             
             container.innerHTML = html;
             selectedRound = null; // reset selection
         }
 
+        // เลือกรับเองหน้าโรง
+        function selectPickup() {
+            selectedRound = 'pickup';
+            document.querySelectorAll('.round-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.round-btn.pickup').classList.add('active');
+            document.getElementById('pickupTimeContainer').classList.add('show');
+        }
+
+        // อัพเดทเวลารับเอง
+        function updatePickupTime() {
+            // เก็บเวลาไว้ใช้ตอนส่ง
+            const time = document.getElementById('pickupTime').value;
+            console.log('Pickup time:', time);
+        }
+
+        // ดึงเวลารับเอง
+        function getPickupTime() {
+            const input = document.getElementById('pickupTime');
+            return input ? input.value : '10:00';
+        }
+
         // ตรวจสอบโควต้า
         function checkQuota() {
             if (!selectedRound) return { valid: false, message: "กรุณาเลือกรอบจัดส่งก่อน" };
+            
+            // ถ้าเป็นรับเองหน้าโรง ไม่ต้องตรวจสอบโควต้า
+            if (selectedRound === 'pickup') {
+                return { valid: true };
+            }
             
             const roundData = customerRounds.find(r => r.round_number == selectedRound);
             if (!roundData) return { valid: false, message: "ไม่พบข้อมูลรอบนี้" };
@@ -436,10 +511,11 @@
             const quotaCubes = roundData.quota_cubes || 0;
             
             let errors = [];
-            if (totalBags > quotaBags) {
+            // ตรวจสอบเฉพาะเมื่อโควต้า > 0
+            if (quotaBags > 0 && totalBags > quotaBags) {
                 errors.push(`สั่งยูนิต+บด: ${totalBags} / โควต้า: ${quotaBags} ❌`);
             }
-            if (totalCubes > quotaCubes) {
+            if (quotaCubes > 0 && totalCubes > quotaCubes) {
                 errors.push(`สั่งก้อน ซอง: ${totalCubes} / โควต้า: ${quotaCubes} ❌`);
             }
             
@@ -884,9 +960,9 @@
         let cachedDiscount = 0;
 
         function openConfirmModal() {
-            // ตรวจสอบว่ามีรอบหรือยัง
-            if (customerRounds.length === 0) {
-                alert("⚠️ ยังไม่ได้ตั้งรอบจัดส่ง\nกรุณาติดต่อโรงงาน 0949592455");
+            // ตรวจสอบว่ามีรอบหรือยัง (ยกเว้น pickup)
+            if (selectedRound !== 'pickup' && customerRounds.length === 0) {
+                alert("⚠️ ยังไม่ได้ตั้งรอบจัดส่ง\nกรุณาเลือก 'รับเองหน้าโรง' หรือติดต่อโรงงาน 0949592455");
                 return;
             }
 
@@ -1079,7 +1155,8 @@
                     total: grandTotal,
                     orderDate: document.getElementById('orderDate').value,
                     orderTime: document.getElementById('orderTime').value,
-                    deliveryRound: selectedRound // ส่งรอบไปด้วย
+                    deliveryRound: selectedRound,
+                    pickupTime: selectedRound === 'pickup' ? getPickupTime() : null
                 };
 
                 const response = await fetch(`${BASE_URL}/order-id`, { 
