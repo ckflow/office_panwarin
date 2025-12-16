@@ -225,7 +225,6 @@
         const ADMIN_IDS = [
             "U4dc8fa32570dca3dfb4093b48a5c2093", //แชมป์
             "U4cc74cb6346dece926adf6b2a3b7cb77", //บี
-            "Ufab5bb133c511730b583f47104965370", //ก้อย
         ];
         const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
 
@@ -246,7 +245,8 @@
             DELETE_PROMO: `${BASE_URL}/delete-promo`,
             SAVE_MULTIPLIER: `${BASE_URL}/save-multiplier`,
             DELETE_MULTIPLIER: `${BASE_URL}/delete-multiplier`,
-            UPDATE_SETTINGS: `${BASE_URL}/update-customer-settings`
+            UPDATE_SETTINGS: `${BASE_URL}/update-customer-settings`,
+            UPDATE_DEPOSIT_PERMISSION: `${BASE_URL}/update-deposit-permission`
         };
 
         let currentCustomer = { id: null, name: '' };
@@ -346,6 +346,7 @@
                         id: item.customer_id,
                         name: item.customer_name,
                         can_see_price: item.can_see_price,
+                        can_deposit: item.can_deposit,
                         prices: []
                     };
                 }
@@ -418,6 +419,23 @@
                                     <span class="title-space"></span>
                                 </div>
                                 <div id="lines-${customer.id}" style="margin-bottom:10px;"></div>
+
+                                <!-- สิทธิ์ฝาก -->
+                                <div class="section-title">
+                                    <span class="title-text">📦 สิทธิ์ฝาก</span>
+                                    <span class="title-btn"></span>
+                                    <span class="title-space"></span>
+                                </div>
+                                <div style="margin-bottom:10px; padding: 8px 10px; background: white; border-radius: 8px; border: 1px solid #eee;">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="deposit-${customer.id}" 
+                                            ${customer.can_deposit ? 'checked' : ''} 
+                                            onchange="toggleDepositPermission(${customer.id}, this.checked)">
+                                        <label class="form-check-label" for="deposit-${customer.id}" style="font-size:13px;">
+                                            ${customer.can_deposit ? '✅ มีสิทธิ์ฝาก' : '❌ ไม่มีสิทธิ์ฝาก'}
+                                        </label>
+                                    </div>
+                                </div>
 
                                 <!-- ตัวคูณถุง -->
                                 <div class="section-title">
@@ -497,6 +515,28 @@
         function toggleCard(el) {
             const body = el.parentElement.querySelector('.card-body-custom');
             body.style.display = body.style.display === 'none' || body.style.display === '' ? 'block' : 'none';
+        }
+
+        // ==================== DEPOSIT PERMISSION ====================
+        async function toggleDepositPermission(customerId, enabled) {
+            try {
+                await fetch(API.UPDATE_DEPOSIT_PERMISSION, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customerId, canDeposit: enabled })
+                });
+                
+                // อัพเดท label
+                const label = document.querySelector(`label[for="deposit-${customerId}"]`);
+                if (label) {
+                    label.textContent = enabled ? '✅ มีสิทธิ์ฝาก' : '❌ ไม่มีสิทธิ์ฝาก';
+                }
+            } catch (e) {
+                console.error('Error updating deposit permission:', e);
+                alert('เกิดข้อผิดพลาด');
+                // Revert checkbox
+                document.getElementById(`deposit-${customerId}`).checked = !enabled;
+            }
         }
 
         // ==================== MULTIPLIER SECTION ====================
@@ -889,4 +929,3 @@
     </script>
 </body>
 </html>
-
