@@ -41,6 +41,20 @@
         .no-price-msg { text-align: center; padding: 40px 20px; color: #666; }
         
         .multiplier-badge { background: #0d6efd; color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px; margin-left: 5px; }
+        
+        /* Product Loading Overlay */
+        .product-loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.85);
+            z-index: 1500;
+            justify-content: center;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
@@ -93,6 +107,14 @@
 
         <div class="container mt-2" id="productList">
             <!-- Products will be rendered here -->
+        </div>
+
+        <!-- Loading Overlay สำหรับตอนโหลดราคา -->
+        <div id="productLoading" class="product-loading-overlay">
+            <div class="text-center">
+                <div class="spinner-border text-primary mb-2" role="status"></div>
+                <div style="font-size: 14px; color: #666;">กำลังโหลดราคา...</div>
+            </div>
         </div>
 
         <div class="container mt-2">
@@ -221,12 +243,21 @@
         let currentCustomerName = null;
         let isAdmin = false;
         let isFirstBill = false;
-        let customerPrices = {}; // { product_code: { price, promo_type, buy_qty, free_qty } }
-        let customerMultipliers = {}; // { product_code: multiplier }
-        let allCustomers = []; // รายชื่อลูกค้าทั้งหมด (สำหรับ Admin)
-        let myShops = []; // ร้านที่ผูกกับ LINE ID นี้ (สำหรับลูกค้าที่มีหลายร้าน)
-        let pendingDeposits = []; // ยอดฝากค้าง
-        let depositTotal = 0; // ยอดฝากรวมเป็นเงิน
+        let customerPrices = {};
+        let customerMultipliers = {};
+        let allCustomers = [];
+        let myShops = [];
+        let pendingDeposits = [];
+        let depositTotal = 0;
+
+        // ฟังก์ชันแสดง/ซ่อน Loading
+        function showProductLoading() {
+            document.getElementById('productLoading').style.display = 'flex';
+        }
+        
+        function hideProductLoading() {
+            document.getElementById('productLoading').style.display = 'none';
+        }
 
         async function main() {
             try {
@@ -246,14 +277,12 @@
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
                     document.getElementById('qty_bag_borrow').removeAttribute('readonly');
                     
-                    // โหลดรายชื่อลูกค้าสำหรับ Admin
                     await loadAllCustomers();
                     renderProductsForAdmin();
                     
                     document.getElementById('loadingScreen').style.display = 'none';
                     document.getElementById('mainContent').style.display = 'block';
                 } else {
-                    // ลูกค้าทั่วไป - โหลดร้านที่ผูกกับ LINE ID
                     await loadMyShops();
                 }
                 
@@ -264,7 +293,6 @@
         }
         main();
 
-        // ===================== โหลดร้านของฉัน (Multi-Shop) =====================
         async function loadMyShops() {
             try {
                 const res = await fetch(`${BASE_URL}/get-my-shops`, {
@@ -275,16 +303,13 @@
                 myShops = await res.json();
                 
                 if (myShops.length === 0) {
-                    // ไม่มีร้านผูก
                     document.getElementById('loadingScreen').style.display = 'none';
                     document.getElementById('noPriceScreen').style.display = 'block';
                 } else if (myShops.length === 1) {
-                    // มีร้านเดียว - โหลดราคาเลย
                     currentCustomerId = myShops[0].id;
                     currentCustomerName = myShops[0].name;
                     await loadPricesForCustomer(currentCustomerId);
                 } else {
-                    // มีหลายร้าน - แสดง dropdown ให้เลือก
                     const select = document.getElementById('myShopSelect');
                     select.innerHTML = '<option value="">-- เลือกร้าน --</option>';
                     myShops.forEach(s => {
@@ -292,7 +317,7 @@
                     });
                     
                     document.getElementById('shopSelectSection').style.display = 'block';
-                    renderProductsForAdmin(); // แสดงสินค้าแบบไม่มีราคา รอเลือกร้าน
+                    renderProductsForAdmin();
                     
                     document.getElementById('loadingScreen').style.display = 'none';
                     document.getElementById('mainContent').style.display = 'block';
@@ -304,7 +329,6 @@
             }
         }
 
-        // เมื่อลูกค้าเลือกร้านของตัวเอง
         async function onMyShopSelect() {
             const select = document.getElementById('myShopSelect');
             const shopId = select.value;
@@ -324,10 +348,15 @@
             currentCustomerId = parseInt(shopId);
             currentCustomerName = select.options[select.selectedIndex].dataset.name;
             
+            // แสดง loading ระหว่างโหลดราคา
+            showProductLoading();
+            
             await loadPricesForCustomer(currentCustomerId);
+            
+            // ซ่อน loading
+            hideProductLoading();
         }
 
-        // โหลดราคาสำหรับลูกค้า/ร้านที่เลือก
         async function loadPricesForCustomer(customerId) {
             try {
                 const res = await fetch(`${BASE_URL}/get-prices-by-customer`, {
@@ -349,12 +378,8 @@
                     }
                 });
                 
-                // โหลดตัวคูณถุงด้วย
                 await loadMultipliers(customerId);
-                
-                // โหลดยอดฝากค้าง
                 await loadPendingDeposits(customerId);
-                
                 await checkFirstBill();
                 renderProducts();
                 
@@ -367,7 +392,6 @@
             }
         }
 
-        // โหลดตัวคูณถุงของลูกค้า
         async function loadMultipliers(customerId) {
             try {
                 const res = await fetch(`${BASE_URL}/get-multipliers`, {
@@ -389,7 +413,6 @@
             }
         }
 
-        // โหลดยอดฝากค้างของลูกค้า
         async function loadPendingDeposits(customerId) {
             try {
                 const res = await fetch(`${BASE_URL}/get-pending-deposits`, {
@@ -400,7 +423,6 @@
                 const data = await res.json();
                 pendingDeposits = Array.isArray(data) ? data : [];
                 
-                // คำนวณยอดฝากรวมเป็นเงิน
                 depositTotal = 0;
                 pendingDeposits.forEach(d => {
                     const price = customerPrices[d.product_code]?.price || 0;
@@ -414,7 +436,6 @@
             }
         }
 
-        // ===================== Admin Functions =====================
         async function loadAllCustomers() {
             try {
                 const res = await fetch(`${BASE_URL}/get-all-customers`);
@@ -449,10 +470,15 @@
             currentCustomerId = parseInt(customerId);
             currentCustomerName = select.options[select.selectedIndex].dataset.name;
             
+            // แสดง loading ระหว่างโหลดราคา
+            showProductLoading();
+            
             await loadPricesForCustomer(currentCustomerId);
+            
+            // ซ่อน loading
+            hideProductLoading();
         }
 
-        // ===================== Check First Bill =====================
         async function checkFirstBill() {
             if (!currentCustomerId) return;
             
@@ -471,7 +497,6 @@
             }
         }
 
-        // ===================== Render Products =====================
         function renderProducts() {
             const container = document.getElementById('productList');
             container.innerHTML = '';
@@ -488,7 +513,6 @@
                     const icon = productIcons[code] || '📦';
                     const hasMultiplier = MULTIPLIER_PRODUCTS.includes(code);
                     
-                    // แสดง badge ตัวคูณถุง (จะอัพเดทตอนกรอกจำนวน)
                     let multiplierBadge = '';
                     if (hasMultiplier && customerMultipliers[code]) {
                         multiplierBadge = `<span class="multiplier-badge" id="badge_${code}">×${customerMultipliers[code]}ถุง</span>`;
@@ -576,7 +600,6 @@
             return units[code] || 'หน่วย';
         }
 
-        // ===================== Calculate Totals =====================
         function calculateAll() {
             updateTotals();
         }
@@ -638,12 +661,10 @@
             autoCalculateBags();
         }
 
-        // ===================== Confirm Modal =====================
         let cachedSubtotal = 0;
         let cachedDiscount = 0;
 
         function openConfirmModal() {
-            // ต้องเลือกร้านก่อน
             if (!currentCustomerId) {
                 if (isAdmin) {
                     alert("กรุณาเลือกลูกค้าก่อนครับ");
@@ -653,7 +674,6 @@
                 return;
             }
 
-            // สร้าง order lines
             let orderLines = [];
             let hasItems = false;
             cachedSubtotal = 0;
@@ -699,14 +719,11 @@
                 return;
             }
 
-            // Update modal content
             document.getElementById('confirmOrderLines').innerHTML = orderLines.join('<br>');
             document.getElementById('confirmSubtotal').textContent = cachedSubtotal.toLocaleString() + ' บาท';
             
-            // Handle discount display - show "-" if no discount
             document.getElementById('confirmDiscount').textContent = cachedDiscount > 0 ? '-' + cachedDiscount.toLocaleString() + ' บาท' : '-';
             
-            // Handle deposit display - show "-" if no deposit or NaN
             const validDeposit = depositTotal && !isNaN(depositTotal) && depositTotal > 0;
             document.getElementById('confirmDeposit').textContent = validDeposit ? '-' + depositTotal.toLocaleString() + ' บาท' : '-';
             
@@ -714,11 +731,9 @@
             const grandTotal = Math.max(0, cachedSubtotal - cachedDiscount - safeDepositTotal);
             document.getElementById('confirmGrandTotal').textContent = grandTotal.toLocaleString() + ' บาท';
 
-            // Show/hide rows - always show but with "-" if no value
             document.getElementById('confirmDiscountRow').style.display = cachedDiscount > 0 ? 'flex' : 'none';
             document.getElementById('confirmDepositRow').style.display = (depositTotal && depositTotal > 0) ? 'flex' : 'none';
 
-            // Show modal
             document.getElementById('confirmModal').style.display = 'block';
             document.body.style.overflow = 'hidden';
         }
@@ -728,7 +743,6 @@
             document.body.style.overflow = 'auto';
         }
 
-        // ===================== DateTime & Bag Functions =====================
         function initDateTimeInput() {
             const dateInput = document.getElementById('orderDate');
             const timeInput = document.getElementById('orderTime');
@@ -762,19 +776,16 @@
         function autoCalculateBags() {
             let totalBags = 0;
             
-            // สินค้าที่ใช้ถุง 1:1 (หลอดใหญ่, หลอดเล็ก, แพ็คกระสอบ, บด(ถุง))
             productsUseBag.forEach(code => { 
                 totalBags += getQty(code); 
             });
             
-            // สินค้าที่ใช้ตัวคูณ (บด(ซอง), ก้อน(ลูก))
             MULTIPLIER_PRODUCTS.forEach(code => {
                 const qty = getQty(code);
                 const multiplier = customerMultipliers[code] || 0;
                 const bagCount = qty * multiplier;
                 totalBags += bagCount;
                 
-                // อัพเดท badge แสดงผลลัพธ์
                 const badgeEl = document.getElementById(`badge_${code}`);
                 if (badgeEl && multiplier > 0) {
                     if (qty > 0) {
@@ -796,7 +807,6 @@
             bagInput.value = newVal;
         }
 
-        // ===================== Submit Order =====================
         async function submitOrder() {
             let orderLines = [];
             let hasItems = false;
@@ -867,17 +877,16 @@
                 const data = await response.json(); 
                 let invoiceNo = data.invoiceNo;
 
-                // Mark deposits as used
                 if (pendingDeposits.length > 0 && currentCustomerId) {
-                await fetch(`${BASE_URL}/use-deposit`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                    customerId: currentCustomerId,
-                    orderId: data.orderId || invoiceNo
-                })
-            });
-         }
+                    await fetch(`${BASE_URL}/use-deposit`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            customerId: currentCustomerId,
+                            orderId: data.orderId || invoiceNo
+                        })
+                    });
+                }
 
                 const thaiDate = formatDateThai(document.getElementById('orderDate').value);
                 const selectedTime = document.getElementById('orderTime').value;
@@ -912,8 +921,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
