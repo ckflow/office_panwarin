@@ -715,8 +715,8 @@
             document.getElementById('confirmGrandTotal').textContent = grandTotal.toLocaleString() + ' บาท';
 
             // Show/hide rows - always show but with "-" if no value
-            document.getElementById('confirmDiscountRow').style.display = 'flex';
-            document.getElementById('confirmDepositRow').style.display = 'flex';
+            document.getElementById('confirmDiscountRow').style.display = cachedDiscount > 0 ? 'flex' : 'none';
+            document.getElementById('confirmDepositRow').style.display = (depositTotal && depositTotal > 0) ? 'flex' : 'none';
 
             // Show modal
             document.getElementById('confirmModal').style.display = 'block';
@@ -912,5 +912,6 @@
     </script>
 </body>
 </html>
+
 
 
