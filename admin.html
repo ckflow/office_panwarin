@@ -24,6 +24,13 @@
         .price-item .value { font-weight: bold; color: #198754; }
         .price-item .btn-del { color: #dc3545; background: none; border: none; cursor: pointer; padding: 2px 6px; font-size: 12px; }
         
+        .multiplier-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: white; border-radius: 8px; margin-bottom: 4px; border: 1px solid #d4edda; }
+        .multiplier-item .name { font-size: 14px; }
+        .multiplier-item .value { font-weight: bold; color: #0d6efd; }
+        .multiplier-item .btn-del { color: #dc3545; background: none; border: none; cursor: pointer; padding: 2px 6px; font-size: 12px; }
+        
+        .multiplier-warning { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 8px 10px; margin-bottom: 4px; font-size: 12px; color: #856404; }
+        
         .line-id-tag { background: #e7f1ff; padding: 5px 10px; border-radius: 20px; font-size: 12px; color: #0d6efd; margin: 2px; display: inline-flex; align-items: center; gap: 5px; }
         
         .promo-section { background: #fff9e6; border: 1px solid #ffe69c; border-radius: 10px; padding: 10px; margin-top: 10px; }
@@ -106,6 +113,36 @@
             <div class="d-flex gap-2">
                 <button class="btn btn-light flex-grow-1" onclick="closeModal('addPriceModal')">ยกเลิก</button>
                 <button class="btn btn-primary flex-grow-1" onclick="savePrice()">บันทึก</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: ตั้งตัวคูณถุง -->
+    <div id="addMultiplierModal" class="modal-overlay">
+        <div class="modal-box">
+            <h5 class="mb-3 text-center">🛍️ ตั้งตัวคูณถุงยืม</h5>
+            <p class="text-center text-muted mb-3">ลูกค้า: <span id="multiplierModalCustomerName" class="fw-bold text-dark">...</span></p>
+            
+            <div class="mb-3">
+                <label class="form-label small text-muted">เลือกสินค้า</label>
+                <select id="multiplierProductCode" class="form-select" onchange="updateMultiplierOptions()">
+                    <option value="crush_sachet">บด(ซอง)</option>
+                    <option value="cube_kak">ก้อน(ลูก)</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="form-label small text-muted">ตัวคูณ</label>
+                <select id="multiplierValue" class="form-select form-select-lg">
+                    <option value="6">×6</option>
+                    <option value="7">×7</option>
+                    <option value="8">×8</option>
+                </select>
+                <div class="form-text" id="multiplierHint">เช่น สั่ง 2 ซอง × 6 = ถุงยืม 12 ใบ</div>
+            </div>
+            
+            <div class="d-flex gap-2">
+                <button class="btn btn-light flex-grow-1" onclick="closeModal('addMultiplierModal')">ยกเลิก</button>
+                <button class="btn btn-success flex-grow-1" onclick="saveMultiplier()">บันทึก</button>
             </div>
         </div>
     </div>
@@ -193,6 +230,7 @@
             GET_PRODUCTS: `${BASE_URL}/get-products`,
             GET_LINES: `${BASE_URL}/get-lines`,
             GET_PROMOS: `${BASE_URL}/get-promos`,
+            GET_MULTIPLIERS: `${BASE_URL}/get-multipliers`,
             ADD_CUSTOMER: `${BASE_URL}/add-customer`,
             DELETE_CUSTOMER: `${BASE_URL}/delete-customer`,
             ADD_LINE: `${BASE_URL}/add-line`,
@@ -200,11 +238,20 @@
             DELETE_PRICE: `${BASE_URL}/delete-price`,
             ADD_PROMO: `${BASE_URL}/add-promo`,
             DELETE_PROMO: `${BASE_URL}/delete-promo`,
+            SAVE_MULTIPLIER: `${BASE_URL}/save-multiplier`,
+            DELETE_MULTIPLIER: `${BASE_URL}/delete-multiplier`,
             UPDATE_SETTINGS: `${BASE_URL}/update-customer-settings`
         };
 
         let currentCustomer = { id: null, name: '' };
         let productsCache = [];
+        let multipliersCache = {};
+
+        // สินค้าที่ต้องมีตัวคูณ
+        const MULTIPLIER_PRODUCTS = {
+            'crush_sachet': { name: 'บด(ซอง)', options: [6, 7, 8] },
+            'cube_kak': { name: 'ก้อน(ลูก)', options: [2] }
+        };
 
         // ==================== INIT ====================
         async function main() {
@@ -259,13 +306,29 @@
             try {
                 const res = await fetch(API.GET_PRICES);
                 const data = await res.json();
-                renderCards(data);
+                await renderCards(data);
             } catch (e) {
                 console.error('Error loading customers:', e);
             }
         }
 
-        function renderCards(data) {
+        async function loadMultipliers(customerId) {
+            try {
+                const res = await fetch(API.GET_MULTIPLIERS, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customerId })
+                });
+                const data = await res.json();
+                multipliersCache[customerId] = data;
+                return data;
+            } catch (e) {
+                console.error('Error loading multipliers:', e);
+                return [];
+            }
+        }
+
+        async function renderCards(data) {
             const container = document.getElementById('customer-list');
             container.innerHTML = '';
 
@@ -295,17 +358,36 @@
                 return;
             }
 
+            // โหลด multipliers ของทุกลูกค้าก่อน
+            const customerIds = Object.keys(grouped);
+            await Promise.all(customerIds.map(id => loadMultipliers(id)));
+
             Object.values(grouped).forEach(customer => {
+                // ดึง multipliers ของลูกค้านี้
+                const custMultipliers = multipliersCache[customer.id] || [];
+                
                 // Prices HTML
                 let pricesHtml = '';
                 if (customer.prices.length > 0) {
-                    pricesHtml = customer.prices.map(p => `
-                        <div class="price-item">
-                            <span class="name">${p.product_name}</span>
-                            <span class="value">${p.price} บาท</span>
-                            <button class="btn-del" onclick="deletePrice(${p.id}, '${p.product_name}', ${customer.id}, '${customer.name}')">✕</button>
-                        </div>
-                    `).join('');
+                    pricesHtml = customer.prices.map(p => {
+                        // ถ้าเป็นสินค้าที่มีตัวคูณ ให้แสดงด้วย
+                        let multiplierBadge = '';
+                        if (MULTIPLIER_PRODUCTS[p.product_code]) {
+                            const mult = custMultipliers.find(m => m.product_code === p.product_code);
+                            if (mult) {
+                                multiplierBadge = `<span class="badge bg-info ms-2">×${mult.multiplier}ถุง</span>`;
+                            } else {
+                                multiplierBadge = `<span class="badge bg-warning text-dark ms-2">⚠️ ยังไม่ตั้งตัวคูณ</span>`;
+                            }
+                        }
+                        return `
+                            <div class="price-item">
+                                <span class="name">${p.product_name}${multiplierBadge}</span>
+                                <span class="value">${p.price} บาท</span>
+                                <button class="btn-del" onclick="deletePrice(${p.id}, '${p.product_name}', ${customer.id}, '${customer.name}')">✕</button>
+                            </div>
+                        `;
+                    }).join('');
                 } else {
                     pricesHtml = '<div class="empty-text">- ยังไม่ได้ตั้งราคา -</div>';
                 }
@@ -329,6 +411,18 @@
                                 <span class="title-space"></span>
                             </div>
                             <div id="lines-${customer.id}" style="margin-bottom:10px;"></div>
+
+                            <!-- ตัวคูณถุง -->
+                            <div class="section-title">
+                                <span class="title-text">🛍️ ตัวคูณถุง</span>
+                                <span class="title-btn">
+                                    <button class="btn btn-sm btn-success" style="font-size:11px;padding:2px 12px;" onclick="openAddMultiplierModal(${customer.id}, '${customer.name}')">+ ตั้งค่า</button>
+                                </span>
+                                <span class="title-space"></span>
+                            </div>
+                            <div id="multipliers-${customer.id}" style="margin-bottom:10px;">
+                                <div class="empty-text">กำลังโหลด...</div>
+                            </div>
 
                             <!-- โปรโมชั่น -->
                             <div class="section-title">
@@ -357,12 +451,111 @@
                     </div>
                 `;
                 container.insertAdjacentHTML('beforeend', cardHtml);
+
+                // Load multipliers for this customer
+                loadAndRenderMultipliers(customer.id);
             });
+        }
+
+        async function loadAndRenderMultipliers(customerId) {
+            const container = document.getElementById(`multipliers-${customerId}`);
+            const multipliers = await loadMultipliers(customerId);
+            
+            // ตรวจสอบว่าครบทุกสินค้าที่ต้องมีตัวคูณหรือไม่
+            const setProducts = multipliers.map(m => m.product_code);
+            const missingProducts = Object.keys(MULTIPLIER_PRODUCTS).filter(p => !setProducts.includes(p));
+            
+            let html = '';
+            
+            // แสดงคำเตือนถ้ายังไม่ได้ตั้งค่าครบ
+            if (missingProducts.length > 0) {
+                const missingNames = missingProducts.map(p => MULTIPLIER_PRODUCTS[p].name).join(', ');
+                html += `<div class="multiplier-warning">⚠️ ยังไม่ได้ตั้งตัวคูณ: ${missingNames}</div>`;
+            }
+            
+            if (multipliers.length > 0) {
+                html += multipliers.map(m => {
+                    const productName = MULTIPLIER_PRODUCTS[m.product_code]?.name || m.product_code;
+                    return `
+                        <div class="multiplier-item">
+                            <span class="name">${productName}</span>
+                            <span class="value">×${m.multiplier}</span>
+                            <button class="btn-del" onclick="deleteMultiplier(${m.id}, ${customerId})">✕</button>
+                        </div>
+                    `;
+                }).join('');
+            } else if (missingProducts.length === 0) {
+                html += '<div class="empty-text">- ไม่ต้องตั้งตัวคูณ -</div>';
+            }
+            
+            container.innerHTML = html;
         }
 
         function toggleCard(el) {
             const body = el.nextElementSibling;
             body.style.display = body.style.display === 'none' || body.style.display === '' ? 'block' : 'none';
+        }
+
+        // ==================== MULTIPLIER SECTION ====================
+        function openAddMultiplierModal(customerId, name) {
+            currentCustomer = { id: customerId, name };
+            document.getElementById('multiplierModalCustomerName').textContent = name;
+            document.getElementById('multiplierProductCode').value = 'crush_sachet';
+            updateMultiplierOptions();
+            document.getElementById('addMultiplierModal').style.display = 'flex';
+        }
+
+        function updateMultiplierOptions() {
+            const productCode = document.getElementById('multiplierProductCode').value;
+            const select = document.getElementById('multiplierValue');
+            const hint = document.getElementById('multiplierHint');
+            const options = MULTIPLIER_PRODUCTS[productCode]?.options || [1];
+            
+            select.innerHTML = options.map(o => `<option value="${o}">×${o}</option>`).join('');
+            
+            if (productCode === 'crush_sachet') {
+                hint.textContent = 'เช่น สั่ง 2 ซอง × 6 = ถุงยืม 12 ใบ';
+            } else if (productCode === 'cube_kak') {
+                hint.textContent = 'เช่น สั่ง 5 ลูก × 2 = ถุงยืม 10 ใบ';
+            }
+        }
+
+        async function saveMultiplier() {
+            const productCode = document.getElementById('multiplierProductCode').value;
+            const multiplier = document.getElementById('multiplierValue').value;
+            
+            try {
+                await fetch(API.SAVE_MULTIPLIER, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        customerId: currentCustomer.id,
+                        productCode,
+                        multiplier: parseInt(multiplier)
+                    })
+                });
+                alert("✅ บันทึกแล้ว");
+                closeModal('addMultiplierModal');
+                loadAndRenderMultipliers(currentCustomer.id);
+            } catch (e) {
+                alert("Error: " + e);
+            }
+        }
+
+        async function deleteMultiplier(multiplierId, customerId) {
+            if (!confirm("ลบตัวคูณนี้?")) return;
+            
+            try {
+                await fetch(API.DELETE_MULTIPLIER, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ multiplierId })
+                });
+                alert("✅ ลบแล้ว");
+                loadAndRenderMultipliers(customerId);
+            } catch (e) {
+                alert("Error: " + e);
+            }
         }
 
         // ==================== PROMO SECTION ====================
@@ -375,7 +568,7 @@
                 await loadPromos(customerId);
             } else {
                 body.style.display = 'none';
-                btn.innerHTML = 'เพิ่มโปรโมชั่น ▼';
+                btn.innerHTML = 'ดูโปรโมชั่น ▼';
             }
         }
 
@@ -497,11 +690,8 @@
                     })
                 });
                 alert("✅ บันทึกแล้ว");
-                // เคลียร์แค่ราคา ไม่ปิด modal
                 document.getElementById('priceValue').value = '';
-                // โหลดข้อมูลใหม่ในพื้นหลัง
                 await loadCustomers();
-                // เปิดการ์ดเดิม
                 setTimeout(() => {
                     const cards = document.querySelectorAll('.customer-card');
                     cards.forEach(card => {
@@ -526,7 +716,6 @@
                 });
                 alert("✅ ลบแล้ว");
                 await loadCustomers();
-                // เปิดการ์ดเดิม
                 setTimeout(() => {
                     const cards = document.querySelectorAll('.customer-card');
                     cards.forEach(card => {
@@ -643,7 +832,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, lineId })
                 });
-                alert("✅ สร้างแล้ว");
+                alert("✅ สร้างแล้ว\n\n⚠️ อย่าลืมตั้งค่าตัวคูณถุงให้ลูกค้านี้!");
                 closeModal('createCustomerModal');
                 location.reload();
             } catch (e) {
@@ -653,7 +842,7 @@
 
         // Delete Customer
         async function deleteCustomer(customerId, customerName) {
-            if (!confirm(`⚠️ ลบลูกค้า "${customerName}"?\n\nจะลบข้อมูลทั้งหมด:\n- LINE ID ที่ผูก\n- ราคาที่ตั้งไว้\n- โปรโมชั่น`)) return;
+            if (!confirm(`⚠️ ลบลูกค้า "${customerName}"?\n\nจะลบข้อมูลทั้งหมด:\n- LINE ID ที่ผูก\n- ราคาที่ตั้งไว้\n- โปรโมชั่น\n- ตัวคูณถุง`)) return;
             if (!confirm(`❗ ยืนยันอีกครั้ง: ลบ "${customerName}" ?`)) return;
             
             try {
@@ -671,5 +860,3 @@
     </script>
 </body>
 </html>
-
-
