@@ -464,19 +464,13 @@
             const container = document.getElementById(`multipliers-${customerId}`);
             const multipliers = await loadMultipliers(customerId);
             
-            // ตรวจสอบว่าครบทุกสินค้าที่ต้องมีตัวคูณหรือไม่
-            const setProducts = multipliers.map(m => m.product_code);
-            const missingProducts = Object.keys(MULTIPLIER_PRODUCTS).filter(p => !setProducts.includes(p));
-            
             let html = '';
             
-            // แสดงคำเตือนถ้ายังไม่ได้ตั้งค่าครบ
-            if (missingProducts.length > 0) {
-                const missingNames = missingProducts.map(p => MULTIPLIER_PRODUCTS[p].name).join(', ');
-                html += `<div class="multiplier-warning">⚠️ ยังไม่ได้ตั้งตัวคูณ: ${missingNames}</div>`;
-            }
-            
-            if (multipliers.length > 0) {
+            // แสดงคำเตือนเฉพาะเมื่อยังไม่ได้ตั้งทั้งสองอย่าง
+            if (multipliers.length === 0) {
+                html += `<div class="multiplier-warning">⚠️ ยังไม่ได้ตั้งตัวคูณ</div>`;
+            } else {
+                // มีอย่างน้อย 1 อย่างแล้ว - แสดงรายการปกติ ไม่ต้องเตือน
                 html += multipliers.map(m => {
                     const productName = MULTIPLIER_PRODUCTS[m.product_code]?.name || m.product_code;
                     return `
@@ -487,8 +481,6 @@
                         </div>
                     `;
                 }).join('');
-            } else if (missingProducts.length === 0) {
-                html += '<div class="empty-text">- ไม่ต้องตั้งตัวคูณ -</div>';
             }
             
             container.innerHTML = html;
