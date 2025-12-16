@@ -35,7 +35,7 @@
         
         .multiplier-warning { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 8px 10px; margin-bottom: 4px; font-size: 12px; color: #856404; }
         
-        .line-id-tag { background: #e7f1ff; padding: 5px 10px; border-radius: 20px; font-size: 12px; color: #0d6efd; margin: 2px; display: inline-flex; align-items: center; gap: 5px; }
+        .line-id-tag { background: #e7f1ff; padding: 5px 10px; border-radius: 8px; font-size: 12px; color: #0d6efd; margin: 3px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         
         .promo-section { background: #fff9e6; border: 1px solid #ffe69c; border-radius: 10px; padding: 10px; margin-top: 10px; }
         .promo-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
@@ -238,6 +238,7 @@
             ADD_CUSTOMER: `${BASE_URL}/add-customer`,
             DELETE_CUSTOMER: `${BASE_URL}/delete-customer`,
             ADD_LINE: `${BASE_URL}/add-line`,
+            DELETE_LINE: `${BASE_URL}/delete-line`,
             SAVE_PRICE: `${BASE_URL}/save-price`,
             DELETE_PRICE: `${BASE_URL}/delete-price`,
             ADD_PROMO: `${BASE_URL}/add-promo`,
@@ -639,11 +640,30 @@
                     document.getElementById('lineIdList').innerHTML = '<div class="text-center text-muted small">- ยังไม่ผูก LINE ID -</div>';
                 } else {
                     document.getElementById('lineIdList').innerHTML = lines.map(l => 
-                        `<span class="line-id-tag">${l.line_user_id} <i class="fas fa-check-circle text-success"></i></span>`
-                    ).join(' ');
+                        `<div class="line-id-tag">
+                            <span style="font-size:10px; word-break:break-all;">${l.line_user_id}</span>
+                            <button onclick="deleteLineId(${l.id}, '${l.line_user_id}')" style="background:none;border:none;color:#dc3545;cursor:pointer;padding:0 2px;font-size:12px;" title="ลบ">✕</button>
+                        </div>`
+                    ).join('');
                 }
             } catch (e) {
                 document.getElementById('lineIdList').innerHTML = '<div class="text-danger small">Error</div>';
+            }
+        }
+
+        async function deleteLineId(lineId, lineUserId) {
+            if (!confirm(`ลบ LINE ID นี้?\n${lineUserId}`)) return;
+            
+            try {
+                await fetch(API.DELETE_LINE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lineId })
+                });
+                alert("✅ ลบแล้ว");
+                openManageLineModal(currentCustomer.id, currentCustomer.name);
+            } catch (e) {
+                alert("Error: " + e);
             }
         }
 
