@@ -299,9 +299,9 @@
         let selectedRound = null; // รอบที่เลือก: 1, 2, 3, 'extra'
         let customerRounds = []; // รอบทั้งหมดของลูกค้า
 
-        // สินค้าที่นับเป็นโควต้าถุง
+        // สินค้าที่นับเป็นโควต้ายูนิต+บด
         const QUOTA_BAG_PRODUCTS = ['tube_l', 'tube_s', 'pack_l', 'pack_s', 'crush_sack', 'crush_sachet', 'crush_white', 'sack'];
-        // สินค้าที่นับเป็นโควต้าก้อน
+        // สินค้าที่นับเป็นโควต้าก้อน ซอง
         const QUOTA_CUBE_PRODUCTS = ['cube_sachet', 'cube_kak', 'cube_hand'];
 
         // ฟังก์ชันเลือกรอบ
@@ -437,10 +437,10 @@
             
             let errors = [];
             if (totalBags > quotaBags) {
-                errors.push(`สั่งถุง: ${totalBags} / โควต้า: ${quotaBags} ❌`);
+                errors.push(`สั่งยูนิต+บด: ${totalBags} / โควต้า: ${quotaBags} ❌`);
             }
             if (totalCubes > quotaCubes) {
-                errors.push(`สั่งก้อน: ${totalCubes} / โควต้า: ${quotaCubes} ❌`);
+                errors.push(`สั่งก้อน ซอง: ${totalCubes} / โควต้า: ${quotaCubes} ❌`);
             }
             
             if (errors.length > 0) {
