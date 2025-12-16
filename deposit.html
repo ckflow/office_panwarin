@@ -168,12 +168,27 @@
                                 <input type="number" id="leftover_tube_s" class="qty-input" placeholder="0" min="0">
                             </div>
                             <div class="product-row">
+                                <div><span class="product-icon">📦</span><span class="product-name">แพ็คเล็ก</span></div>
+                                <input type="number" id="leftover_pack_s" class="qty-input" placeholder="0" min="0">
+                            </div>
+                            <div class="product-row">
                                 <div><span class="product-icon">🛍️</span><span class="product-name">บด(ถุงขาว)</span></div>
                                 <input type="number" id="leftover_crush_white" class="qty-input" placeholder="0" min="0">
                             </div>
                             <div class="product-row">
                                 <div><span class="product-icon">🛍️</span><span class="product-name">บด(ถุงบีซ)</span></div>
                                 <input type="number" id="leftover_crush_sack" class="qty-input" placeholder="0" min="0">
+                            </div>
+                            <div class="product-row">
+                                <div style="display:flex;align-items:center;gap:5px;">
+                                    <span class="product-icon">🧊</span>
+                                    <span class="product-name">ก้อน</span>
+                                    <select id="leftover_cube_unit" style="font-size:12px;padding:2px 5px;border-radius:5px;border:1px solid #ced4da;">
+                                        <option value="cube_kak">กั๊ก</option>
+                                        <option value="cube_hand">มือ</option>
+                                    </select>
+                                </div>
+                                <input type="number" id="leftover_cube" class="qty-input" placeholder="0" min="0">
                             </div>
                             <div class="mt-3">
                                 <input type="text" id="leftoverNote" class="form-control" placeholder="หมายเหตุ (ถ้ามี)">
@@ -203,19 +218,26 @@
         ];
 
         const DEPOSIT_PRODUCTS = ['tube_l', 'tube_s', 'crush_white', 'crush_sack'];
+        const LEFTOVER_PRODUCTS = ['tube_l', 'tube_s', 'pack_s', 'crush_white', 'crush_sack'];
         
         const productNames = {
             'tube_l': 'หลอดใหญ่',
             'tube_s': 'หลอดเล็ก',
+            'pack_s': 'แพ็คเล็ก',
             'crush_white': 'บด(ถุงขาว)',
-            'crush_sack': 'บด(ถุงบีซ)'
+            'crush_sack': 'บด(ถุงบีซ)',
+            'cube_kak': 'ก้อน(กั๊ก)',
+            'cube_hand': 'ก้อน(มือ)'
         };
 
         const productIcons = {
             'tube_l': '🍻',
             'tube_s': '🥤',
+            'pack_s': '📦',
             'crush_white': '🛍️',
-            'crush_sack': '🛍️'
+            'crush_sack': '🛍️',
+            'cube_kak': '🧊',
+            'cube_hand': '🧊'
         };
 
         let currentUserId = null;
@@ -224,27 +246,10 @@
         let isAdmin = false;
         let depositCustomers = []; // ลูกค้าที่มีสิทธิ์ฝาก
 
-        // Fetch with timeout
-        async function fetchWithTimeout(url, options = {}, timeout = 8000) {
-            const controller = new AbortController();
-            const id = setTimeout(() => controller.abort(), timeout);
-            
-            try {
-                const response = await fetch(url, {
-                    ...options,
-                    signal: controller.signal
-                });
-                clearTimeout(id);
-                return response;
-            } catch (error) {
-                clearTimeout(id);
-                throw error;
-            }
-        }
-
         async function main() {
             try {
                 await liff.init({ liffId: MY_LIFF_ID });
+                
                 if (!liff.isLoggedIn()) {
                     liff.login();
                     return;
@@ -270,7 +275,7 @@
 
             } catch (err) {
                 console.error(err);
-                document.getElementById('loadingScreen').innerHTML = '<h4>❌ เกิดข้อผิดพลาด</h4><p>กรุณาลองใหม่อีกครั้ง</p>';
+                document.getElementById('loadingScreen').innerHTML = '<h4>❌ เกิดข้อผิดพลาด</h4><button class="btn btn-primary mt-3" onclick="location.reload()">ลองใหม่</button>';
             }
         }
         main();
@@ -278,7 +283,7 @@
         // โหลดลูกค้าที่มีสิทธิ์ฝาก (Admin)
         async function loadDepositCustomers() {
             try {
-                const res = await fetchWithTimeout(`${BASE_URL}/get-deposit-customers`);
+                const res = await fetch(`${BASE_URL}/get-deposit-customers`);
                 depositCustomers = await res.json();
 
                 const select = document.getElementById('customerSelect');
@@ -288,14 +293,13 @@
                 });
             } catch (e) {
                 console.error('Error loading deposit customers:', e);
-                alert('โหลดข้อมูลไม่สำเร็จ กรุณาลองใหม่');
             }
         }
 
         // เช็คสิทธิ์ลูกค้า
         async function checkCustomerPermission() {
             try {
-                const res = await fetchWithTimeout(`${BASE_URL}/check-deposit-permission`, {
+                const res = await fetch(`${BASE_URL}/check-deposit-permission`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ lineId: currentUserId })
@@ -353,7 +357,7 @@
         // โหลดข้อมูลฝาก
         async function loadDepositData(customerId) {
             try {
-                const res = await fetchWithTimeout(`${BASE_URL}/get-deposits`, {
+                const res = await fetch(`${BASE_URL}/get-deposits`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ customerId })
@@ -387,7 +391,7 @@
         // โหลดข้อมูลเหลือ
         async function loadLeftoverData(customerId) {
             try {
-                const res = await fetchWithTimeout(`${BASE_URL}/get-leftovers`, {
+                const res = await fetch(`${BASE_URL}/get-leftovers`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ customerId })
@@ -440,7 +444,7 @@
 
             try {
                 for (const d of deposits) {
-                    await fetchWithTimeout(`${BASE_URL}/add-deposit`, {
+                    await fetch(`${BASE_URL}/add-deposit`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -477,12 +481,20 @@
             const note = document.getElementById('leftoverNote').value;
             const leftovers = [];
 
-            DEPOSIT_PRODUCTS.forEach(code => {
+            // สินค้าปกติ
+            LEFTOVER_PRODUCTS.forEach(code => {
                 const qty = parseInt(document.getElementById(`leftover_${code}`).value) || 0;
                 if (qty > 0) {
                     leftovers.push({ productCode: code, quantity: qty });
                 }
             });
+
+            // ก้อน (เลือกหน่วย)
+            const cubeQty = parseInt(document.getElementById('leftover_cube').value) || 0;
+            if (cubeQty > 0) {
+                const cubeUnit = document.getElementById('leftover_cube_unit').value;
+                leftovers.push({ productCode: cubeUnit, quantity: cubeQty });
+            }
 
             if (leftovers.length === 0) {
                 alert('กรุณากรอกจำนวนอย่างน้อย 1 รายการ');
@@ -491,7 +503,7 @@
 
             try {
                 for (const l of leftovers) {
-                    await fetchWithTimeout(`${BASE_URL}/add-leftover`, {
+                    await fetch(`${BASE_URL}/add-leftover`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -506,9 +518,10 @@
                 alert('บันทึกเหลือสำเร็จ!');
                 
                 // Clear form
-                DEPOSIT_PRODUCTS.forEach(code => {
+                LEFTOVER_PRODUCTS.forEach(code => {
                     document.getElementById(`leftover_${code}`).value = '';
                 });
+                document.getElementById('leftover_cube').value = '';
                 document.getElementById('leftoverNote').value = '';
 
                 await loadLeftoverData(currentCustomerId);
@@ -523,7 +536,7 @@
             if (!confirm('ต้องการลบยอดฝากนี้?')) return;
 
             try {
-                await fetchWithTimeout(`${BASE_URL}/delete-deposit`, {
+                await fetch(`${BASE_URL}/delete-deposit`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ depositId: id })
@@ -540,7 +553,7 @@
             if (!confirm('ต้องการลบบันทึกนี้?')) return;
 
             try {
-                await fetchWithTimeout(`${BASE_URL}/delete-leftover`, {
+                await fetch(`${BASE_URL}/delete-leftover`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ leftoverId: id })
