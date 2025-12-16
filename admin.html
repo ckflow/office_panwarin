@@ -65,6 +65,7 @@
         .round-item.extra .round-name { color: #dc3545; }
         .round-item .round-time { font-size: 12px; color: #666; }
         .round-item .round-quota { font-size: 11px; color: #0d6efd; margin-top: 2px; }
+        .round-item .round-driver { font-size: 11px; color: #6c757d; margin-top: 2px; background: #f8f9fa; padding: 2px 6px; border-radius: 4px; display: inline-block; }
         .round-item .round-actions { display: flex; gap: 5px; align-items: center; }
         .round-item .btn-unlock { font-size: 11px; padding: 3px 8px; }
         .round-item .btn-del { color: #dc3545; background: none; border: none; cursor: pointer; padding: 2px 6px; font-size: 12px; }
@@ -82,6 +83,7 @@
             <div><h4 class="text-primary fw-bold mb-0">📋 จัดการลูกค้า</h4></div>
             <div>
                 <a href="orders.html" class="btn btn-outline-primary btn-sm"><i class="fas fa-receipt"></i> ออเดอร์</a>
+                <a href="drivers.html" class="btn btn-outline-info btn-sm ms-1"><i class="fas fa-truck"></i> คนขับ</a>
                 <button class="btn btn-success btn-sm shadow-sm ms-1" onclick="openCreateCustomerModal()"><i class="fas fa-user-plus"></i> ลูกค้าใหม่</button>
                 <button class="btn btn-sm btn-outline-secondary ms-1" onclick="window.location.reload()"><i class="fas fa-sync"></i></button>
             </div>
@@ -273,6 +275,14 @@
                 <input type="number" id="roundQuotaCubes" class="form-control" placeholder="0" value="100">
             </div>
             
+            <div class="mb-4">
+                <label class="form-label small text-muted">🚗 ส่งแจ้งเตือนไปกลุ่ม</label>
+                <select id="roundDeliveryGroup" class="form-select">
+                    <option value="">-- ไม่ส่ง --</option>
+                </select>
+                <div class="form-text">เลือกกลุ่มคนขับที่จะได้รับแจ้งเตือนเมื่อมีออเดอร์</div>
+            </div>
+            
             <div class="d-flex gap-2">
                 <button class="btn btn-light flex-grow-1" onclick="closeModal('addRoundModal')">ยกเลิก</button>
                 <button class="btn btn-success flex-grow-1" onclick="saveRound()">บันทึก</button>
@@ -312,13 +322,15 @@
             UPDATE_DEPOSIT_PERMISSION: `${BASE_URL}/update-deposit-permission`,
             SAVE_ROUND: `${BASE_URL}/save-customer-round`,
             DELETE_ROUND: `${BASE_URL}/delete-customer-round`,
-            TOGGLE_EXTRA_ROUND: `${BASE_URL}/toggle-extra-round`
+            TOGGLE_EXTRA_ROUND: `${BASE_URL}/toggle-extra-round`,
+            GET_DELIVERY_GROUPS: `${BASE_URL}/get-delivery-groups`
         };
 
         let currentCustomer = { id: null, name: '' };
         let productsCache = [];
         let multipliersCache = {};
         let roundsCache = {};
+        let deliveryGroupsCache = [];
 
         // สินค้าที่ต้องมีตัวคูณ
         const MULTIPLIER_PRODUCTS = {
@@ -342,6 +354,7 @@
                 document.getElementById('content').style.display = 'block';
                 
                 await loadProducts();
+                await loadDeliveryGroups();
                 await loadCustomers();
             } catch (err) {
                 alert("Error: " + err);
@@ -373,6 +386,30 @@
                     });
                 }
             });
+        }
+
+        async function loadDeliveryGroups() {
+            try {
+                const res = await fetch(API.GET_DELIVERY_GROUPS);
+                deliveryGroupsCache = await res.json();
+                initDeliveryGroupDropdown();
+            } catch (e) {
+                console.error('Error loading delivery groups:', e);
+                deliveryGroupsCache = [];
+            }
+        }
+
+        function initDeliveryGroupDropdown() {
+            const select = document.getElementById('roundDeliveryGroup');
+            if (select) {
+                select.innerHTML = '<option value="">-- ไม่ส่ง --</option>';
+                deliveryGroupsCache.forEach(g => {
+                    const opt = document.createElement('option');
+                    opt.value = g.id;
+                    opt.textContent = '🚗 ' + g.name;
+                    select.appendChild(opt);
+                });
+            }
         }
 
         async function loadCustomers() {
@@ -603,6 +640,15 @@
                 const roundName = isExtra ? 'รอบเสริม' : `รอบ ${r.round_number}`;
                 const timeText = isExtra ? '' : `${formatTime(r.time_start)} - ${formatTime(r.time_end)}`;
                 
+                // หาชื่อกลุ่มคนขับ
+                let driverGroupText = '';
+                if (r.delivery_group_id) {
+                    const group = deliveryGroupsCache.find(g => g.id == r.delivery_group_id);
+                    if (group) {
+                        driverGroupText = `<div class="round-driver">🚗 ${group.name}</div>`;
+                    }
+                }
+                
                 let lockStatus = '';
                 let lockBtn = '';
                 if (isExtra) {
@@ -621,6 +667,7 @@
                             <div class="round-name">${roundName} ${lockStatus}</div>
                             ${timeText ? `<div class="round-time">🕐 ${timeText}</div>` : ''}
                             <div class="round-quota">📦 ยูนิต+บด: ${r.quota_bags} | 🧊 ก้อน ซอง: ${r.quota_cubes}</div>
+                            ${driverGroupText}
                         </div>
                         <div class="round-actions">
                             ${lockBtn}
@@ -647,6 +694,7 @@
             document.getElementById('roundTimeEnd').value = '08:00';
             document.getElementById('roundQuotaBags').value = '50';
             document.getElementById('roundQuotaCubes').value = '100';
+            document.getElementById('roundDeliveryGroup').value = '';
             document.getElementById('roundTimeFields').style.display = 'block';
             document.getElementById('addRoundModal').style.display = 'flex';
         }
@@ -680,6 +728,7 @@
             const timeEnd = isExtra ? null : document.getElementById('roundTimeEnd').value;
             const quotaBags = parseInt(document.getElementById('roundQuotaBags').value) || 0;
             const quotaCubes = parseInt(document.getElementById('roundQuotaCubes').value) || 0;
+            const deliveryGroupId = document.getElementById('roundDeliveryGroup').value || null;
             
             try {
                 await fetch(API.SAVE_ROUND, {
@@ -691,7 +740,8 @@
                         timeStart,
                         timeEnd,
                         quotaBags,
-                        quotaCubes
+                        quotaCubes,
+                        deliveryGroupId
                     })
                 });
                 alert("✅ บันทึกรอบแล้ว");
