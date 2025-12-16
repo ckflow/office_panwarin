@@ -65,6 +65,19 @@
             </div>
         </div>
 
+        <!-- เลือกร้านของฉัน (สำหรับลูกค้าที่มีหลายร้าน) -->
+        <div class="container mt-2" id="shopSelectSection" style="display: none;">
+            <div class="product-card" style="background: #e7f1ff; border: 1px solid #b6d4fe;">
+                <div class="product-info">
+                    <div class="product-name text-primary">🏪 เลือกร้านของคุณ</div>
+                    <select id="myShopSelect" class="form-select mt-2" onchange="onMyShopSelect()">
+                        <option value="">-- เลือกร้าน --</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- เลือกลูกค้า (สำหรับ Admin) -->
         <div class="container mt-2" id="adminInputSection" style="display: none;">
             <div class="product-card" style="background: #fff3cd; border: 1px solid #ffe69c;">
                 <div class="product-info">
@@ -163,6 +176,7 @@
         let isFirstBill = false;
         let customerPrices = {}; // { product_code: { price, promo_type, buy_qty, free_qty } }
         let allCustomers = []; // รายชื่อลูกค้าทั้งหมด (สำหรับ Admin)
+        let myShops = []; // ร้านที่ผูกกับ LINE ID นี้ (สำหรับลูกค้าที่มีหลายร้าน)
 
         async function main() {
             try {
@@ -189,8 +203,8 @@
                     document.getElementById('loadingScreen').style.display = 'none';
                     document.getElementById('mainContent').style.display = 'block';
                 } else {
-                    // ลูกค้าทั่วไป - โหลดราคาตาม LINE ID
-                    await loadCustomerPrices();
+                    // ลูกค้าทั่วไป - โหลดร้านที่ผูกกับ LINE ID
+                    await loadMyShops();
                 }
                 
             } catch (err) { 
@@ -200,6 +214,101 @@
         }
         main();
 
+        // ===================== โหลดร้านของฉัน (Multi-Shop) =====================
+        async function loadMyShops() {
+            try {
+                const res = await fetch(`${BASE_URL}/get-my-shops`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lineId: currentUserId })
+                });
+                myShops = await res.json();
+                
+                if (myShops.length === 0) {
+                    // ไม่มีร้านผูก
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('noPriceScreen').style.display = 'block';
+                } else if (myShops.length === 1) {
+                    // มีร้านเดียว - โหลดราคาเลย
+                    currentCustomerId = myShops[0].id;
+                    currentCustomerName = myShops[0].name;
+                    await loadPricesForCustomer(currentCustomerId);
+                } else {
+                    // มีหลายร้าน - แสดง dropdown ให้เลือก
+                    const select = document.getElementById('myShopSelect');
+                    select.innerHTML = '<option value="">-- เลือกร้าน --</option>';
+                    myShops.forEach(s => {
+                        select.innerHTML += `<option value="${s.id}" data-name="${s.name}">${s.name}</option>`;
+                    });
+                    
+                    document.getElementById('shopSelectSection').style.display = 'block';
+                    renderProductsForAdmin(); // แสดงสินค้าแบบไม่มีราคา รอเลือกร้าน
+                    
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                }
+                
+            } catch (e) {
+                console.error('Error loading my shops:', e);
+                document.getElementById('loadingScreen').innerHTML = '<h4>❌ โหลดข้อมูลไม่สำเร็จ</h4>';
+            }
+        }
+
+        // เมื่อลูกค้าเลือกร้านของตัวเอง
+        async function onMyShopSelect() {
+            const select = document.getElementById('myShopSelect');
+            const shopId = select.value;
+            
+            if (!shopId) {
+                currentCustomerId = null;
+                currentCustomerName = null;
+                customerPrices = {};
+                renderProductsForAdmin();
+                updateTotals();
+                return;
+            }
+            
+            currentCustomerId = parseInt(shopId);
+            currentCustomerName = select.options[select.selectedIndex].dataset.name;
+            
+            await loadPricesForCustomer(currentCustomerId);
+        }
+
+        // โหลดราคาสำหรับลูกค้า/ร้านที่เลือก
+        async function loadPricesForCustomer(customerId) {
+            try {
+                const res = await fetch(`${BASE_URL}/get-prices-by-customer`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customerId: customerId })
+                });
+                const data = await res.json();
+                
+                customerPrices = {};
+                data.forEach(item => {
+                    if (item.product_code) {
+                        customerPrices[item.product_code] = {
+                            price: parseFloat(item.price) || 0,
+                            promo_type: item.promo_type,
+                            buy_qty: item.buy_qty,
+                            free_qty: item.free_qty
+                        };
+                    }
+                });
+                
+                await checkFirstBill();
+                renderProducts();
+                
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                
+            } catch (e) {
+                console.error('Error loading prices:', e);
+                alert('โหลดราคาไม่สำเร็จ');
+            }
+        }
+
+        // ===================== Admin Functions =====================
         async function loadAllCustomers() {
             try {
                 const res = await fetch(`${BASE_URL}/get-all-customers`);
@@ -220,7 +329,6 @@
             const customerId = select.value;
             
             if (!customerId) {
-                // ยกเลิกการเลือก - แสดงแบบไม่มีราคา
                 currentCustomerId = null;
                 currentCustomerName = null;
                 customerPrices = {};
@@ -232,88 +340,10 @@
             currentCustomerId = parseInt(customerId);
             currentCustomerName = select.options[select.selectedIndex].dataset.name;
             
-            // โหลดราคาของลูกค้าที่เลือก
-            try {
-                const res = await fetch(`${BASE_URL}/get-prices-by-customer`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ customerId: currentCustomerId })
-                });
-                const data = await res.json();
-                
-                customerPrices = {};
-                data.forEach(item => {
-                    if (item.product_code) {
-                        customerPrices[item.product_code] = {
-                            price: parseFloat(item.price) || 0,
-                            promo_type: item.promo_type,
-                            buy_qty: item.buy_qty,
-                            free_qty: item.free_qty
-                        };
-                    }
-                });
-                
-                await checkFirstBill();
-                renderProducts();
-                
-            } catch (e) {
-                console.error('Error loading customer prices:', e);
-                alert('โหลดราคาไม่สำเร็จ');
-            }
+            await loadPricesForCustomer(currentCustomerId);
         }
 
-       async function loadCustomerPrices() {
-    try {
-        const res = await fetch(`${BASE_URL}/get-customer-prices`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ lineId: currentUserId })
-        });
-        const data = await res.json();
-        
-        if (data.length === 0 || !data[0].product_code) {
-            // ไม่มีราคา
-            if (isAdmin) {
-                // Admin ยังใช้งานได้ แต่ไม่แสดงราคา
-                renderProductsForAdmin();
-                // ⭐ เพิ่ม 2 บรรทัดนี้
-                document.getElementById('loadingScreen').style.display = 'none';
-                document.getElementById('mainContent').style.display = 'block';
-            } else {
-                document.getElementById('loadingScreen').style.display = 'none';
-                document.getElementById('noPriceScreen').style.display = 'block';
-                return; // ⭐ เพิ่ม return เพื่อไม่ให้รันโค้ดข้างล่าง
-            }
-        } else {
-            currentCustomerId = data[0].customer_id;
-            currentCustomerName = data[0].customer_name;
-            
-            // Map prices and promos
-            data.forEach(item => {
-                if (item.product_code) {
-                    customerPrices[item.product_code] = {
-                        price: parseFloat(item.price) || 0,
-                        promo_type: item.promo_type,
-                        buy_qty: item.buy_qty,
-                        free_qty: item.free_qty
-                    };
-                }
-            });
-            
-            await checkFirstBill();
-            renderProducts();
-            
-            // ⭐ แสดง mainContent สำหรับลูกค้าที่มีราคา
-            document.getElementById('loadingScreen').style.display = 'none';
-            document.getElementById('mainContent').style.display = 'block';
-        }
-        
-    } catch (e) {
-        console.error('Error loading prices:', e);
-        document.getElementById('loadingScreen').innerHTML = '<h4>❌ โหลดข้อมูลไม่สำเร็จ</h4>';
-    }
-}
-
+        // ===================== Check First Bill =====================
         async function checkFirstBill() {
             if (!currentCustomerId) return;
             
@@ -332,6 +362,7 @@
             }
         }
 
+        // ===================== Render Products =====================
         function renderProducts() {
             const container = document.getElementById('productList');
             container.innerHTML = '';
@@ -369,14 +400,12 @@
                 container.innerHTML += html;
             }
             
-            // Add event listeners for bag calculation
             document.querySelectorAll('.calculate-trigger').forEach(input => {
                 input.addEventListener('input', autoCalculateBags);
             });
         }
 
         function renderProductsForAdmin() {
-            // Admin mode without customer prices - show all products
             const container = document.getElementById('productList');
             container.innerHTML = '';
             
@@ -416,8 +445,8 @@
                 'tube_l': 'หลอดใหญ่', 'tube_s': 'หลอดเล็ก',
                 'pack_l': 'แพ็คกระสอบ', 'pack_s': 'แพ็คเล็ก',
                 'crush_sack': 'บด(ถุง)', 'crush_sachet': 'บด(ซอง)',
-                'cube_sachet': 'ก้อน(ซอง)', 'cube_kak': 'ก้อน(กั๊ก)',
-                'cube_hand': 'ก้อน(มือ)', 'sack': 'กระสอบ(มัด)'
+                'cube_sachet': 'ก้อน(ซอง)', 'cube_kak': 'ก้อน(ลูก)',
+                'cube_hand': 'ก้อน(กั๊ก)', 'sack': 'กระสอบ(มัด)'
             };
             return names[code] || code;
         }
@@ -427,12 +456,13 @@
                 'tube_l': 'กระสอบ', 'tube_s': 'กระสอบ',
                 'pack_l': 'แพ็ค', 'pack_s': 'แพ็ค',
                 'crush_sack': 'ถุง', 'crush_sachet': 'ซอง',
-                'cube_sachet': 'ซอง', 'cube_kak': 'กั๊ก',
-                'cube_hand': 'มือ', 'sack': 'มัด'
+                'cube_sachet': 'ซอง', 'cube_kak': 'ลูก',
+                'cube_hand': 'กั๊ก', 'sack': 'มัด'
             };
             return units[code] || 'หน่วย';
         }
 
+        // ===================== Calculate Totals =====================
         function calculateAll() {
             updateTotals();
         }
@@ -501,6 +531,7 @@
             autoCalculateBags();
         }
 
+        // ===================== DateTime & Bag Functions =====================
         function initDateTimeInput() {
             const dateInput = document.getElementById('orderDate');
             const timeInput = document.getElementById('orderTime');
@@ -545,10 +576,15 @@
             bagInput.value = newVal;
         }
 
+        // ===================== Submit Order =====================
         async function submitOrder() {
-            // Admin ต้องเลือกลูกค้าก่อน
-            if (isAdmin && !currentCustomerId) {
-                alert("กรุณาเลือกลูกค้าก่อนครับ");
+            // ต้องเลือกร้านก่อน
+            if (!currentCustomerId) {
+                if (isAdmin) {
+                    alert("กรุณาเลือกลูกค้าก่อนครับ");
+                } else {
+                    alert("กรุณาเลือกร้านก่อนครับ");
+                }
                 return;
             }
             
@@ -563,7 +599,6 @@
                     const unit = getUnit(code);
                     let line = `- ${getProductName(code)}: ${qty} ${unit} (${(qty * p.price).toLocaleString()} บาท)`;
                     
-                    // Add promo info
                     if (p.promo_type === 'buy_x_free_y' && p.buy_qty && p.free_qty) {
                         const freeCount = Math.floor(qty / (p.buy_qty + p.free_qty)) * p.free_qty;
                         if (freeCount > 0) {
@@ -600,7 +635,6 @@
             try {
                 let finalCustomerName = currentCustomerName || "ลูกค้าหน้าร้าน";
 
-                // Calculate totals for payload
                 let subtotal = 0, totalDiscount = 0;
                 for (const code in customerPrices) {
                     const qty = getQty(code);
@@ -672,7 +706,3 @@
     </script>
 </body>
 </html>
-
-
-
-
