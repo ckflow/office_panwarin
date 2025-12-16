@@ -24,13 +24,16 @@
         .product-icon { font-size: 20px; margin-right: 8px; }
         
         .qty-input { width: 70px; text-align: center; font-size: 16px; font-weight: bold; border: 1px solid #ced4da; border-radius: 8px; padding: 5px; }
-        .qty-display { font-size: 18px; font-weight: bold; color: #198754; }
         
         .btn-save { border-radius: 30px; padding: 10px 30px; font-weight: bold; }
         
         .status-badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; margin-left: 8px; }
         .status-pending { background: #fff3cd; color: #856404; }
         .status-used { background: #d4edda; color: #155724; }
+        
+        .shift-badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; margin-left: 5px; }
+        .shift-morning { background: #fff3cd; color: #856404; }
+        .shift-afternoon { background: #cff4fc; color: #0c5460; }
         
         .history-item { background: white; border-radius: 10px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .history-item.used { opacity: 0.7; }
@@ -49,6 +52,15 @@
         
         .customer-info { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 15px; border-radius: 10px; margin-bottom: 15px; }
         .customer-info .name { font-size: 18px; font-weight: bold; }
+        
+        .shift-selector { display: flex; gap: 10px; margin-bottom: 15px; }
+        .shift-btn { flex: 1; padding: 12px; border-radius: 10px; border: 2px solid #ddd; background: white; font-weight: bold; cursor: pointer; text-align: center; transition: all 0.2s; }
+        .shift-btn.active { border-color: #0d6efd; background: #e7f1ff; color: #0d6efd; }
+        .shift-btn:hover { border-color: #0d6efd; }
+        .shift-btn i { margin-right: 5px; }
+        
+        .shift-required { font-size: 12px; color: #dc3545; margin-bottom: 10px; display: none; }
+        .shift-required.show { display: block; }
     </style>
 </head>
 <body>
@@ -122,6 +134,19 @@
                             <i class="fas fa-plus"></i> เพิ่มยอดฝาก
                         </div>
                         <div class="card-body">
+                            <!-- เลือกรอบ (บังคับ) -->
+                            <label style="font-size: 13px; color: #666; margin-bottom: 5px;">เลือกรอบ <span style="color: #dc3545;">*</span></label>
+                            <div class="shift-selector" id="depositShiftSelector">
+                                <div class="shift-btn" data-shift="morning" onclick="selectShift(this, 'deposit')">
+                                    <i class="fas fa-sun"></i> รอบเช้า
+                                </div>
+                                <div class="shift-btn" data-shift="afternoon" onclick="selectShift(this, 'deposit')">
+                                    <i class="fas fa-cloud-sun"></i> รอบบ่าย
+                                </div>
+                            </div>
+                            <div class="shift-required" id="depositShiftRequired">⚠️ กรุณาเลือกรอบก่อนบันทึก</div>
+                            <input type="hidden" id="depositShift" value="">
+                            
                             <div class="product-row">
                                 <div><span class="product-icon">🍻</span><span class="product-name">หลอดใหญ่</span></div>
                                 <input type="number" id="deposit_tube_l" class="qty-input" placeholder="0" min="0">
@@ -172,6 +197,19 @@
                             <i class="fas fa-plus"></i> เพิ่มบันทึกเหลือ
                         </div>
                         <div class="card-body">
+                            <!-- เลือกรอบ (บังคับ) -->
+                            <label style="font-size: 13px; color: #666; margin-bottom: 5px;">เลือกรอบ <span style="color: #dc3545;">*</span></label>
+                            <div class="shift-selector" id="leftoverShiftSelector">
+                                <div class="shift-btn" data-shift="morning" onclick="selectShift(this, 'leftover')">
+                                    <i class="fas fa-sun"></i> รอบเช้า
+                                </div>
+                                <div class="shift-btn" data-shift="afternoon" onclick="selectShift(this, 'leftover')">
+                                    <i class="fas fa-cloud-sun"></i> รอบบ่าย
+                                </div>
+                            </div>
+                            <div class="shift-required" id="leftoverShiftRequired">⚠️ กรุณาเลือกรอบก่อนบันทึก</div>
+                            <input type="hidden" id="leftoverShift" value="">
+                            
                             <div class="product-row">
                                 <div><span class="product-icon">🍻</span><span class="product-name">หลอดใหญ่</span></div>
                                 <input type="number" id="leftover_tube_l" class="qty-input" placeholder="0" min="0">
@@ -253,6 +291,11 @@
             'cube_hand': '🧊'
         };
 
+        const shiftNames = {
+            'morning': '🌅 เช้า',
+            'afternoon': '🌤️ บ่าย'
+        };
+
         let currentUserId = null;
         let currentCustomerId = null;
         let currentCustomerName = null;
@@ -291,6 +334,19 @@
             }
         }
         main();
+
+        // เลือกรอบ
+        function selectShift(btn, type) {
+            const container = btn.parentElement;
+            container.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const shift = btn.dataset.shift;
+            document.getElementById(type + 'Shift').value = shift;
+            
+            // ซ่อนข้อความแจ้งเตือน
+            document.getElementById(type + 'ShiftRequired').classList.remove('show');
+        }
 
         async function loadDepositCustomers() {
             try {
@@ -382,7 +438,7 @@
             }
         }
 
-        // โหลดข้อมูลฝาก - แก้ไขให้แสดงทั้ง pending และ used
+        // โหลดข้อมูลฝาก
         async function loadDepositData(customerId, filterDate = null) {
             try {
                 const res = await fetch(`${BASE_URL}/get-deposits`, {
@@ -392,11 +448,8 @@
                 });
                 const deposits = await res.json();
 
-                // แยก pending และ used
                 const pendingDeposits = deposits.filter(d => d.status === 'pending');
                 const usedDeposits = deposits.filter(d => d.status === 'used');
-                
-                // รวมทั้งหมด (pending ก่อน, used ทีหลัง)
                 const allDeposits = [...pendingDeposits, ...usedDeposits];
 
                 const today = new Date().toISOString().split('T')[0];
@@ -413,10 +466,13 @@
                         const pIcon = productIcons[pCode] || '📦';
                         const isUsed = d.status === 'used';
                         
-                        // สร้าง badge ตามสถานะ
                         const statusBadge = isUsed 
                             ? '<span class="status-badge status-used">✅ หักไปแล้ว</span>' 
                             : '<span class="status-badge status-pending">⏳ รอหัก</span>';
+                        
+                        const shiftBadge = d.shift 
+                            ? `<span class="shift-badge shift-${d.shift}">${shiftNames[d.shift] || d.shift}</span>`
+                            : '';
                         
                         return `
                             <div class="history-item ${isUsed ? 'used' : ''}">
@@ -424,6 +480,7 @@
                                     <div>
                                         <span class="history-product">${pIcon} ${pName}</span>
                                         <span class="history-qty ms-2">${d.quantity || 0} ถุง</span>
+                                        ${shiftBadge}
                                         ${statusBadge}
                                     </div>
                                     ${isAdmin && !isUsed ? `<button class="delete-btn" onclick="deleteDeposit(${d.id})"><i class="fas fa-trash"></i></button>` : ''}
@@ -438,6 +495,7 @@
             }
         }
 
+        // โหลดข้อมูลเหลือ
         async function loadLeftoverData(customerId, filterDate = null) {
             try {
                 const res = await fetch(`${BASE_URL}/get-leftovers`, {
@@ -455,16 +513,22 @@
                     document.getElementById('leftoverList').innerHTML = 
                         `<div class="text-center text-muted">${noDataText}</div>`;
                 } else {
-                    document.getElementById('leftoverList').innerHTML = leftovers.slice(0, 10).map(l => {
+                    document.getElementById('leftoverList').innerHTML = leftovers.slice(0, 20).map(l => {
                         const pCode = l.product_code || '';
                         const pName = productNames[pCode] || pCode || 'ไม่ระบุสินค้า';
                         const pIcon = productIcons[pCode] || '📦';
+                        
+                        const shiftBadge = l.shift 
+                            ? `<span class="shift-badge shift-${l.shift}">${shiftNames[l.shift] || l.shift}</span>`
+                            : '';
+                        
                         return `
                             <div class="history-item">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <span class="history-product">${pIcon} ${pName}</span>
                                         <span class="history-qty ms-2">${l.quantity || 0} ถุง</span>
+                                        ${shiftBadge}
                                     </div>
                                     ${isAdmin ? `<button class="delete-btn" onclick="deleteLeftover(${l.id})"><i class="fas fa-trash"></i></button>` : ''}
                                 </div>
@@ -478,9 +542,17 @@
             }
         }
 
+        // บันทึกฝาก - บังคับเลือกรอบ
         async function saveDeposit() {
             if (!currentCustomerId) {
                 alert('กรุณาเลือกลูกค้าก่อน');
+                return;
+            }
+
+            const shift = document.getElementById('depositShift').value;
+            if (!shift) {
+                document.getElementById('depositShiftRequired').classList.add('show');
+                alert('กรุณาเลือกรอบก่อน (เช้า/บ่าย)');
                 return;
             }
 
@@ -508,6 +580,7 @@
                             customerId: currentCustomerId,
                             productCode: d.productCode,
                             quantity: d.quantity,
+                            shift: shift,
                             note: note
                         })
                     });
@@ -515,10 +588,15 @@
 
                 alert('บันทึกฝากสำเร็จ!');
                 
+                // Clear form
                 DEPOSIT_PRODUCTS.forEach(code => {
                     document.getElementById(`deposit_${code}`).value = '';
                 });
                 document.getElementById('depositNote').value = '';
+                
+                // Reset shift selection
+                document.getElementById('depositShift').value = '';
+                document.getElementById('depositShiftSelector').querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
 
                 await loadDepositData(currentCustomerId, selectedDate);
             } catch (e) {
@@ -527,9 +605,17 @@
             }
         }
 
+        // บันทึกเหลือ - บังคับเลือกรอบ
         async function saveLeftover() {
             if (!currentCustomerId) {
                 alert('กรุณาเลือกลูกค้าก่อน');
+                return;
+            }
+
+            const shift = document.getElementById('leftoverShift').value;
+            if (!shift) {
+                document.getElementById('leftoverShiftRequired').classList.add('show');
+                alert('กรุณาเลือกรอบก่อน (เช้า/บ่าย)');
                 return;
             }
 
@@ -563,6 +649,7 @@
                             customerId: currentCustomerId,
                             productCode: l.productCode,
                             quantity: l.quantity,
+                            shift: shift,
                             note: note
                         })
                     });
@@ -570,11 +657,16 @@
 
                 alert('บันทึกเหลือสำเร็จ!');
                 
+                // Clear form
                 LEFTOVER_PRODUCTS.forEach(code => {
                     document.getElementById(`leftover_${code}`).value = '';
                 });
                 document.getElementById('leftover_cube').value = '';
                 document.getElementById('leftoverNote').value = '';
+                
+                // Reset shift selection
+                document.getElementById('leftoverShift').value = '';
+                document.getElementById('leftoverShiftSelector').querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
 
                 await loadLeftoverData(currentCustomerId, selectedDate);
             } catch (e) {
