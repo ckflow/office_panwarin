@@ -8,7 +8,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body { background-color: #f4f6f9; font-family: 'Sarabun', sans-serif; padding: 20px; padding-bottom: 80px; }
-        .customer-card { background: white; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 15px; overflow: hidden; }
+        .customer-card { background: white; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 15px; overflow: hidden; display: flex; }
+        .customer-card-main { flex: 1; }
+        .customer-card-delete { width: 45px; background: #f8f9fa; border-left: 1px solid #eee; display: flex; align-items: center; justify-content: center; }
+        .customer-card-delete button { background: none; border: none; color: #dc3545; font-size: 14px; padding: 10px; cursor: pointer; opacity: 0.6; }
+        .customer-card-delete button:hover { opacity: 1; background: #fee; }
         .card-header-custom { padding: 15px; background: #fff; border-bottom: 1px solid #f0f0f0; font-weight: bold; font-size: 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .card-header-custom:hover { background-color: #f9f9f9; }
         .card-body-custom { padding: 15px; display: none; background-color: #fafafa; }
@@ -397,59 +401,61 @@
 
                 const cardHtml = `
                     <div class="customer-card">
-                        <div class="card-header-custom" onclick="toggleCard(this)">
-                            <span>👤 ${customer.name}</span>
-                            <div>
-                                <button class="btn btn-sm btn-outline-danger me-2" style="font-size:10px;padding:2px 6px;" onclick="event.stopPropagation(); deleteCustomer(${customer.id}, '${customer.name}')">🗑️</button>
+                        <div class="customer-card-main">
+                            <div class="card-header-custom" onclick="toggleCard(this)">
+                                <span>👤 ${customer.name}</span>
                                 <span>▼</span>
                             </div>
+                            <div class="card-body-custom">
+                                <!-- LINE ID -->
+                                <div class="section-title">
+                                    <span class="title-text">📱 LINE ID</span>
+                                    <span class="title-btn">
+                                        <button class="btn btn-sm btn-outline-primary" style="font-size:11px;padding:2px 12px;" onclick="openManageLineModal(${customer.id}, '${customer.name}')">จัดการ</button>
+                                    </span>
+                                    <span class="title-space"></span>
+                                </div>
+                                <div id="lines-${customer.id}" style="margin-bottom:10px;"></div>
+
+                                <!-- ตัวคูณถุง -->
+                                <div class="section-title">
+                                    <span class="title-text">🛍️ ตัวคูณถุง</span>
+                                    <span class="title-btn">
+                                        <button class="btn btn-sm btn-success" style="font-size:11px;padding:2px 12px;" onclick="openAddMultiplierModal(${customer.id}, '${customer.name}')">+ ตั้งค่า</button>
+                                    </span>
+                                    <span class="title-space"></span>
+                                </div>
+                                <div id="multipliers-${customer.id}" style="margin-bottom:10px;">
+                                    <div class="empty-text">กำลังโหลด...</div>
+                                </div>
+
+                                <!-- โปรโมชั่น -->
+                                <div class="section-title">
+                                    <span class="title-text">🎁 โปรโมชั่น</span>
+                                    <span class="title-btn">
+                                        <button class="btn btn-sm btn-warning" style="font-size:11px;padding:2px 12px;" onclick="togglePromoSection(this, ${customer.id})">ดูโปรโมชั่น ▼</button>
+                                    </span>
+                                    <span class="title-space"></span>
+                                </div>
+                                <div class="promo-body" id="promos-${customer.id}" style="display:none; margin-top:8px;">
+                                    <div class="empty-text">กำลังโหลด...</div>
+                                </div>
+
+                                <!-- ตั้งราคา -->
+                                <div class="section-title mt-3">
+                                    <span class="title-text">💰 ตั้งราคา</span>
+                                    <span class="title-btn">
+                                        <button class="btn btn-sm btn-primary" style="font-size:11px;padding:2px 12px;" onclick="openAddPriceModal(${customer.id}, '${customer.name}')">+ เพิ่ม</button>
+                                    </span>
+                                    <span class="title-space"></span>
+                                </div>
+                                <div style="margin-bottom:10px;">
+                                    ${pricesHtml}
+                                </div>
+                            </div>
                         </div>
-                        <div class="card-body-custom">
-                            <!-- LINE ID -->
-                            <div class="section-title">
-                                <span class="title-text">📱 LINE ID</span>
-                                <span class="title-btn">
-                                    <button class="btn btn-sm btn-outline-primary" style="font-size:11px;padding:2px 12px;" onclick="openManageLineModal(${customer.id}, '${customer.name}')">จัดการ</button>
-                                </span>
-                                <span class="title-space"></span>
-                            </div>
-                            <div id="lines-${customer.id}" style="margin-bottom:10px;"></div>
-
-                            <!-- ตัวคูณถุง -->
-                            <div class="section-title">
-                                <span class="title-text">🛍️ ตัวคูณถุง</span>
-                                <span class="title-btn">
-                                    <button class="btn btn-sm btn-success" style="font-size:11px;padding:2px 12px;" onclick="openAddMultiplierModal(${customer.id}, '${customer.name}')">+ ตั้งค่า</button>
-                                </span>
-                                <span class="title-space"></span>
-                            </div>
-                            <div id="multipliers-${customer.id}" style="margin-bottom:10px;">
-                                <div class="empty-text">กำลังโหลด...</div>
-                            </div>
-
-                            <!-- โปรโมชั่น -->
-                            <div class="section-title">
-                                <span class="title-text">🎁 โปรโมชั่น</span>
-                                <span class="title-btn">
-                                    <button class="btn btn-sm btn-warning" style="font-size:11px;padding:2px 12px;" onclick="togglePromoSection(this, ${customer.id})">ดูโปรโมชั่น ▼</button>
-                                </span>
-                                <span class="title-space"></span>
-                            </div>
-                            <div class="promo-body" id="promos-${customer.id}" style="display:none; margin-top:8px;">
-                                <div class="empty-text">กำลังโหลด...</div>
-                            </div>
-
-                            <!-- ตั้งราคา -->
-                            <div class="section-title mt-3">
-                                <span class="title-text">💰 ตั้งราคา</span>
-                                <span class="title-btn">
-                                    <button class="btn btn-sm btn-primary" style="font-size:11px;padding:2px 12px;" onclick="openAddPriceModal(${customer.id}, '${customer.name}')">+ เพิ่ม</button>
-                                </span>
-                                <span class="title-space"></span>
-                            </div>
-                            <div style="margin-bottom:10px;">
-                                ${pricesHtml}
-                            </div>
+                        <div class="customer-card-delete">
+                            <button onclick="deleteCustomer(${customer.id}, '${customer.name}')" title="ลบลูกค้า">🗑️</button>
                         </div>
                     </div>
                 `;
@@ -487,7 +493,7 @@
         }
 
         function toggleCard(el) {
-            const body = el.nextElementSibling;
+            const body = el.parentElement.querySelector('.card-body-custom');
             body.style.display = body.style.display === 'none' || body.style.display === '' ? 'block' : 'none';
         }
 
@@ -690,8 +696,10 @@
                 setTimeout(() => {
                     const cards = document.querySelectorAll('.customer-card');
                     cards.forEach(card => {
-                        if (card.querySelector('.card-header-custom span').textContent.includes(currentCustomer.name)) {
-                            card.querySelector('.card-body-custom').style.display = 'block';
+                        const header = card.querySelector('.card-header-custom span');
+                        if (header && header.textContent.includes(currentCustomer.name)) {
+                            const body = card.querySelector('.card-body-custom');
+                            if (body) body.style.display = 'block';
                         }
                     });
                 }, 100);
@@ -714,8 +722,10 @@
                 setTimeout(() => {
                     const cards = document.querySelectorAll('.customer-card');
                     cards.forEach(card => {
-                        if (card.querySelector('.card-header-custom span').textContent.includes(customerName)) {
-                            card.querySelector('.card-body-custom').style.display = 'block';
+                        const header = card.querySelector('.card-header-custom span');
+                        if (header && header.textContent.includes(customerName)) {
+                            const body = card.querySelector('.card-body-custom');
+                            if (body) body.style.display = 'block';
                         }
                     });
                 }, 100);
