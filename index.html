@@ -869,16 +869,15 @@
 
                 // Mark deposits as used
                 if (pendingDeposits.length > 0 && currentCustomerId) {
-    await fetch(`${BASE_URL}/use-deposit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-            customerId: currentCustomerId,
-            orderId: data.orderId || invoiceNo
-        })
-    });
-}
-                }
+                await fetch(`${BASE_URL}/use-deposit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                    customerId: currentCustomerId,
+                    orderId: data.orderId || invoiceNo
+                })
+            });
+         }
 
                 const thaiDate = formatDateThai(document.getElementById('orderDate').value);
                 const selectedTime = document.getElementById('orderTime').value;
@@ -913,4 +912,5 @@
     </script>
 </body>
 </html>
+
 
