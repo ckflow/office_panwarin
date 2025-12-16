@@ -45,6 +45,8 @@
         
         .loading-screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #f4f6f9; display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .no-price-msg { text-align: center; padding: 40px 20px; color: #666; }
+        
+        .multiplier-badge { background: #0d6efd; color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px; margin-left: 5px; }
     </style>
 </head>
 <body>
@@ -166,8 +168,11 @@
             'ก้อน & อื่นๆ': ['cube_sachet', 'cube_kak', 'cube_hand', 'sack']
         };
 
-        // สินค้าที่ใช้ถุง
+        // สินค้าที่ใช้ถุง 1:1
         const productsUseBag = ['tube_l', 'tube_s', 'pack_l', 'crush_sack'];
+        
+        // สินค้าที่ใช้ตัวคูณถุง
+        const MULTIPLIER_PRODUCTS = ['crush_sachet', 'cube_kak'];
 
         let currentUserId = null;
         let currentCustomerId = null;
@@ -175,6 +180,7 @@
         let isAdmin = false;
         let isFirstBill = false;
         let customerPrices = {}; // { product_code: { price, promo_type, buy_qty, free_qty } }
+        let customerMultipliers = {}; // { product_code: multiplier }
         let allCustomers = []; // รายชื่อลูกค้าทั้งหมด (สำหรับ Admin)
         let myShops = []; // ร้านที่ผูกกับ LINE ID นี้ (สำหรับลูกค้าที่มีหลายร้าน)
 
@@ -263,6 +269,7 @@
                 currentCustomerId = null;
                 currentCustomerName = null;
                 customerPrices = {};
+                customerMultipliers = {};
                 renderProductsForAdmin();
                 updateTotals();
                 return;
@@ -296,6 +303,9 @@
                     }
                 });
                 
+                // โหลดตัวคูณถุงด้วย
+                await loadMultipliers(customerId);
+                
                 await checkFirstBill();
                 renderProducts();
                 
@@ -305,6 +315,28 @@
             } catch (e) {
                 console.error('Error loading prices:', e);
                 alert('โหลดราคาไม่สำเร็จ');
+            }
+        }
+
+        // โหลดตัวคูณถุงของลูกค้า
+        async function loadMultipliers(customerId) {
+            try {
+                const res = await fetch(`${BASE_URL}/get-multipliers`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customerId: customerId })
+                });
+                const data = await res.json();
+                
+                customerMultipliers = {};
+                data.forEach(item => {
+                    if (item.product_code) {
+                        customerMultipliers[item.product_code] = item.multiplier;
+                    }
+                });
+            } catch (e) {
+                console.error('Error loading multipliers:', e);
+                customerMultipliers = {};
             }
         }
 
@@ -332,6 +364,7 @@
                 currentCustomerId = null;
                 currentCustomerName = null;
                 customerPrices = {};
+                customerMultipliers = {};
                 renderProductsForAdmin();
                 updateTotals();
                 return;
@@ -377,18 +410,24 @@
                 availableProducts.forEach(code => {
                     const p = customerPrices[code];
                     const icon = productIcons[code] || '📦';
-                    const useBag = productsUseBag.includes(code);
+                    const hasMultiplier = MULTIPLIER_PRODUCTS.includes(code);
+                    
+                    // แสดง badge ตัวคูณถุง
+                    let multiplierBadge = '';
+                    if (hasMultiplier && customerMultipliers[code]) {
+                        multiplierBadge = `<span class="multiplier-badge">×${customerMultipliers[code]}ถุง</span>`;
+                    }
                     
                     html += `
                         <div class="product-card" id="card_${code}">
                             <div class="product-row">
                                 <div class="product-info">
-                                    <div class="product-name">${icon} ${getProductName(code)}</div>
+                                    <div class="product-name">${icon} ${getProductName(code)}${multiplierBadge}</div>
                                     <div class="product-price">${p.price} บาท</div>
                                 </div>
                                 <div class="product-right">
                                     <span class="line-total" id="total_${code}">0</span>
-                                    <input type="number" id="qty_${code}" class="qty-input ${useBag ? 'calculate-trigger' : ''}" 
+                                    <input type="number" id="qty_${code}" class="qty-input calculate-trigger" 
                                         placeholder="0" min="0" onchange="calculateAll()" oninput="calculateAll()">
                                 </div>
                             </div>
@@ -414,7 +453,6 @@
                 
                 codes.forEach(code => {
                     const icon = productIcons[code] || '📦';
-                    const useBag = productsUseBag.includes(code);
                     
                     html += `
                         <div class="product-card" id="card_${code}">
@@ -424,7 +462,7 @@
                                     <div class="product-price" style="color:#999;">ไม่มีราคา</div>
                                 </div>
                                 <div class="product-right">
-                                    <input type="number" id="qty_${code}" class="qty-input ${useBag ? 'calculate-trigger' : ''}" 
+                                    <input type="number" id="qty_${code}" class="qty-input calculate-trigger" 
                                         placeholder="0" min="0">
                                 </div>
                             </div>
@@ -564,7 +602,19 @@
 
         function autoCalculateBags() {
             let totalBags = 0;
-            productsUseBag.forEach(id => { totalBags += getQty(id); });
+            
+            // สินค้าที่ใช้ถุง 1:1 (หลอดใหญ่, หลอดเล็ก, แพ็คกระสอบ, บด(ถุง))
+            productsUseBag.forEach(code => { 
+                totalBags += getQty(code); 
+            });
+            
+            // สินค้าที่ใช้ตัวคูณ (บด(ซอง), ก้อน(ลูก))
+            MULTIPLIER_PRODUCTS.forEach(code => {
+                const qty = getQty(code);
+                const multiplier = customerMultipliers[code] || 0;
+                totalBags += qty * multiplier;
+            });
+            
             document.getElementById('qty_bag_borrow').value = totalBags;
         }
 
