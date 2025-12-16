@@ -181,7 +181,10 @@
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script>
         const MY_LIFF_ID = "2008689090-CnrdxM5k";
-        const ALLOWED_ADMINS = ["U4dc8fa32570dca3dfb4093b48a5c2093","U4cc74cb6346dece926adf6b2a3b7cb77"];
+        const ADMIN_IDS = [
+            "U4dc8fa32570dca3dfb4093b48a5c2093", //แชมป์
+            "U4cc74cb6346dece926adf6b2a3b7cb77", //บี
+        ];
         const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
 
         // API Endpoints
@@ -210,7 +213,7 @@
                 if (!liff.isLoggedIn()) { liff.login(); return; }
                 
                 const profile = await liff.getProfile();
-                if (!ALLOWED_ADMINS.includes(profile.userId)) {
+                if (!ADMIN_IDS.includes(profile.userId)) {
                     document.getElementById('auth-check').innerHTML = `<h3 class="text-danger">⛔ Access Denied</h3>`;
                     return;
                 }
@@ -668,4 +671,5 @@
     </script>
 </body>
 </html>
+
 
