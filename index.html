@@ -110,6 +110,116 @@
         .pickup-time-container.show {
             display: block;
         }
+        
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            padding: 4px;
+            margin: 10px 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            font-weight: bold;
+            color: #666;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: #0d6efd;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* My Orders Styles */
+        .my-order-card {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        .my-order-header {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .my-order-invoice {
+            font-weight: bold;
+            color: #0d6efd;
+            font-size: 14px;
+        }
+        .my-order-date {
+            font-size: 11px;
+            color: #888;
+        }
+        .my-order-total {
+            font-weight: bold;
+            color: #198754;
+            font-size: 16px;
+        }
+        .my-order-body {
+            padding: 12px 15px;
+            background: #fafafa;
+        }
+        .my-order-items {
+            font-size: 13px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .my-order-round {
+            font-size: 12px;
+            color: #0d6efd;
+            background: #e7f1ff;
+            padding: 4px 8px;
+            border-radius: 6px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .my-order-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .my-order-actions button {
+            flex: 1;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-badge {
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-confirmed { background: #d1e7dd; color: #0f5132; }
+        .status-cancelled { background: #f8d7da; color: #842029; }
+        .empty-orders {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+        .empty-orders i {
+            font-size: 50px;
+            margin-bottom: 15px;
+            color: #ddd;
+        }
     </style>
 </head>
 <body>
@@ -127,99 +237,121 @@
                     <i class="fas fa-sync-alt"></i>
                 </button>
             </div>
-            <div class="date-input-container">
-                <i class="fas fa-calendar-alt date-icon"></i>
-                <input type="date" id="orderDate" class="date-input" onchange="checkFirstBill()">
-                <span class="divider">|</span>
-                <i class="fas fa-clock date-icon"></i>
-                <input type="time" id="orderTime" class="date-input">
-            </div>
         </div>
 
-        <!-- เลือกรอบจัดส่ง -->
-        <div class="container mt-2" id="roundSelectSection">
-            <div class="product-card" style="background: #f0fff4; border: 1px solid #86efac;">
-                <div class="product-info">
-                    <div class="product-name text-success mb-2">🚚 เลือกรอบจัดส่ง</div>
-                    <div class="round-btn-group" id="roundButtonGroup">
-                        <!-- จะถูก render โดย JavaScript -->
-                        <div class="text-muted" style="font-size: 13px;">กรุณาเลือกลูกค้าก่อน</div>
-                    </div>
-                </div>
-            </div>
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('order')">🛒 สั่งซื้อ</button>
+            <button class="tab-btn" onclick="switchTab('myorders')">📋 ออเดอร์ของฉัน</button>
         </div>
 
-        <!-- เลือกร้านของฉัน (สำหรับลูกค้าที่มีหลายร้าน) -->
-        <div class="container mt-2" id="shopSelectSection" style="display: none;">
-            <div class="product-card" style="background: #e7f1ff; border: 1px solid #b6d4fe;">
-                <div class="product-info">
-                    <div class="product-name text-primary">🏪 เลือกร้านของคุณ</div>
-                    <select id="myShopSelect" class="form-select mt-2" onchange="onMyShopSelect()">
-                        <option value="">-- เลือกร้าน --</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <!-- เลือกลูกค้า (สำหรับ Admin) -->
-        <div class="container mt-2" id="adminInputSection" style="display: none;">
-            <div class="product-card" style="background: #fff3cd; border: 1px solid #ffe69c;">
-                <div class="product-info">
-                    <div class="product-name text-warning-emphasis">👤 เลือกลูกค้า (เสมียนลงเอง)</div>
-                    <select id="customerSelect" class="form-select mt-2" onchange="onCustomerSelect()">
-                        <option value="">-- เลือกลูกค้า --</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <div class="container mt-2" id="productList">
-            <!-- Products will be rendered here -->
-        </div>
-
-        <!-- Loading Overlay สำหรับตอนโหลดราคา -->
-        <div id="productLoading" class="product-loading-overlay">
-            <div class="text-center">
-                <div class="spinner-border text-primary mb-2" role="status"></div>
-                <div style="font-size: 14px; color: #666;">กำลังโหลดราคา...</div>
-            </div>
-        </div>
-
-        <div class="container mt-2">
-            <div class="cat-title">จัดการถุง</div>
-            <div class="product-card">
-                <div class="product-row">
-                    <div class="product-info"><div class="product-name">♻️ คืนถุง (ใบ)</div></div>
-                    <div><input type="number" id="qty_bag_return" class="qty-input" placeholder="0" min="0"></div>
+        <!-- Tab: สั่งซื้อ -->
+        <div id="tabOrder" class="tab-content active">
+            <div class="container-fluid px-3">
+                <div class="date-input-container">
+                    <i class="fas fa-calendar-alt date-icon"></i>
+                    <input type="date" id="orderDate" class="date-input" onchange="checkFirstBill()">
+                    <span class="divider">|</span>
+                    <i class="fas fa-clock date-icon"></i>
+                    <input type="time" id="orderTime" class="date-input">
                 </div>
             </div>
 
-            <div class="product-card borrow-card">
-                <div class="product-row">
+            <!-- เลือกรอบจัดส่ง -->
+            <div class="container mt-2" id="roundSelectSection">
+                <div class="product-card" style="background: #f0fff4; border: 1px solid #86efac;">
                     <div class="product-info">
-                        <div class="product-name text-primary">👜 ยืมถุง (ใบ)</div>
-                        <div class="product-price">รวมให้อัตโนมัติ</div>
+                        <div class="product-name text-success mb-2">🚚 เลือกรอบจัดส่ง</div>
+                        <div class="round-btn-group" id="roundButtonGroup">
+                            <!-- จะถูก render โดย JavaScript -->
+                            <div class="text-muted" style="font-size: 13px;">กรุณาเลือกลูกค้าก่อน</div>
+                        </div>
                     </div>
-                    <div class="stepper-container">
-                        <button class="stepper-btn minus admin-only" style="display:none;" onclick="manualAdjustBag(-1)"><i class="fas fa-minus"></i></button>
-                        <input type="number" id="qty_bag_borrow" class="qty-input" value="0" min="0" readonly>
-                        <button class="stepper-btn plus admin-only" style="display:none;" onclick="manualAdjustBag(1)"><i class="fas fa-plus"></i></button>
+                </div>
+            </div>
+
+            <!-- เลือกร้านของฉัน (สำหรับลูกค้าที่มีหลายร้าน) -->
+            <div class="container mt-2" id="shopSelectSection" style="display: none;">
+                <div class="product-card" style="background: #e7f1ff; border: 1px solid #b6d4fe;">
+                    <div class="product-info">
+                        <div class="product-name text-primary">🏪 เลือกร้านของคุณ</div>
+                        <select id="myShopSelect" class="form-select mt-2" onchange="onMyShopSelect()">
+                            <option value="">-- เลือกร้าน --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- เลือกลูกค้า (สำหรับ Admin) -->
+            <div class="container mt-2" id="adminInputSection" style="display: none;">
+                <div class="product-card" style="background: #fff3cd; border: 1px solid #ffe69c;">
+                    <div class="product-info">
+                        <div class="product-name text-warning-emphasis">👤 เลือกลูกค้า (เสมียนลงเอง)</div>
+                        <select id="customerSelect" class="form-select mt-2" onchange="onCustomerSelect()">
+                            <option value="">-- เลือกลูกค้า --</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="container mt-2" id="productList">
+                <!-- Products will be rendered here -->
+            </div>
+
+            <!-- Loading Overlay สำหรับตอนโหลดราคา -->
+            <div id="productLoading" class="product-loading-overlay">
+                <div class="text-center">
+                    <div class="spinner-border text-primary mb-2" role="status"></div>
+                    <div style="font-size: 14px; color: #666;">กำลังโหลดราคา...</div>
+                </div>
+            </div>
+
+            <div class="container mt-2">
+                <div class="cat-title">จัดการถุง</div>
+                <div class="product-card">
+                    <div class="product-row">
+                        <div class="product-info"><div class="product-name">♻️ คืนถุง (ใบ)</div></div>
+                        <div><input type="number" id="qty_bag_return" class="qty-input" placeholder="0" min="0"></div>
+                    </div>
+                </div>
+
+                <div class="product-card borrow-card">
+                    <div class="product-row">
+                        <div class="product-info">
+                            <div class="product-name text-primary">👜 ยืมถุง (ใบ)</div>
+                            <div class="product-price">รวมให้อัตโนมัติ</div>
+                        </div>
+                        <div class="stepper-container">
+                            <button class="stepper-btn minus admin-only" style="display:none;" onclick="manualAdjustBag(-1)"><i class="fas fa-minus"></i></button>
+                            <input type="number" id="qty_bag_borrow" class="qty-input" value="0" min="0" readonly>
+                            <button class="stepper-btn plus admin-only" style="display:none;" onclick="manualAdjustBag(1)"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ยอดรวมและปุ่มยืนยัน -->
+            <div class="container">
+                <div class="bottom-bar">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted" style="font-size: 12px;">รวมสุทธิ</span>
+                            <div class="grand-total" id="grandTotalDisplay" style="font-size: 22px; font-weight: bold; color: #198754;">0 บาท</div>
+                        </div>
+                        <button class="btn btn-primary" style="border-radius: 25px; padding: 12px 30px; font-weight: bold; font-size: 16px;" onclick="openConfirmModal()">
+                            ยืนยันสั่งซื้อ
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ยอดรวมและปุ่มยืนยัน -->
-        <div class="container">
-            <div class="bottom-bar">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="text-muted" style="font-size: 12px;">รวมสุทธิ</span>
-                        <div class="grand-total" id="grandTotalDisplay" style="font-size: 22px; font-weight: bold; color: #198754;">0 บาท</div>
-                    </div>
-                    <button class="btn btn-primary" style="border-radius: 25px; padding: 12px 30px; font-weight: bold; font-size: 16px;" onclick="openConfirmModal()">
-                        ยืนยันสั่งซื้อ
-                    </button>
+        <!-- Tab: ออเดอร์ของฉัน -->
+        <div id="tabMyOrders" class="tab-content">
+            <div class="container mt-2" id="myOrdersList">
+                <div class="text-center text-muted py-4">
+                    <div class="spinner-border text-primary mb-2" role="status"></div>
+                    <div>กำลังโหลด...</div>
                 </div>
             </div>
         </div>
@@ -317,24 +449,183 @@
         let myShops = [];
         let pendingDeposits = [];
         let depositTotal = 0;
-        let selectedRound = null; // รอบที่เลือก: 1, 2, 3, 'extra'
-        let customerRounds = []; // รอบทั้งหมดของลูกค้า
+        let selectedRound = null;
+        let customerRounds = [];
+        let myOrders = [];
 
-        // สินค้าที่นับเป็นโควต้ายูนิต+บด
         const QUOTA_BAG_PRODUCTS = ['tube_l', 'tube_s', 'pack_l', 'pack_s', 'crush_sack', 'crush_sachet', 'crush_white', 'sack'];
-        // สินค้าที่นับเป็นโควต้าก้อน ซอง
         const QUOTA_CUBE_PRODUCTS = ['cube_sachet', 'cube_kak', 'cube_hand'];
 
-        // ฟังก์ชันเลือกรอบ
+        // ==================== TAB FUNCTIONS ====================
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            if (tab === 'order') {
+                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+                document.getElementById('tabOrder').classList.add('active');
+            } else {
+                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+                document.getElementById('tabMyOrders').classList.add('active');
+                loadMyOrders();
+            }
+        }
+
+        // ==================== MY ORDERS FUNCTIONS ====================
+        async function loadMyOrders() {
+            const container = document.getElementById('myOrdersList');
+            container.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border text-primary mb-2"></div><div>กำลังโหลด...</div></div>';
+            
+            try {
+                const res = await fetch(`${BASE_URL}/get-my-orders`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lineId: currentUserId })
+                });
+                myOrders = await res.json();
+                if (!Array.isArray(myOrders)) myOrders = [];
+                renderMyOrders();
+            } catch (e) {
+                console.error('Error loading my orders:', e);
+                container.innerHTML = '<div class="empty-orders"><i class="fas fa-exclamation-circle"></i><h5>โหลดข้อมูลไม่สำเร็จ</h5></div>';
+            }
+        }
+
+        function renderMyOrders() {
+            const container = document.getElementById('myOrdersList');
+            
+            if (!myOrders || myOrders.length === 0) {
+                container.innerHTML = '<div class="empty-orders"><i class="fas fa-receipt"></i><h5>ยังไม่มีออเดอร์</h5><p>ออเดอร์ที่สั่งจะแสดงที่นี่</p></div>';
+                return;
+            }
+            
+            let html = '';
+            myOrders.forEach(order => {
+                const statusClass = getStatusClass(order.status);
+                const statusText = getStatusText(order.status);
+                const canCancel = order.status === 'pending';
+                const roundText = getRoundDisplayText(order.delivery_round, order.pickup_time);
+                
+                html += `
+                    <div class="my-order-card">
+                        <div class="my-order-header">
+                            <div>
+                                <div class="my-order-invoice">${order.invoice_no || 'N/A'}</div>
+                                <div class="my-order-date">📅 ${formatOrderDate(order.order_date)} ${order.order_time || ''}</div>
+                            </div>
+                            <div class="text-end">
+                                <div class="my-order-total">${parseFloat(order.total || 0).toLocaleString()} บาท</div>
+                                <span class="status-badge ${statusClass}">${statusText}</span>
+                            </div>
+                        </div>
+                        <div class="my-order-body">
+                            <div class="my-order-round">🚚 ${roundText}</div>
+                            <div class="my-order-items">${formatOrderItems(order.order_items)}</div>
+                            ${order.total_bags > 0 ? `<div style="font-size:12px; color:#666;">👜 ยืมถุง: ${order.total_bags} ใบ</div>` : ''}
+                            ${canCancel ? `
+                                <div class="my-order-actions mt-3">
+                                    <button class="btn btn-outline-danger" onclick="cancelOrder(${order.id}, '${order.invoice_no}')">❌ ยกเลิกออเดอร์</button>
+                                </div>
+                            ` : `
+                                <div class="text-center mt-2" style="font-size: 12px; color: #888;">
+                                    ${order.status === 'confirmed' ? '✅ ยืนยันแล้ว ไม่สามารถยกเลิกได้' : ''}
+                                    ${order.status === 'cancelled' ? '❌ ยกเลิกแล้ว' : ''}
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function getStatusClass(status) {
+            const classes = {
+                'pending': 'status-pending',
+                'confirmed': 'status-confirmed',
+                'delivered': 'status-confirmed',
+                'cancelled': 'status-cancelled'
+            };
+            return classes[status] || 'status-pending';
+        }
+
+        function getStatusText(status) {
+            const texts = {
+                'pending': '⏳ รอยืนยัน',
+                'confirmed': '✅ ยืนยันแล้ว',
+                'delivered': '🚚 ส่งแล้ว',
+                'cancelled': '❌ ยกเลิก'
+            };
+            return texts[status] || 'รอดำเนินการ';
+        }
+
+        function getRoundDisplayText(round, pickupTime) {
+            if (round === 'pickup') {
+                return `รับเองหน้าโรง (${pickupTime || '-'} น.)`;
+            }
+            if (round === 'extra') return 'รอบเสริม';
+            if (round) return `รอบ ${round}`;
+            return '-';
+        }
+
+        function formatOrderDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            const day = date.getDate();
+            const month = date.toLocaleDateString('th-TH', { month: 'short' });
+            const year = date.getFullYear() + 543;
+            return `${day} ${month} ${year}`;
+        }
+
+        function formatOrderItems(items) {
+            if (!items) return '<span class="text-muted">ไม่มีรายการ</span>';
+            
+            if (typeof items === 'string') {
+                try {
+                    items = JSON.parse(items);
+                } catch (e) {
+                    return items.replace(/\n/g, '<br>');
+                }
+            }
+            
+            if (Array.isArray(items)) {
+                return items.map(item => `<div>• ${item}</div>`).join('');
+            }
+            
+            return '<span class="text-muted">ไม่มีรายการ</span>';
+        }
+
+        async function cancelOrder(orderId, invoiceNo) {
+            if (!confirm(`❌ ยกเลิกออเดอร์ ${invoiceNo}?\n\nเมื่อยกเลิกแล้วจะไม่สามารถกู้คืนได้`)) return;
+            
+            try {
+                const res = await fetch(`${BASE_URL}/cancel-order`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId, lineId: currentUserId })
+                });
+                const result = await res.json();
+                
+                if (result.success) {
+                    alert('✅ ยกเลิกออเดอร์แล้ว');
+                    loadMyOrders();
+                } else {
+                    alert('❌ ' + (result.message || 'ไม่สามารถยกเลิกได้'));
+                }
+            } catch (e) {
+                alert('เกิดข้อผิดพลาด: ' + e.message);
+            }
+        }
+
+        // ==================== ROUND FUNCTIONS ====================
         function selectRound(round) {
-            // ตรวจสอบว่ารอบนี้สามารถเลือกได้หรือไม่
             const roundData = customerRounds.find(r => r.round_number == round);
             if (!roundData) {
                 alert("ลูกค้านี้ไม่มีรอบนี้");
                 return;
             }
             
-            // ถ้าเป็นรอบเสริม ต้องตรวจสอบว่าปลดล็อคหรือยัง
             if (round === 'extra' && !roundData.is_unlocked) {
                 alert("🔒 รอบเสริมยังไม่ได้ปลดล็อค\nกรุณาติดต่อโรงงาน 0949592455");
                 return;
@@ -344,12 +635,10 @@
             document.querySelectorAll('.round-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector(`.round-btn[data-round="${round}"]`).classList.add('active');
             
-            // ซ่อน pickup time container
             const pickupContainer = document.getElementById('pickupTimeContainer');
             if (pickupContainer) pickupContainer.classList.remove('show');
         }
 
-        // แปลงรอบเป็นข้อความ
         function getRoundText(round) {
             if (round === 'pickup') {
                 const time = getPickupTime();
@@ -378,7 +667,6 @@
             return timeStr.substring(0, 5);
         }
 
-        // โหลดรอบของลูกค้า
         async function loadCustomerRounds(customerId) {
             try {
                 const res = await fetch(`${BASE_URL}/get-customer-rounds`, {
@@ -396,12 +684,10 @@
             }
         }
 
-        // แสดงปุ่มเลือกรอบตามที่ลูกค้ามี
         function renderRoundButtons() {
             const container = document.getElementById('roundButtonGroup');
             if (!container) return;
             
-            // ปุ่มรับเองหน้าโรงแสดงเสมอ
             let html = '';
             
             if (customerRounds.length === 0) {
@@ -411,7 +697,6 @@
                     </div>
                 `;
             } else {
-                // Sort: 1, 2, 3, extra
                 const order = { '1': 1, '2': 2, '3': 3, 'extra': 4 };
                 customerRounds.sort((a, b) => (order[a.round_number] || 99) - (order[b.round_number] || 99));
                 
@@ -436,7 +721,6 @@
                 });
             }
             
-            // เพิ่มปุ่มรับเองหน้าโรง (แสดงเสมอ)
             html += `
                 <button type="button" 
                     class="round-btn pickup" 
@@ -448,7 +732,6 @@
                 </button>
             `;
             
-            // เพิ่มช่องเลือกเวลารับเอง
             html += `
                 <div class="pickup-time-container" id="pickupTimeContainer">
                     <label class="small text-muted">⏰ เลือกเวลารับ:</label>
@@ -457,10 +740,9 @@
             `;
             
             container.innerHTML = html;
-            selectedRound = null; // reset selection
+            selectedRound = null;
         }
 
-        // เลือกรับเองหน้าโรง
         function selectPickup() {
             selectedRound = 'pickup';
             document.querySelectorAll('.round-btn').forEach(btn => btn.classList.remove('active'));
@@ -468,24 +750,19 @@
             document.getElementById('pickupTimeContainer').classList.add('show');
         }
 
-        // อัพเดทเวลารับเอง
         function updatePickupTime() {
-            // เก็บเวลาไว้ใช้ตอนส่ง
             const time = document.getElementById('pickupTime').value;
             console.log('Pickup time:', time);
         }
 
-        // ดึงเวลารับเอง
         function getPickupTime() {
             const input = document.getElementById('pickupTime');
             return input ? input.value : '10:00';
         }
 
-        // ตรวจสอบโควต้า
         function checkQuota() {
             if (!selectedRound) return { valid: false, message: "กรุณาเลือกรอบจัดส่งก่อน" };
             
-            // ถ้าเป็นรับเองหน้าโรง ไม่ต้องตรวจสอบโควต้า
             if (selectedRound === 'pickup') {
                 return { valid: true };
             }
@@ -493,7 +770,6 @@
             const roundData = customerRounds.find(r => r.round_number == selectedRound);
             if (!roundData) return { valid: false, message: "ไม่พบข้อมูลรอบนี้" };
             
-            // คำนวณจำนวนถุงและก้อนที่สั่ง
             let totalBags = 0;
             let totalCubes = 0;
             
@@ -512,7 +788,6 @@
             const quotaCubes = roundData.quota_cubes || 0;
             
             let errors = [];
-            // ตรวจสอบเฉพาะเมื่อโควต้า > 0
             if (quotaBags > 0 && totalBags > quotaBags) {
                 errors.push(`สั่งยูนิต+บด: ${totalBags} / โควต้า: ${quotaBags} ❌`);
             }
@@ -572,7 +847,6 @@
         }
         main();
 
-        // รีโหลดยอดฝากเมื่อสลับกลับมาหน้านี้
         document.addEventListener('visibilitychange', async function() {
             if (document.visibilityState === 'visible' && currentCustomerId) {
                 await loadPendingDeposits(currentCustomerId);
@@ -580,7 +854,6 @@
             }
         });
 
-        // Polling ยอดฝากทุก 10 วินาที
         let depositPollingInterval = null;
         
         function startDepositPolling() {
@@ -590,7 +863,7 @@
                     await loadPendingDeposits(currentCustomerId);
                     updateTotals();
                 }
-            }, 10000); // 10 วินาที
+            }, 10000);
         }
         
         function stopDepositPolling() {
@@ -649,7 +922,7 @@
                 depositTotal = 0;
                 customerRounds = [];
                 selectedRound = null;
-                stopDepositPolling(); // หยุด polling
+                stopDepositPolling();
                 renderProductsForAdmin();
                 renderRoundButtons();
                 updateTotals();
@@ -687,10 +960,10 @@
                 
                 await loadMultipliers(customerId);
                 await loadPendingDeposits(customerId);
-                await loadCustomerRounds(customerId); // โหลดรอบจัดส่ง
+                await loadCustomerRounds(customerId);
                 await checkFirstBill();
                 renderProducts();
-                startDepositPolling(); // เริ่ม polling
+                startDepositPolling();
                 
                 document.getElementById('loadingScreen').style.display = 'none';
                 document.getElementById('mainContent').style.display = 'block';
@@ -773,7 +1046,7 @@
                 depositTotal = 0;
                 customerRounds = [];
                 selectedRound = null;
-                stopDepositPolling(); // หยุด polling
+                stopDepositPolling();
                 renderProductsForAdmin();
                 renderRoundButtons();
                 updateTotals();
@@ -961,7 +1234,6 @@
         let cachedDiscount = 0;
 
         function openConfirmModal() {
-            // ตรวจสอบว่ามีรอบหรือยัง (ยกเว้น pickup)
             if (selectedRound !== 'pickup' && customerRounds.length === 0) {
                 alert("⚠️ ยังไม่ได้ตั้งรอบจัดส่ง\nกรุณาเลือก 'รับเองหน้าโรง' หรือติดต่อโรงงาน 0949592455");
                 return;
@@ -1018,7 +1290,6 @@
                 return;
             }
 
-            // ตรวจสอบโควต้า
             const quotaCheck = checkQuota();
             if (!quotaCheck.valid) {
                 alert(quotaCheck.message);
@@ -1182,7 +1453,6 @@
                     });
                 }
 
-                // ถ้าเป็นรอบเสริม ให้ล็อคกลับหลังสั่งเสร็จ
                 if (selectedRound === 'extra') {
                     const roundData = customerRounds.find(r => r.round_number === 'extra');
                     if (roundData) {
