@@ -868,17 +868,16 @@
                 let invoiceNo = data.invoiceNo;
 
                 // Mark deposits as used
-                if (pendingDeposits.length > 0) {
-                    for (const dep of pendingDeposits) {
-                        await fetch(`${BASE_URL}/use-deposit`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ 
-                                depositId: dep.id,
-                                orderId: data.orderId || invoiceNo
-                            })
-                        });
-                    }
+                if (pendingDeposits.length > 0 && currentCustomerId) {
+    await fetch(`${BASE_URL}/use-deposit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            customerId: currentCustomerId,
+            orderId: data.orderId || invoiceNo
+        })
+    });
+}
                 }
 
                 const thaiDate = formatDateThai(document.getElementById('orderDate').value);
@@ -914,3 +913,4 @@
     </script>
 </body>
 </html>
+
