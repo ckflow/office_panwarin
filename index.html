@@ -702,7 +702,9 @@
             // Update modal content
             document.getElementById('confirmOrderLines').innerHTML = orderLines.join('<br>');
             document.getElementById('confirmSubtotal').textContent = cachedSubtotal.toLocaleString() + ' บาท';
-            document.getElementById('confirmDiscount').textContent = '-' + cachedDiscount.toLocaleString() + ' บาท';
+            
+            // Handle discount display - show "-" if no discount
+            document.getElementById('confirmDiscount').textContent = cachedDiscount > 0 ? '-' + cachedDiscount.toLocaleString() + ' บาท' : '-';
             
             // Handle deposit display - show "-" if no deposit or NaN
             const validDeposit = depositTotal && !isNaN(depositTotal) && depositTotal > 0;
@@ -712,9 +714,9 @@
             const grandTotal = Math.max(0, cachedSubtotal - cachedDiscount - safeDepositTotal);
             document.getElementById('confirmGrandTotal').textContent = grandTotal.toLocaleString() + ' บาท';
 
-            // Show/hide rows
-            document.getElementById('confirmDiscountRow').style.display = cachedDiscount > 0 ? 'flex' : 'none';
-            document.getElementById('confirmDepositRow').style.display = validDeposit ? 'flex' : 'none';
+            // Show/hide rows - always show but with "-" if no value
+            document.getElementById('confirmDiscountRow').style.display = 'flex';
+            document.getElementById('confirmDepositRow').style.display = 'flex';
 
             // Show modal
             document.getElementById('confirmModal').style.display = 'block';
