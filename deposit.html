@@ -88,6 +88,18 @@
                 </div>
             </div>
 
+            <!-- เลือกวันที่ -->
+            <div id="dateFilterSection" style="display: none;">
+                <div class="card" style="background: #f8f9fa; border: 1px solid #dee2e6;">
+                    <div class="card-body py-2">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span style="font-size: 14px;">📅 ดูข้อมูลวันที่:</span>
+                            <input type="date" id="filterDate" class="form-control" style="width: 160px; font-size: 14px;" onchange="onDateChange()">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- ส่วนฝาก -->
             <div id="depositSection" style="display: none;">
                 <div class="section-title">📦 ฝากน้ำแข็ง (หักบิลถัดไป)</div>
@@ -245,6 +257,7 @@
         let currentCustomerName = null;
         let isAdmin = false;
         let depositCustomers = []; // ลูกค้าที่มีสิทธิ์ฝาก
+        let selectedDate = null; // วันที่เลือกดู
 
         async function main() {
             try {
@@ -310,13 +323,19 @@
                     currentCustomerId = data.customerId;
                     currentCustomerName = data.customerName;
                     
+                    // ตั้งค่าวันที่เป็นวันนี้
+                    const today = new Date().toISOString().split('T')[0];
+                    document.getElementById('filterDate').value = today;
+                    selectedDate = today;
+                    
                     document.getElementById('customerNameDisplay').textContent = currentCustomerName;
                     document.getElementById('customerInfoSection').style.display = 'block';
+                    document.getElementById('dateFilterSection').style.display = 'block';
                     document.getElementById('depositSection').style.display = 'block';
                     document.getElementById('leftoverSection').style.display = 'block';
                     
-                    await loadDepositData(currentCustomerId);
-                    await loadLeftoverData(currentCustomerId);
+                    await loadDepositData(currentCustomerId, selectedDate);
+                    await loadLeftoverData(currentCustomerId, selectedDate);
                     
                     document.getElementById('loadingScreen').style.display = 'none';
                     document.getElementById('mainContent').style.display = 'block';
@@ -339,6 +358,7 @@
             if (!customerId) {
                 currentCustomerId = null;
                 currentCustomerName = null;
+                document.getElementById('dateFilterSection').style.display = 'none';
                 document.getElementById('depositSection').style.display = 'none';
                 document.getElementById('leftoverSection').style.display = 'none';
                 return;
@@ -347,41 +367,65 @@
             currentCustomerId = parseInt(customerId);
             currentCustomerName = select.options[select.selectedIndex].dataset.name;
 
+            // ตั้งค่าวันที่เป็นวันนี้
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('filterDate').value = today;
+            selectedDate = today;
+
+            document.getElementById('dateFilterSection').style.display = 'block';
             document.getElementById('depositSection').style.display = 'block';
             document.getElementById('leftoverSection').style.display = 'block';
 
-            await loadDepositData(currentCustomerId);
-            await loadLeftoverData(currentCustomerId);
+            await loadDepositData(currentCustomerId, selectedDate);
+            await loadLeftoverData(currentCustomerId, selectedDate);
+        }
+
+        // เปลี่ยนวันที่
+        async function onDateChange() {
+            selectedDate = document.getElementById('filterDate').value;
+            if (currentCustomerId) {
+                await loadDepositData(currentCustomerId, selectedDate);
+                await loadLeftoverData(currentCustomerId, selectedDate);
+            }
         }
 
         // โหลดข้อมูลฝาก
-        async function loadDepositData(customerId) {
+        async function loadDepositData(customerId, filterDate = null) {
             try {
                 const res = await fetch(`${BASE_URL}/get-deposits`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ customerId })
+                    body: JSON.stringify({ customerId, filterDate })
                 });
                 const deposits = await res.json();
 
                 const pendingDeposits = deposits.filter(d => d.status === 'pending');
 
+                // เช็คว่าเป็นวันนี้หรือไม่
+                const today = new Date().toISOString().split('T')[0];
+                const isToday = filterDate === today;
+                const noDataText = isToday ? '- วันนี้ยังไม่มีข้อมูล -' : '- ไม่มีข้อมูล -';
+
                 if (pendingDeposits.length === 0) {
                     document.getElementById('pendingDepositList').innerHTML = 
-                        '<div class="text-center text-muted">- ไม่มียอดฝากค้าง -</div>';
+                        `<div class="text-center text-muted">${noDataText}</div>`;
                 } else {
-                    document.getElementById('pendingDepositList').innerHTML = pendingDeposits.map(d => `
-                        <div class="history-item">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <span class="history-product">${productIcons[d.product_code]} ${productNames[d.product_code]}</span>
-                                    <span class="history-qty ms-2">${d.quantity} ถุง</span>
+                    document.getElementById('pendingDepositList').innerHTML = pendingDeposits.map(d => {
+                        const pName = productNames[d.product_code] || d.product_code;
+                        const pIcon = productIcons[d.product_code] || '📦';
+                        return `
+                            <div class="history-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="history-product">${pIcon} ${pName}</span>
+                                        <span class="history-qty ms-2">${d.quantity} ถุง</span>
+                                    </div>
+                                    ${isAdmin ? `<button class="delete-btn" onclick="deleteDeposit(${d.id})"><i class="fas fa-trash"></i></button>` : ''}
                                 </div>
-                                ${isAdmin ? `<button class="delete-btn" onclick="deleteDeposit(${d.id})"><i class="fas fa-trash"></i></button>` : ''}
+                                <div class="history-date">${formatDate(d.created_at)} ${d.note ? '| ' + d.note : ''}</div>
                             </div>
-                            <div class="history-date">${formatDate(d.created_at)} ${d.note ? '| ' + d.note : ''}</div>
-                        </div>
-                    `).join('');
+                        `;
+                    }).join('');
                 }
             } catch (e) {
                 console.error('Error loading deposits:', e);
@@ -389,31 +433,40 @@
         }
 
         // โหลดข้อมูลเหลือ
-        async function loadLeftoverData(customerId) {
+        async function loadLeftoverData(customerId, filterDate = null) {
             try {
                 const res = await fetch(`${BASE_URL}/get-leftovers`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ customerId })
+                    body: JSON.stringify({ customerId, filterDate })
                 });
                 const leftovers = await res.json();
 
+                // เช็คว่าเป็นวันนี้หรือไม่
+                const today = new Date().toISOString().split('T')[0];
+                const isToday = filterDate === today;
+                const noDataText = isToday ? '- วันนี้ยังไม่มีข้อมูล -' : '- ไม่มีข้อมูล -';
+
                 if (leftovers.length === 0) {
                     document.getElementById('leftoverList').innerHTML = 
-                        '<div class="text-center text-muted">- ไม่มีบันทึก -</div>';
+                        `<div class="text-center text-muted">${noDataText}</div>`;
                 } else {
-                    document.getElementById('leftoverList').innerHTML = leftovers.slice(0, 10).map(l => `
-                        <div class="history-item">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <span class="history-product">${productIcons[l.product_code]} ${productNames[l.product_code]}</span>
-                                    <span class="history-qty ms-2">${l.quantity} ถุง</span>
+                    document.getElementById('leftoverList').innerHTML = leftovers.slice(0, 10).map(l => {
+                        const pName = productNames[l.product_code] || l.product_code;
+                        const pIcon = productIcons[l.product_code] || '📦';
+                        return `
+                            <div class="history-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="history-product">${pIcon} ${pName}</span>
+                                        <span class="history-qty ms-2">${l.quantity} ถุง</span>
+                                    </div>
+                                    ${isAdmin ? `<button class="delete-btn" onclick="deleteLeftover(${l.id})"><i class="fas fa-trash"></i></button>` : ''}
                                 </div>
-                                ${isAdmin ? `<button class="delete-btn" onclick="deleteLeftover(${l.id})"><i class="fas fa-trash"></i></button>` : ''}
+                                <div class="history-date">${formatDate(l.created_at)} ${l.note ? '| ' + l.note : ''}</div>
                             </div>
-                            <div class="history-date">${formatDate(l.created_at)} ${l.note ? '| ' + l.note : ''}</div>
-                        </div>
-                    `).join('');
+                        `;
+                    }).join('');
                 }
             } catch (e) {
                 console.error('Error loading leftovers:', e);
@@ -464,7 +517,7 @@
                 });
                 document.getElementById('depositNote').value = '';
 
-                await loadDepositData(currentCustomerId);
+                await loadDepositData(currentCustomerId, selectedDate);
             } catch (e) {
                 console.error('Error saving deposit:', e);
                 alert('เกิดข้อผิดพลาด');
@@ -524,7 +577,7 @@
                 document.getElementById('leftover_cube').value = '';
                 document.getElementById('leftoverNote').value = '';
 
-                await loadLeftoverData(currentCustomerId);
+                await loadLeftoverData(currentCustomerId, selectedDate);
             } catch (e) {
                 console.error('Error saving leftover:', e);
                 alert('เกิดข้อผิดพลาด');
@@ -541,7 +594,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ depositId: id })
                 });
-                await loadDepositData(currentCustomerId);
+                await loadDepositData(currentCustomerId, selectedDate);
             } catch (e) {
                 console.error('Error deleting deposit:', e);
                 alert('เกิดข้อผิดพลาด');
@@ -558,7 +611,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ leftoverId: id })
                 });
-                await loadLeftoverData(currentCustomerId);
+                await loadLeftoverData(currentCustomerId, selectedDate);
             } catch (e) {
                 console.error('Error deleting leftover:', e);
                 alert('เกิดข้อผิดพลาด');
