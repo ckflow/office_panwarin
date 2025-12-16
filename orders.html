@@ -3,271 +3,514 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>จัดการออเดอร์</title>
+    <title>จัดการออเดอร์ - Staff</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background-color: #f4f6f9; font-family: 'Sarabun', sans-serif; padding: 20px; padding-bottom: 80px; }
-        .order-card { background: white; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin-bottom: 12px; overflow: hidden; }
-        .order-header { padding: 12px 15px; background: #fff; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .order-header:hover { background-color: #f9f9f9; }
-        .order-body { padding: 15px; display: none; background-color: #fafafa; }
+        body { background-color: #f4f6f9; font-family: 'Sarabun', sans-serif; }
+        .header-section { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; 
+            padding: 15px 20px; 
+            position: sticky; 
+            top: 0; 
+            z-index: 999;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .date-picker-container {
+            background: white;
+            border-radius: 12px;
+            padding: 10px 15px;
+            margin: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
         
-        .order-invoice { font-weight: bold; color: #0d6efd; font-size: 14px; }
-        .order-customer { font-size: 13px; color: #333; }
-        .order-date { font-size: 11px; color: #888; }
-        .order-total { font-weight: bold; color: #198754; font-size: 14px; }
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            padding: 4px;
+            margin: 0 15px 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+            font-weight: bold;
+            color: #666;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .tab-btn.active { background: #667eea; color: white; }
+        .tab-btn .badge {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 10px;
+            padding: 2px 6px;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
         
-        .order-item { padding: 6px 0; border-bottom: 1px solid #eee; font-size: 13px; }
-        .order-item:last-child { border-bottom: none; }
+        /* Order Card */
+        .order-card {
+            background: white;
+            border-radius: 12px;
+            margin: 0 15px 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            overflow: hidden;
+            border-left: 4px solid #dee2e6;
+        }
+        .order-card.pending { border-left-color: #ffc107; }
+        .order-card.confirmed { border-left-color: #198754; }
+        .order-card.cancelled { border-left-color: #dc3545; }
         
-        .status-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; }
+        .order-header {
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .order-invoice { font-weight: bold; color: #667eea; font-size: 15px; }
+        .order-time { font-size: 12px; color: #888; }
+        .order-total { font-weight: bold; color: #198754; font-size: 18px; }
+        
+        .order-body { padding: 12px 15px; }
+        .order-customer { font-weight: bold; font-size: 15px; margin-bottom: 5px; }
+        .order-phone { font-size: 13px; color: #666; margin-bottom: 8px; }
+        .order-phone a { color: #667eea; text-decoration: none; }
+        
+        .order-round {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .round-pickup { background: #fff3cd; color: #856404; }
+        .round-delivery { background: #cfe2ff; color: #084298; }
+        
+        .order-items {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+        .order-items div { margin-bottom: 3px; }
+        
+        .order-bags {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .order-actions {
+            display: flex;
+            gap: 8px;
+            padding-top: 10px;
+            border-top: 1px solid #f0f0f0;
+        }
+        .order-actions button {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        
+        .status-badge {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
         .status-pending { background: #fff3cd; color: #856404; }
         .status-confirmed { background: #d1e7dd; color: #0f5132; }
-        .status-delivered { background: #cff4fc; color: #055160; }
         .status-cancelled { background: #f8d7da; color: #842029; }
         
-        .btn-delete-order { font-size: 11px; padding: 4px 10px; }
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #999;
+        }
+        .empty-state i {
+            font-size: 60px;
+            margin-bottom: 15px;
+            color: #ddd;
+        }
         
-        .filter-section { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        .summary-bar {
+            background: white;
+            padding: 10px 15px;
+            margin: 0 15px 15px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-around;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .summary-item {
+            text-align: center;
+        }
+        .summary-number {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .summary-label {
+            font-size: 11px;
+            color: #888;
+        }
+        .summary-pending .summary-number { color: #ffc107; }
+        .summary-confirmed .summary-number { color: #198754; }
+        .summary-total .summary-number { color: #667eea; }
         
-        .pending-delete { background: #fff3cd; border-left: 4px solid #ffc107; }
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
     </style>
 </head>
 <body>
 
-    <div id="auth-check" class="text-center mt-5"><h4>🔒 กำลังตรวจสอบสิทธิ์...</h4></div>
-
-    <div id="content" class="container" style="display: none;">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="text-primary fw-bold mb-0">📋 จัดการออเดอร์</h4>
-            <div>
-                <a href="admin.html" class="btn btn-outline-secondary btn-sm"><i class="fas fa-users"></i> ลูกค้า</a>
-                <button class="btn btn-sm btn-outline-secondary ms-1" onclick="window.location.reload()"><i class="fas fa-sync"></i></button>
-            </div>
-        </div>
-        
-        <!-- Filter Section -->
-        <div class="filter-section">
-            <div class="row g-2">
-                <div class="col-6">
-                    <label class="small text-muted">วันที่</label>
-                    <input type="date" id="filterDate" class="form-control form-control-sm" onchange="loadOrders()">
-                </div>
-                <div class="col-6">
-                    <label class="small text-muted">สถานะ</label>
-                    <select id="filterStatus" class="form-select form-select-sm" onchange="loadOrders()">
-                        <option value="">ทั้งหมด</option>
-                        <option value="pending">รอดำเนินการ</option>
-                        <option value="confirmed">ยืนยันแล้ว</option>
-                        <option value="delivered">ส่งแล้ว</option>
-                        <option value="cancelled">ยกเลิก</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-        
-        <div id="order-list">
-            <div class="text-center text-muted mt-5">⏳ กำลังโหลดข้อมูล...</div>
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="text-center">
+            <div class="spinner-border text-primary mb-3" role="status"></div>
+            <div>กำลังโหลด...</div>
         </div>
     </div>
 
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <div class="header-section">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>จัดการออเดอร์</h5>
+            <button onclick="loadOrders()" class="btn btn-light btn-sm">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="date-picker-container">
+        <div class="d-flex align-items-center gap-2">
+            <i class="fas fa-calendar-alt text-primary"></i>
+            <input type="date" id="orderDate" class="form-control" onchange="loadOrders()">
+            <select id="statusFilter" class="form-select" style="width: auto;" onchange="loadOrders()">
+                <option value="">ทั้งหมด</option>
+                <option value="pending" selected>รอยืนยัน</option>
+                <option value="confirmed">ยืนยันแล้ว</option>
+                <option value="cancelled">ยกเลิก</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="summary-bar">
+        <div class="summary-item summary-pending">
+            <div class="summary-number" id="countPending">0</div>
+            <div class="summary-label">รอยืนยัน</div>
+        </div>
+        <div class="summary-item summary-confirmed">
+            <div class="summary-number" id="countConfirmed">0</div>
+            <div class="summary-label">ยืนยันแล้ว</div>
+        </div>
+        <div class="summary-item summary-total">
+            <div class="summary-number" id="countTotal">0</div>
+            <div class="summary-label">ทั้งหมด</div>
+        </div>
+    </div>
+
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('pickup')">
+            🏭 รับเอง
+            <span class="badge bg-warning text-dark" id="badgePickup">0</span>
+        </button>
+        <button class="tab-btn" onclick="switchTab('delivery')">
+            🚚 จัดส่ง
+            <span class="badge bg-primary" id="badgeDelivery">0</span>
+        </button>
+    </div>
+
+    <!-- Tab: รับเอง -->
+    <div id="tabPickup" class="tab-content active">
+        <div id="pickupOrdersList"></div>
+    </div>
+
+    <!-- Tab: จัดส่ง -->
+    <div id="tabDelivery" class="tab-content">
+        <div id="deliveryOrdersList"></div>
+    </div>
+
     <script>
-        const MY_LIFF_ID = "2008689090-CnrdxM5k";
-        const ALLOWED_ADMINS = ["U4dc8fa32570dca3dfb4093b48a5c2093"];
         const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
-        
-        const API = {
-            GET_ORDERS: `${BASE_URL}/get-orders`,
-            REQUEST_DELETE: `${BASE_URL}/request-delete-order`
-        };
+        let allOrders = [];
 
-        let currentUserId = null;
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initDate();
+            loadOrders();
+        });
 
-        async function main() {
-            try {
-                await liff.init({ liffId: MY_LIFF_ID });
-                if (!liff.isLoggedIn()) { liff.login(); return; }
-                
-                const profile = await liff.getProfile();
-                currentUserId = profile.userId;
-                
-                if (!ALLOWED_ADMINS.includes(currentUserId)) {
-                    document.getElementById('auth-check').innerHTML = `<h3 class="text-danger">⛔ Access Denied</h3>`;
-                    return;
-                }
-                
-                document.getElementById('auth-check').style.display = 'none';
-                document.getElementById('content').style.display = 'block';
-                
-                // Set default date to today (Thailand timezone)
-                const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
-                document.getElementById('filterDate').value = today;
-                
-                await loadOrders();
-            } catch (err) {
-                alert("Error: " + err);
+        function initDate() {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            document.getElementById('orderDate').value = `${yyyy}-${mm}-${dd}`;
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            if (tab === 'pickup') {
+                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+                document.getElementById('tabPickup').classList.add('active');
+            } else {
+                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+                document.getElementById('tabDelivery').classList.add('active');
             }
         }
-        main();
 
         async function loadOrders() {
-            const container = document.getElementById('order-list');
-            container.innerHTML = '<div class="text-center text-muted">⏳ กำลังโหลด...</div>';
+            showLoading(true);
+            
+            const orderDate = document.getElementById('orderDate').value;
+            const status = document.getElementById('statusFilter').value;
             
             try {
-                const filterDate = document.getElementById('filterDate').value;
-                const filterStatus = document.getElementById('filterStatus').value;
-                
-                const res = await fetch(API.GET_ORDERS, {
+                const res = await fetch(`${BASE_URL}/get-pending-orders`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ date: filterDate, status: filterStatus })
+                    body: JSON.stringify({ orderDate, status: status || null })
                 });
-                const orders = await res.json();
+                allOrders = await res.json();
+                if (!Array.isArray(allOrders)) allOrders = [];
                 
-                if (orders.length === 0) {
-                    container.innerHTML = '<div class="text-center text-muted mt-4">📭 ไม่มีออเดอร์</div>';
-                    return;
-                }
-                
-                container.innerHTML = '';
-                orders.forEach(order => {
-                    const isPendingDelete = order.pending_delete == 1;
-                    const statusClass = getStatusClass(order.status);
-                    const statusText = getStatusText(order.status);
-                    
-                    const html = `
-                        <div class="order-card ${isPendingDelete ? 'pending-delete' : ''}">
-                            <div class="order-header" onclick="toggleOrder(this)">
-                                <div>
-                                    <div class="order-invoice">${order.invoice_no || 'N/A'}</div>
-                                    <div class="order-customer">👤 ${order.customer_name}</div>
-                                    <div class="order-date">📅 ${formatDate(order.order_date)} ${order.order_time || ''}</div>
-                                </div>
-                                <div class="text-end">
-                                    <div class="order-total">${parseFloat(order.total || 0).toLocaleString()} บาท</div>
-                                    <span class="status-badge ${statusClass}">${statusText}</span>
-                                    ${isPendingDelete ? '<br><span class="status-badge status-pending mt-1">⏳ รอยืนยันลบ</span>' : ''}
-                                </div>
-                            </div>
-                            <div class="order-body">
-                                <div class="mb-2">
-                                    <strong>รายการสินค้า:</strong>
-                                    <div class="order-items mt-1">
-                                        ${formatItems(order.order_items)}
-                                    </div>
-                                </div>
-                                <div class="mb-2">
-                                    <small class="text-muted">
-                                        ยอดรวม: ${parseFloat(order.subtotal || 0).toLocaleString()} บาท
-                                        ${order.discount > 0 ? `<br>ส่วนลด: -${parseFloat(order.discount).toLocaleString()} บาท` : ''}
-                                        <br><strong>สุทธิ: ${parseFloat(order.total || 0).toLocaleString()} บาท</strong>
-                                    </small>
-                                </div>
-                                ${order.total_bags > 0 ? `<div class="mb-2"><small>👜 ยืมถุง: ${order.total_bags} ใบ</small></div>` : ''}
-                                <hr>
-                                <div class="d-flex justify-content-between">
-                                    <small class="text-muted">Order ID: ${order.id}</small>
-                                    ${!isPendingDelete ? `
-                                        <button class="btn btn-outline-danger btn-delete-order" onclick="requestDeleteOrder(${order.id}, '${order.invoice_no}', '${order.customer_name}')">
-                                            🗑️ ขอลบ
-                                        </button>
-                                    ` : '<span class="text-warning"><i class="fas fa-clock"></i> รอยืนยัน</span>'}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    container.innerHTML += html;
-                });
-                
+                renderOrders();
+                updateSummary();
             } catch (e) {
                 console.error('Error loading orders:', e);
-                container.innerHTML = '<div class="text-center text-danger">❌ โหลดข้อมูลไม่สำเร็จ</div>';
+                allOrders = [];
+                renderOrders();
+            }
+            
+            showLoading(false);
+        }
+
+        function renderOrders() {
+            const pickupOrders = allOrders.filter(o => o.delivery_round === 'pickup');
+            const deliveryOrders = allOrders.filter(o => o.delivery_round !== 'pickup');
+            
+            // Update badges
+            const pendingPickup = pickupOrders.filter(o => o.status === 'pending').length;
+            const pendingDelivery = deliveryOrders.filter(o => o.status === 'pending').length;
+            document.getElementById('badgePickup').textContent = pendingPickup;
+            document.getElementById('badgeDelivery').textContent = pendingDelivery;
+            
+            // Render pickup orders
+            const pickupContainer = document.getElementById('pickupOrdersList');
+            if (pickupOrders.length === 0) {
+                pickupContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <h5>ไม่มีออเดอร์รับเอง</h5>
+                    </div>
+                `;
+            } else {
+                pickupContainer.innerHTML = pickupOrders.map(o => renderOrderCard(o)).join('');
+            }
+            
+            // Render delivery orders
+            const deliveryContainer = document.getElementById('deliveryOrdersList');
+            if (deliveryOrders.length === 0) {
+                deliveryContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-truck"></i>
+                        <h5>ไม่มีออเดอร์จัดส่ง</h5>
+                    </div>
+                `;
+            } else {
+                // Group by delivery round
+                const grouped = {};
+                deliveryOrders.forEach(o => {
+                    const round = o.delivery_round || 'ไม่ระบุ';
+                    if (!grouped[round]) grouped[round] = [];
+                    grouped[round].push(o);
+                });
+                
+                let html = '';
+                const roundOrder = ['1', '2', '3', 'extra'];
+                roundOrder.forEach(round => {
+                    if (grouped[round]) {
+                        html += `<div style="margin: 15px; font-weight: bold; color: #667eea;">
+                            🚚 รอบ ${round === 'extra' ? 'เสริม' : round} (${grouped[round].length} ออเดอร์)
+                        </div>`;
+                        html += grouped[round].map(o => renderOrderCard(o)).join('');
+                    }
+                });
+                
+                // Other rounds
+                Object.keys(grouped).forEach(round => {
+                    if (!roundOrder.includes(round)) {
+                        html += `<div style="margin: 15px; font-weight: bold; color: #667eea;">
+                            🚚 ${round} (${grouped[round].length} ออเดอร์)
+                        </div>`;
+                        html += grouped[round].map(o => renderOrderCard(o)).join('');
+                    }
+                });
+                
+                deliveryContainer.innerHTML = html;
             }
         }
 
-        function toggleOrder(el) {
-            const body = el.nextElementSibling;
-            body.style.display = body.style.display === 'none' || body.style.display === '' ? 'block' : 'none';
-        }
-
-        function getStatusClass(status) {
-            const classes = {
+        function renderOrderCard(order) {
+            const statusClass = {
+                'pending': 'pending',
+                'confirmed': 'confirmed',
+                'cancelled': 'cancelled'
+            }[order.status] || 'pending';
+            
+            const statusBadgeClass = {
                 'pending': 'status-pending',
                 'confirmed': 'status-confirmed',
-                'delivered': 'status-delivered',
                 'cancelled': 'status-cancelled'
-            };
-            return classes[status] || 'status-pending';
-        }
-
-        function getStatusText(status) {
-            const texts = {
-                'pending': 'รอดำเนินการ',
-                'confirmed': 'ยืนยันแล้ว',
-                'delivered': 'ส่งแล้ว',
-                'cancelled': 'ยกเลิก'
-            };
-            return texts[status] || 'รอดำเนินการ';
-        }
-
-        function formatDate(dateStr) {
-            if (!dateStr) return '-';
-            const date = new Date(dateStr);
-            const day = date.getDate();
-            const month = date.toLocaleDateString('th-TH', { month: 'short' });
-            const year = date.getFullYear() + 543;
-            return `${day} ${month} ${year}`;
-        }
-
-        function formatItems(items) {
-            if (!items) return '<div class="order-item text-muted">ไม่มีรายการ</div>';
+            }[order.status] || 'status-pending';
             
-            // items อาจเป็น string หรือ array
+            const statusText = {
+                'pending': '⏳ รอยืนยัน',
+                'confirmed': '✅ ยืนยันแล้ว',
+                'cancelled': '❌ ยกเลิก'
+            }[order.status] || 'รอดำเนินการ';
+            
+            const isPickup = order.delivery_round === 'pickup';
+            const roundText = isPickup 
+                ? `🏭 รับเอง ${order.pickup_time ? '(' + order.pickup_time + ' น.)' : ''}`
+                : `🚚 รอบ ${order.delivery_round === 'extra' ? 'เสริม' : order.delivery_round}`;
+            const roundClass = isPickup ? 'round-pickup' : 'round-delivery';
+            
+            const canConfirm = order.status === 'pending';
+            
+            return `
+                <div class="order-card ${statusClass}">
+                    <div class="order-header">
+                        <div>
+                            <div class="order-invoice">${order.invoice_no || 'N/A'}</div>
+                            <div class="order-time">📅 ${order.order_time || ''}</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="order-total">${parseFloat(order.total || 0).toLocaleString()} ฿</div>
+                            <span class="status-badge ${statusBadgeClass}">${statusText}</span>
+                        </div>
+                    </div>
+                    <div class="order-body">
+                        <div class="order-customer">👤 ${order.customer_name || 'ไม่ระบุ'}</div>
+                        ${order.phone ? `<div class="order-phone">📞 <a href="tel:${order.phone}">${order.phone}</a></div>` : ''}
+                        
+                        <div class="order-round ${roundClass}">${roundText}</div>
+                        
+                        <div class="order-items">${formatOrderItems(order.order_items)}</div>
+                        
+                        ${order.total_bags > 0 ? `<div class="order-bags">👜 ยืมถุง: ${order.total_bags} ใบ</div>` : ''}
+                        
+                        ${canConfirm ? `
+                            <div class="order-actions">
+                                <button class="btn btn-success" onclick="confirmOrder(${order.id}, '${order.invoice_no}')">
+                                    ✅ ยืนยันออเดอร์
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="cancelOrder(${order.id}, '${order.invoice_no}')">
+                                    ❌ ยกเลิก
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatOrderItems(items) {
+            if (!items) return '<span style="color:#999;">ไม่มีรายการ</span>';
+            
             if (typeof items === 'string') {
                 try {
                     items = JSON.parse(items);
                 } catch (e) {
-                    // ถ้าเป็น string ธรรมดา
-                    return items.split('\n').map(line => 
-                        `<div class="order-item">${line}</div>`
-                    ).join('');
+                    return items.replace(/\n/g, '<br>');
                 }
             }
             
             if (Array.isArray(items)) {
-                return items.map(item => `<div class="order-item">${item}</div>`).join('');
+                return items.map(item => `<div>• ${item}</div>`).join('');
             }
             
-            return '<div class="order-item text-muted">ไม่มีรายการ</div>';
+            return '<span style="color:#999;">ไม่มีรายการ</span>';
         }
 
-        async function requestDeleteOrder(orderId, invoiceNo, customerName) {
-            if (!confirm(`⚠️ ขอลบออเดอร์ ${invoiceNo}?\n\nลูกค้า: ${customerName}\n\nจะส่งข้อความขอยืนยันไปยังผู้มีสิทธิ์`)) return;
+        function updateSummary() {
+            const pending = allOrders.filter(o => o.status === 'pending').length;
+            const confirmed = allOrders.filter(o => o.status === 'confirmed').length;
+            
+            document.getElementById('countPending').textContent = pending;
+            document.getElementById('countConfirmed').textContent = confirmed;
+            document.getElementById('countTotal').textContent = allOrders.length;
+        }
+
+        async function confirmOrder(orderId, invoiceNo) {
+            if (!confirm(`✅ ยืนยันออเดอร์ ${invoiceNo}?`)) return;
             
             try {
-                const res = await fetch(API.REQUEST_DELETE, {
+                const res = await fetch(`${BASE_URL}/confirm-order`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        orderId,
-                        requestedBy: currentUserId
-                    })
+                    body: JSON.stringify({ orderId })
                 });
-                
                 const result = await res.json();
                 
                 if (result.success) {
-                    alert("✅ ส่งคำขอลบแล้ว\nรอการยืนยันจากผู้มีสิทธิ์");
+                    alert('✅ ยืนยันออเดอร์แล้ว');
                     loadOrders();
                 } else {
-                    alert("❌ " + (result.message || "เกิดข้อผิดพลาด"));
+                    alert('❌ ' + (result.message || 'เกิดข้อผิดพลาด'));
                 }
             } catch (e) {
-                alert("Error: " + e);
+                alert('เกิดข้อผิดพลาด: ' + e.message);
             }
+        }
+
+        async function cancelOrder(orderId, invoiceNo) {
+            if (!confirm(`❌ ยกเลิกออเดอร์ ${invoiceNo}?\n\nเมื่อยกเลิกแล้วจะไม่สามารถกู้คืนได้`)) return;
+            
+            try {
+                const res = await fetch(`${BASE_URL}/cancel-order`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId, lineId: 'STAFF' })
+                });
+                const result = await res.json();
+                
+                if (result.success) {
+                    alert('✅ ยกเลิกออเดอร์แล้ว');
+                    loadOrders();
+                } else {
+                    alert('❌ ' + (result.message || 'เกิดข้อผิดพลาด'));
+                }
+            } catch (e) {
+                alert('เกิดข้อผิดพลาด: ' + e.message);
+            }
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
         }
     </script>
 </body>
