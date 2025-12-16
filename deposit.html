@@ -411,14 +411,15 @@
                         `<div class="text-center text-muted">${noDataText}</div>`;
                 } else {
                     document.getElementById('pendingDepositList').innerHTML = pendingDeposits.map(d => {
-                        const pName = productNames[d.product_code] || d.product_code;
-                        const pIcon = productIcons[d.product_code] || '📦';
+                        const pCode = d.product_code || '';
+                        const pName = productNames[pCode] || pCode || 'ไม่ระบุสินค้า';
+                        const pIcon = productIcons[pCode] || '📦';
                         return `
                             <div class="history-item">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <span class="history-product">${pIcon} ${pName}</span>
-                                        <span class="history-qty ms-2">${d.quantity} ถุง</span>
+                                        <span class="history-qty ms-2">${d.quantity || 0} ถุง</span>
                                     </div>
                                     ${isAdmin ? `<button class="delete-btn" onclick="deleteDeposit(${d.id})"><i class="fas fa-trash"></i></button>` : ''}
                                 </div>
@@ -452,14 +453,15 @@
                         `<div class="text-center text-muted">${noDataText}</div>`;
                 } else {
                     document.getElementById('leftoverList').innerHTML = leftovers.slice(0, 10).map(l => {
-                        const pName = productNames[l.product_code] || l.product_code;
-                        const pIcon = productIcons[l.product_code] || '📦';
+                        const pCode = l.product_code || '';
+                        const pName = productNames[pCode] || pCode || 'ไม่ระบุสินค้า';
+                        const pIcon = productIcons[pCode] || '📦';
                         return `
                             <div class="history-item">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <span class="history-product">${pIcon} ${pName}</span>
-                                        <span class="history-qty ms-2">${l.quantity} ถุง</span>
+                                        <span class="history-qty ms-2">${l.quantity || 0} ถุง</span>
                                     </div>
                                     ${isAdmin ? `<button class="delete-btn" onclick="deleteLeftover(${l.id})"><i class="fas fa-trash"></i></button>` : ''}
                                 </div>
