@@ -56,6 +56,21 @@
         .modal-box { background: white; width: 90%; max-width: 400px; padding: 20px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
         
         .empty-text { text-align: center; color: #999; font-size: 12px; padding: 10px; }
+        
+        /* Round Items */
+        .round-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: white; border-radius: 8px; margin-bottom: 6px; border: 1px solid #d1e7dd; }
+        .round-item.extra { border-color: #f8d7da; background: #fff5f5; }
+        .round-item .round-info { flex: 1; }
+        .round-item .round-name { font-size: 14px; font-weight: bold; color: #198754; }
+        .round-item.extra .round-name { color: #dc3545; }
+        .round-item .round-time { font-size: 12px; color: #666; }
+        .round-item .round-quota { font-size: 11px; color: #0d6efd; margin-top: 2px; }
+        .round-item .round-actions { display: flex; gap: 5px; align-items: center; }
+        .round-item .btn-unlock { font-size: 11px; padding: 3px 8px; }
+        .round-item .btn-del { color: #dc3545; background: none; border: none; cursor: pointer; padding: 2px 6px; font-size: 12px; }
+        
+        .round-locked { color: #dc3545; font-size: 11px; }
+        .round-unlocked { color: #198754; font-size: 11px; }
     </style>
 </head>
 <body>
@@ -219,6 +234,52 @@
         </div>
     </div>
 
+    <!-- Modal: เพิ่ม/แก้ไขรอบจัดส่ง -->
+    <div id="addRoundModal" class="modal-overlay">
+        <div class="modal-box">
+            <h5 class="mb-3 text-center text-success">🚚 เพิ่มรอบจัดส่ง</h5>
+            <p class="text-center text-muted mb-3">ลูกค้า: <span id="roundModalCustomerName" class="fw-bold text-dark">...</span></p>
+            
+            <div class="mb-3">
+                <label class="form-label small text-muted">เลือกรอบ</label>
+                <select id="roundNumber" class="form-select" onchange="onRoundNumberChange()">
+                    <option value="1">รอบ 1</option>
+                    <option value="2">รอบ 2</option>
+                    <option value="3">รอบ 3</option>
+                    <option value="extra">รอบเสริม</option>
+                </select>
+            </div>
+            
+            <div id="roundTimeFields">
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label small text-muted">เวลาเริ่ม</label>
+                        <input type="time" id="roundTimeStart" class="form-control" value="06:00">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small text-muted">เวลาสิ้นสุด</label>
+                        <input type="time" id="roundTimeEnd" class="form-control" value="08:00">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label small text-muted">โควต้าถุง (tube, pack, crush, sack)</label>
+                <input type="number" id="roundQuotaBags" class="form-control" placeholder="0" value="50">
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label small text-muted">โควต้าก้อน (cube_sachet, cube_kak, cube_hand)</label>
+                <input type="number" id="roundQuotaCubes" class="form-control" placeholder="0" value="100">
+            </div>
+            
+            <div class="d-flex gap-2">
+                <button class="btn btn-light flex-grow-1" onclick="closeModal('addRoundModal')">ยกเลิก</button>
+                <button class="btn btn-success flex-grow-1" onclick="saveRound()">บันทึก</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script>
         const MY_LIFF_ID = "2008689090-CnrdxM5k";
@@ -236,6 +297,7 @@
             GET_LINES: `${BASE_URL}/get-lines`,
             GET_PROMOS: `${BASE_URL}/get-promos`,
             GET_MULTIPLIERS: `${BASE_URL}/get-multipliers`,
+            GET_ROUNDS: `${BASE_URL}/get-customer-rounds`,
             ADD_CUSTOMER: `${BASE_URL}/add-customer`,
             DELETE_CUSTOMER: `${BASE_URL}/delete-customer`,
             ADD_LINE: `${BASE_URL}/add-line`,
@@ -247,12 +309,16 @@
             SAVE_MULTIPLIER: `${BASE_URL}/save-multiplier`,
             DELETE_MULTIPLIER: `${BASE_URL}/delete-multiplier`,
             UPDATE_SETTINGS: `${BASE_URL}/update-customer-settings`,
-            UPDATE_DEPOSIT_PERMISSION: `${BASE_URL}/update-deposit-permission`
+            UPDATE_DEPOSIT_PERMISSION: `${BASE_URL}/update-deposit-permission`,
+            SAVE_ROUND: `${BASE_URL}/save-customer-round`,
+            DELETE_ROUND: `${BASE_URL}/delete-customer-round`,
+            TOGGLE_EXTRA_ROUND: `${BASE_URL}/toggle-extra-round`
         };
 
         let currentCustomer = { id: null, name: '' };
         let productsCache = [];
         let multipliersCache = {};
+        let roundsCache = {};
 
         // สินค้าที่ต้องมีตัวคูณ
         const MULTIPLIER_PRODUCTS = {
@@ -335,6 +401,22 @@
             }
         }
 
+        async function loadRounds(customerId) {
+            try {
+                const res = await fetch(API.GET_ROUNDS, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customerId })
+                });
+                const data = await res.json();
+                roundsCache[customerId] = Array.isArray(data) ? data : [];
+                return roundsCache[customerId];
+            } catch (e) {
+                console.error('Error loading rounds:', e);
+                return [];
+            }
+        }
+
         async function renderCards(data) {
             const container = document.getElementById('customer-list');
             container.innerHTML = '';
@@ -366,9 +448,12 @@
                 return;
             }
 
-            // โหลด multipliers ของทุกลูกค้าก่อน
+            // โหลด multipliers และ rounds ของทุกลูกค้าก่อน
             const customerIds = Object.keys(grouped);
-            await Promise.all(customerIds.map(id => loadMultipliers(id)));
+            await Promise.all([
+                ...customerIds.map(id => loadMultipliers(id)),
+                ...customerIds.map(id => loadRounds(id))
+            ]);
 
             // เรียงตามชื่อ ก-ฮ, A-Z
             const sortedCustomers = Object.values(grouped).sort((a, b) => a.name.localeCompare(b.name, 'th'));
@@ -381,7 +466,6 @@
                 let pricesHtml = '';
                 if (customer.prices.length > 0) {
                     pricesHtml = customer.prices.map(p => {
-                        // ถ้าเป็นสินค้าที่มีตัวคูณ ให้แสดงด้วย
                         let multiplierBadge = '';
                         if (MULTIPLIER_PRODUCTS[p.product_code]) {
                             const mult = custMultipliers.find(m => m.product_code === p.product_code);
@@ -411,6 +495,18 @@
                                 <span>▼</span>
                             </div>
                             <div class="card-body-custom">
+                                <!-- รอบจัดส่ง -->
+                                <div class="section-title">
+                                    <span class="title-text">🚚 รอบจัดส่ง</span>
+                                    <span class="title-btn">
+                                        <button class="btn btn-sm btn-success" style="font-size:11px;padding:2px 12px;" onclick="openAddRoundModal(${customer.id}, '${customer.name}')">+ เพิ่มรอบ</button>
+                                    </span>
+                                    <span class="title-space"></span>
+                                </div>
+                                <div id="rounds-${customer.id}" style="margin-bottom:10px;">
+                                    <div class="empty-text">กำลังโหลด...</div>
+                                </div>
+
                                 <!-- LINE ID -->
                                 <div class="section-title">
                                     <span class="title-text">📱 LINE ID</span>
@@ -482,22 +578,170 @@
                 `;
                 container.insertAdjacentHTML('beforeend', cardHtml);
 
-                // Load multipliers for this customer
+                // Load multipliers and rounds for this customer
                 loadAndRenderMultipliers(customer.id);
+                loadAndRenderRounds(customer.id);
             });
         }
 
+        // ==================== ROUNDS SECTION ====================
+        async function loadAndRenderRounds(customerId) {
+            const container = document.getElementById(`rounds-${customerId}`);
+            const rounds = await loadRounds(customerId);
+            
+            if (rounds.length === 0) {
+                container.innerHTML = `<div class="multiplier-warning">⚠️ ยังไม่ได้ตั้งรอบจัดส่ง (ลูกค้าจะสั่งไม่ได้)</div>`;
+                return;
+            }
+            
+            // Sort: 1, 2, 3, extra
+            const order = { '1': 1, '2': 2, '3': 3, 'extra': 4 };
+            rounds.sort((a, b) => (order[a.round_number] || 99) - (order[b.round_number] || 99));
+            
+            let html = rounds.map(r => {
+                const isExtra = r.round_number === 'extra';
+                const roundName = isExtra ? 'รอบเสริม' : `รอบ ${r.round_number}`;
+                const timeText = isExtra ? '' : `${formatTime(r.time_start)} - ${formatTime(r.time_end)}`;
+                
+                let lockStatus = '';
+                let lockBtn = '';
+                if (isExtra) {
+                    if (r.is_unlocked) {
+                        lockStatus = `<span class="round-unlocked">🔓 ปลดล็อคแล้ว</span>`;
+                        lockBtn = `<button class="btn btn-outline-danger btn-unlock" onclick="toggleExtraRound(${r.id}, ${customerId}, false)">ล็อค</button>`;
+                    } else {
+                        lockStatus = `<span class="round-locked">🔒 ล็อคอยู่</span>`;
+                        lockBtn = `<button class="btn btn-outline-success btn-unlock" onclick="toggleExtraRound(${r.id}, ${customerId}, true)">ปลดล็อค</button>`;
+                    }
+                }
+                
+                return `
+                    <div class="round-item ${isExtra ? 'extra' : ''}">
+                        <div class="round-info">
+                            <div class="round-name">${roundName} ${lockStatus}</div>
+                            ${timeText ? `<div class="round-time">🕐 ${timeText}</div>` : ''}
+                            <div class="round-quota">📦 ถุง: ${r.quota_bags} | 🧊 ก้อน: ${r.quota_cubes}</div>
+                        </div>
+                        <div class="round-actions">
+                            ${lockBtn}
+                            <button class="btn-del" onclick="deleteRound(${r.id}, ${customerId})">✕</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = html;
+        }
+
+        function formatTime(timeStr) {
+            if (!timeStr) return '';
+            // แปลง "06:00:00" -> "06:00"
+            return timeStr.substring(0, 5);
+        }
+
+        function openAddRoundModal(customerId, name) {
+            currentCustomer = { id: customerId, name };
+            document.getElementById('roundModalCustomerName').textContent = name;
+            document.getElementById('roundNumber').value = '1';
+            document.getElementById('roundTimeStart').value = '06:00';
+            document.getElementById('roundTimeEnd').value = '08:00';
+            document.getElementById('roundQuotaBags').value = '50';
+            document.getElementById('roundQuotaCubes').value = '100';
+            document.getElementById('roundTimeFields').style.display = 'block';
+            document.getElementById('addRoundModal').style.display = 'flex';
+        }
+
+        function onRoundNumberChange() {
+            const roundNumber = document.getElementById('roundNumber').value;
+            const timeFields = document.getElementById('roundTimeFields');
+            
+            if (roundNumber === 'extra') {
+                timeFields.style.display = 'none';
+            } else {
+                timeFields.style.display = 'block';
+                // ตั้งค่าเริ่มต้นตามรอบ
+                if (roundNumber === '1') {
+                    document.getElementById('roundTimeStart').value = '06:00';
+                    document.getElementById('roundTimeEnd').value = '08:00';
+                } else if (roundNumber === '2') {
+                    document.getElementById('roundTimeStart').value = '10:00';
+                    document.getElementById('roundTimeEnd').value = '12:00';
+                } else if (roundNumber === '3') {
+                    document.getElementById('roundTimeStart').value = '14:00';
+                    document.getElementById('roundTimeEnd').value = '16:00';
+                }
+            }
+        }
+
+        async function saveRound() {
+            const roundNumber = document.getElementById('roundNumber').value;
+            const isExtra = roundNumber === 'extra';
+            const timeStart = isExtra ? null : document.getElementById('roundTimeStart').value;
+            const timeEnd = isExtra ? null : document.getElementById('roundTimeEnd').value;
+            const quotaBags = parseInt(document.getElementById('roundQuotaBags').value) || 0;
+            const quotaCubes = parseInt(document.getElementById('roundQuotaCubes').value) || 0;
+            
+            try {
+                await fetch(API.SAVE_ROUND, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        customerId: currentCustomer.id,
+                        roundNumber,
+                        timeStart,
+                        timeEnd,
+                        quotaBags,
+                        quotaCubes
+                    })
+                });
+                alert("✅ บันทึกรอบแล้ว");
+                closeModal('addRoundModal');
+                loadAndRenderRounds(currentCustomer.id);
+            } catch (e) {
+                alert("Error: " + e);
+            }
+        }
+
+        async function deleteRound(roundId, customerId) {
+            if (!confirm("ลบรอบนี้?")) return;
+            
+            try {
+                await fetch(API.DELETE_ROUND, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ roundId })
+                });
+                alert("✅ ลบแล้ว");
+                loadAndRenderRounds(customerId);
+            } catch (e) {
+                alert("Error: " + e);
+            }
+        }
+
+        async function toggleExtraRound(roundId, customerId, unlock) {
+            try {
+                await fetch(API.TOGGLE_EXTRA_ROUND, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ roundId, unlock })
+                });
+                alert(unlock ? "✅ ปลดล็อครอบเสริมแล้ว" : "🔒 ล็อครอบเสริมแล้ว");
+                loadAndRenderRounds(customerId);
+            } catch (e) {
+                alert("Error: " + e);
+            }
+        }
+
+        // ==================== MULTIPLIER SECTION ====================
         async function loadAndRenderMultipliers(customerId) {
             const container = document.getElementById(`multipliers-${customerId}`);
             const multipliers = await loadMultipliers(customerId);
             
             let html = '';
             
-            // แสดงคำเตือนเฉพาะเมื่อยังไม่ได้ตั้งทั้งสองอย่าง
             if (multipliers.length === 0) {
                 html += `<div class="multiplier-warning">⚠️ ยังไม่ได้ตั้งตัวคูณ</div>`;
             } else {
-                // มีอย่างน้อย 1 อย่างแล้ว - แสดงรายการปกติ ไม่ต้องเตือน
                 html += multipliers.map(m => {
                     const productName = MULTIPLIER_PRODUCTS[m.product_code]?.name || m.product_code;
                     return `
@@ -527,7 +771,6 @@
                     body: JSON.stringify({ customerId, canDeposit: enabled })
                 });
                 
-                // อัพเดท label
                 const label = document.querySelector(`label[for="deposit-${customerId}"]`);
                 if (label) {
                     label.textContent = enabled ? '✅ มีสิทธิ์ฝาก' : '❌ ไม่มีสิทธิ์ฝาก';
@@ -535,12 +778,11 @@
             } catch (e) {
                 console.error('Error updating deposit permission:', e);
                 alert('เกิดข้อผิดพลาด');
-                // Revert checkbox
                 document.getElementById(`deposit-${customerId}`).checked = !enabled;
             }
         }
 
-        // ==================== MULTIPLIER SECTION ====================
+        // ==================== MULTIPLIER MODAL ====================
         function openAddMultiplierModal(customerId, name) {
             currentCustomer = { id: customerId, name };
             document.getElementById('multiplierModalCustomerName').textContent = name;
@@ -678,7 +920,6 @@
                 });
                 const lines = await res.json();
                 
-                // กรองเอาเฉพาะที่มี line_user_id จริงๆ
                 const validLines = lines.filter(l => l.line_user_id && l.line_user_id !== 'undefined');
                 
                 if (validLines.length === 0) {
@@ -902,7 +1143,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, lineId })
                 });
-                alert("✅ สร้างแล้ว\n\n⚠️ อย่าลืมตั้งค่าตัวคูณถุงให้ลูกค้านี้!");
+                alert("✅ สร้างแล้ว\n\n⚠️ อย่าลืมตั้งค่ารอบจัดส่งและตัวคูณถุงให้ลูกค้านี้!");
                 closeModal('createCustomerModal');
                 location.reload();
             } catch (e) {
@@ -912,7 +1153,7 @@
 
         // Delete Customer
         async function deleteCustomer(customerId, customerName) {
-            if (!confirm(`⚠️ ลบลูกค้า "${customerName}"?\n\nจะลบข้อมูลทั้งหมด:\n- LINE ID ที่ผูก\n- ราคาที่ตั้งไว้\n- โปรโมชั่น\n- ตัวคูณถุง`)) return;
+            if (!confirm(`⚠️ ลบลูกค้า "${customerName}"?\n\nจะลบข้อมูลทั้งหมด:\n- LINE ID ที่ผูก\n- ราคาที่ตั้งไว้\n- โปรโมชั่น\n- ตัวคูณถุง\n- รอบจัดส่ง`)) return;
             if (!confirm(`❗ ยืนยันอีกครั้ง: ลบ "${customerName}" ?`)) return;
             
             try {
@@ -930,4 +1171,3 @@
     </script>
 </body>
 </html>
-
