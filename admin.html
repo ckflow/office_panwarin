@@ -264,12 +264,12 @@
             </div>
             
             <div class="mb-3">
-                <label class="form-label small text-muted">โควต้าถุง (tube, pack, crush, sack)</label>
+                <label class="form-label small text-muted">โควต้ายูนิต+บด (tube, pack, crush, sack)</label>
                 <input type="number" id="roundQuotaBags" class="form-control" placeholder="0" value="50">
             </div>
             
             <div class="mb-4">
-                <label class="form-label small text-muted">โควต้าก้อน (cube_sachet, cube_kak, cube_hand)</label>
+                <label class="form-label small text-muted">โควต้าก้อน ซอง (cube_sachet, cube_kak, cube_hand)</label>
                 <input type="number" id="roundQuotaCubes" class="form-control" placeholder="0" value="100">
             </div>
             
@@ -620,7 +620,7 @@
                         <div class="round-info">
                             <div class="round-name">${roundName} ${lockStatus}</div>
                             ${timeText ? `<div class="round-time">🕐 ${timeText}</div>` : ''}
-                            <div class="round-quota">📦 ถุง: ${r.quota_bags} | 🧊 ก้อน: ${r.quota_cubes}</div>
+                            <div class="round-quota">📦 ยูนิต+บด: ${r.quota_bags} | 🧊 ก้อน ซอง: ${r.quota_cubes}</div>
                         </div>
                         <div class="round-actions">
                             ${lockBtn}
