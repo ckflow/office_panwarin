@@ -57,7 +57,13 @@
 
     <div id="mainContent" style="display: none;">
         <div class="header-section">
-            <h4 class="text-center mb-2">🧊 สั่งน้ำแข็ง</h4>
+            <div class="d-flex justify-content-between align-items-center px-3 mb-2">
+                <div style="width: 32px;"></div>
+                <h4 class="text-center mb-0">🧊 สั่งน้ำแข็ง</h4>
+                <button onclick="location.reload()" style="background: none; border: none; font-size: 18px; color: #0d6efd; cursor: pointer;" title="รีเฟรช">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
             <div class="date-input-container">
                 <i class="fas fa-calendar-alt date-icon"></i>
                 <input type="date" id="orderDate" class="date-input" onchange="checkFirstBill()">
