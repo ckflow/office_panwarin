@@ -261,53 +261,57 @@
             }
         }
 
-        async function loadCustomerPrices() {
-            try {
-                const res = await fetch(`${BASE_URL}/get-customer-prices`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lineId: currentUserId })
-                });
-                const data = await res.json();
-                
-                if (data.length === 0 || !data[0].product_code) {
-                    // ไม่มีราคา
-                    if (isAdmin) {
-                        // Admin ยังใช้งานได้ แต่ไม่แสดงราคา
-                        renderProductsForAdmin();
-                    } else {
-                        document.getElementById('loadingScreen').style.display = 'none';
-                        document.getElementById('noPriceScreen').style.display = 'block';
-                        return;
-                    }
-                } else {
-                    currentCustomerId = data[0].customer_id;
-                    currentCustomerName = data[0].customer_name;
-                    
-                    // Map prices and promos
-                    data.forEach(item => {
-                        if (item.product_code) {
-                            customerPrices[item.product_code] = {
-                                price: parseFloat(item.price) || 0,
-                                promo_type: item.promo_type,
-                                buy_qty: item.buy_qty,
-                                free_qty: item.free_qty
-                            };
-                        }
-                    });
-                    
-                    await checkFirstBill();
-                    renderProducts();
-                }
-                
+       async function loadCustomerPrices() {
+    try {
+        const res = await fetch(`${BASE_URL}/get-customer-prices`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lineId: currentUserId })
+        });
+        const data = await res.json();
+        
+        if (data.length === 0 || !data[0].product_code) {
+            // ไม่มีราคา
+            if (isAdmin) {
+                // Admin ยังใช้งานได้ แต่ไม่แสดงราคา
+                renderProductsForAdmin();
+                // ⭐ เพิ่ม 2 บรรทัดนี้
                 document.getElementById('loadingScreen').style.display = 'none';
                 document.getElementById('mainContent').style.display = 'block';
-                
-            } catch (e) {
-                console.error('Error loading prices:', e);
-                document.getElementById('loadingScreen').innerHTML = '<h4>❌ โหลดข้อมูลไม่สำเร็จ</h4>';
+            } else {
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('noPriceScreen').style.display = 'block';
+                return; // ⭐ เพิ่ม return เพื่อไม่ให้รันโค้ดข้างล่าง
             }
+        } else {
+            currentCustomerId = data[0].customer_id;
+            currentCustomerName = data[0].customer_name;
+            
+            // Map prices and promos
+            data.forEach(item => {
+                if (item.product_code) {
+                    customerPrices[item.product_code] = {
+                        price: parseFloat(item.price) || 0,
+                        promo_type: item.promo_type,
+                        buy_qty: item.buy_qty,
+                        free_qty: item.free_qty
+                    };
+                }
+            });
+            
+            await checkFirstBill();
+            renderProducts();
+            
+            // ⭐ แสดง mainContent สำหรับลูกค้าที่มีราคา
+            document.getElementById('loadingScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
         }
+        
+    } catch (e) {
+        console.error('Error loading prices:', e);
+        document.getElementById('loadingScreen').innerHTML = '<h4>❌ โหลดข้อมูลไม่สำเร็จ</h4>';
+    }
+}
 
         async function checkFirstBill() {
             if (!currentCustomerId) return;
@@ -667,5 +671,6 @@
     </script>
 </body>
 </html>
+
 
 
