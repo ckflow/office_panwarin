@@ -79,6 +79,16 @@
             color: white;
         }
         .round-btn .round-icon { font-size: 16px; display: block; margin-bottom: 2px; }
+        .round-btn.locked {
+            background: #f8f9fa;
+            border-color: #dee2e6;
+            color: #adb5bd;
+            cursor: not-allowed;
+        }
+        .round-btn.locked:hover {
+            border-color: #dee2e6;
+            color: #adb5bd;
+        }
     </style>
 </head>
 <body>
@@ -106,27 +116,13 @@
         </div>
 
         <!-- เลือกรอบจัดส่ง -->
-        <div class="container mt-2">
+        <div class="container mt-2" id="roundSelectSection">
             <div class="product-card" style="background: #f0fff4; border: 1px solid #86efac;">
                 <div class="product-info">
                     <div class="product-name text-success mb-2">🚚 เลือกรอบจัดส่ง</div>
-                    <div class="round-btn-group">
-                        <button type="button" class="round-btn" data-round="1" onclick="selectRound(1)">
-                            <span class="round-icon">①</span>
-                            รอบ 1
-                        </button>
-                        <button type="button" class="round-btn" data-round="2" onclick="selectRound(2)">
-                            <span class="round-icon">②</span>
-                            รอบ 2
-                        </button>
-                        <button type="button" class="round-btn" data-round="3" onclick="selectRound(3)">
-                            <span class="round-icon">③</span>
-                            รอบ 3
-                        </button>
-                        <button type="button" class="round-btn" data-round="extra" onclick="selectRound('extra')">
-                            <span class="round-icon">➕</span>
-                            เสริม
-                        </button>
+                    <div class="round-btn-group" id="roundButtonGroup">
+                        <!-- จะถูก render โดย JavaScript -->
+                        <div class="text-muted" style="font-size: 13px;">กรุณาเลือกลูกค้าก่อน</div>
                     </div>
                 </div>
             </div>
@@ -301,9 +297,28 @@
         let pendingDeposits = [];
         let depositTotal = 0;
         let selectedRound = null; // รอบที่เลือก: 1, 2, 3, 'extra'
+        let customerRounds = []; // รอบทั้งหมดของลูกค้า
+
+        // สินค้าที่นับเป็นโควต้าถุง
+        const QUOTA_BAG_PRODUCTS = ['tube_l', 'tube_s', 'pack_l', 'pack_s', 'crush_sack', 'crush_sachet', 'crush_white', 'sack'];
+        // สินค้าที่นับเป็นโควต้าก้อน
+        const QUOTA_CUBE_PRODUCTS = ['cube_sachet', 'cube_kak', 'cube_hand'];
 
         // ฟังก์ชันเลือกรอบ
         function selectRound(round) {
+            // ตรวจสอบว่ารอบนี้สามารถเลือกได้หรือไม่
+            const roundData = customerRounds.find(r => r.round_number == round);
+            if (!roundData) {
+                alert("ลูกค้านี้ไม่มีรอบนี้");
+                return;
+            }
+            
+            // ถ้าเป็นรอบเสริม ต้องตรวจสอบว่าปลดล็อคหรือยัง
+            if (round === 'extra' && !roundData.is_unlocked) {
+                alert("🔒 รอบเสริมยังไม่ได้ปลดล็อค\nกรุณาติดต่อโรงงาน 0949592455");
+                return;
+            }
+            
             selectedRound = round;
             document.querySelectorAll('.round-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelector(`.round-btn[data-round="${round}"]`).classList.add('active');
@@ -311,11 +326,131 @@
 
         // แปลงรอบเป็นข้อความ
         function getRoundText(round) {
-            if (round === 1) return 'รอบ 1';
-            if (round === 2) return 'รอบ 2';
-            if (round === 3) return 'รอบ 3';
+            const roundData = customerRounds.find(r => r.round_number == round);
+            if (round === 1 || round === '1') {
+                const time = roundData ? `(${formatTime(roundData.time_start)}-${formatTime(roundData.time_end)})` : '';
+                return `รอบ 1 ${time}`;
+            }
+            if (round === 2 || round === '2') {
+                const time = roundData ? `(${formatTime(roundData.time_start)}-${formatTime(roundData.time_end)})` : '';
+                return `รอบ 2 ${time}`;
+            }
+            if (round === 3 || round === '3') {
+                const time = roundData ? `(${formatTime(roundData.time_start)}-${formatTime(roundData.time_end)})` : '';
+                return `รอบ 3 ${time}`;
+            }
             if (round === 'extra') return 'รอบเสริม';
             return '-';
+        }
+
+        function formatTime(timeStr) {
+            if (!timeStr) return '';
+            return timeStr.substring(0, 5);
+        }
+
+        // โหลดรอบของลูกค้า
+        async function loadCustomerRounds(customerId) {
+            try {
+                const res = await fetch(`${BASE_URL}/get-customer-rounds`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customerId })
+                });
+                const data = await res.json();
+                customerRounds = Array.isArray(data) ? data : [];
+                renderRoundButtons();
+            } catch (e) {
+                console.error('Error loading rounds:', e);
+                customerRounds = [];
+                renderRoundButtons();
+            }
+        }
+
+        // แสดงปุ่มเลือกรอบตามที่ลูกค้ามี
+        function renderRoundButtons() {
+            const container = document.getElementById('roundButtonGroup');
+            if (!container) return;
+            
+            if (customerRounds.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-warning mb-0" style="font-size: 13px;">
+                        ⚠️ ยังไม่ได้ตั้งรอบจัดส่ง กรุณาติดต่อโรงงาน 0949592455
+                    </div>
+                `;
+                selectedRound = null;
+                return;
+            }
+            
+            // Sort: 1, 2, 3, extra
+            const order = { '1': 1, '2': 2, '3': 3, 'extra': 4 };
+            customerRounds.sort((a, b) => (order[a.round_number] || 99) - (order[b.round_number] || 99));
+            
+            let html = '';
+            customerRounds.forEach(r => {
+                const isExtra = r.round_number === 'extra';
+                const isLocked = isExtra && !r.is_unlocked;
+                const roundName = isExtra ? 'เสริม' : `รอบ ${r.round_number}`;
+                const timeText = isExtra ? '' : `${formatTime(r.time_start)}-${formatTime(r.time_end)}`;
+                const icon = isExtra ? '➕' : ['①', '②', '③'][parseInt(r.round_number) - 1] || '●';
+                
+                html += `
+                    <button type="button" 
+                        class="round-btn ${isLocked ? 'locked' : ''}" 
+                        data-round="${r.round_number}" 
+                        onclick="selectRound('${r.round_number}')"
+                        ${isLocked ? 'title="🔒 รอบเสริมยังไม่ได้ปลดล็อค"' : ''}>
+                        <span class="round-icon">${isLocked ? '🔒' : icon}</span>
+                        ${roundName}
+                        ${timeText ? `<br><small style="font-size:10px;">${timeText}</small>` : ''}
+                    </button>
+                `;
+            });
+            
+            container.innerHTML = html;
+            selectedRound = null; // reset selection
+        }
+
+        // ตรวจสอบโควต้า
+        function checkQuota() {
+            if (!selectedRound) return { valid: false, message: "กรุณาเลือกรอบจัดส่งก่อน" };
+            
+            const roundData = customerRounds.find(r => r.round_number == selectedRound);
+            if (!roundData) return { valid: false, message: "ไม่พบข้อมูลรอบนี้" };
+            
+            // คำนวณจำนวนถุงและก้อนที่สั่ง
+            let totalBags = 0;
+            let totalCubes = 0;
+            
+            for (const code in customerPrices) {
+                const qty = getQty(code);
+                if (qty > 0) {
+                    if (QUOTA_BAG_PRODUCTS.includes(code)) {
+                        totalBags += qty;
+                    } else if (QUOTA_CUBE_PRODUCTS.includes(code)) {
+                        totalCubes += qty;
+                    }
+                }
+            }
+            
+            const quotaBags = roundData.quota_bags || 0;
+            const quotaCubes = roundData.quota_cubes || 0;
+            
+            let errors = [];
+            if (totalBags > quotaBags) {
+                errors.push(`สั่งถุง: ${totalBags} / โควต้า: ${quotaBags} ❌`);
+            }
+            if (totalCubes > quotaCubes) {
+                errors.push(`สั่งก้อน: ${totalCubes} / โควต้า: ${quotaCubes} ❌`);
+            }
+            
+            if (errors.length > 0) {
+                return {
+                    valid: false,
+                    message: `⚠️ คำขอออเดอร์เกินที่รถจะรับไหว\nโปรดติดต่อโรงงาน 0949592455\n\n${errors.join('\n')}`
+                };
+            }
+            
+            return { valid: true };
         }
 
         function showProductLoading() {
@@ -368,6 +503,26 @@
             }
         });
 
+        // Polling ยอดฝากทุก 10 วินาที
+        let depositPollingInterval = null;
+        
+        function startDepositPolling() {
+            if (depositPollingInterval) clearInterval(depositPollingInterval);
+            depositPollingInterval = setInterval(async () => {
+                if (currentCustomerId) {
+                    await loadPendingDeposits(currentCustomerId);
+                    updateTotals();
+                }
+            }, 10000); // 10 วินาที
+        }
+        
+        function stopDepositPolling() {
+            if (depositPollingInterval) {
+                clearInterval(depositPollingInterval);
+                depositPollingInterval = null;
+            }
+        }
+
         async function loadMyShops() {
             try {
                 const res = await fetch(`${BASE_URL}/get-my-shops`, {
@@ -415,7 +570,11 @@
                 customerMultipliers = {};
                 pendingDeposits = [];
                 depositTotal = 0;
+                customerRounds = [];
+                selectedRound = null;
+                stopDepositPolling(); // หยุด polling
                 renderProductsForAdmin();
+                renderRoundButtons();
                 updateTotals();
                 return;
             }
@@ -451,8 +610,10 @@
                 
                 await loadMultipliers(customerId);
                 await loadPendingDeposits(customerId);
+                await loadCustomerRounds(customerId); // โหลดรอบจัดส่ง
                 await checkFirstBill();
                 renderProducts();
+                startDepositPolling(); // เริ่ม polling
                 
                 document.getElementById('loadingScreen').style.display = 'none';
                 document.getElementById('mainContent').style.display = 'block';
@@ -533,7 +694,11 @@
                 customerMultipliers = {};
                 pendingDeposits = [];
                 depositTotal = 0;
+                customerRounds = [];
+                selectedRound = null;
+                stopDepositPolling(); // หยุด polling
                 renderProductsForAdmin();
+                renderRoundButtons();
                 updateTotals();
                 return;
             }
@@ -719,6 +884,12 @@
         let cachedDiscount = 0;
 
         function openConfirmModal() {
+            // ตรวจสอบว่ามีรอบหรือยัง
+            if (customerRounds.length === 0) {
+                alert("⚠️ ยังไม่ได้ตั้งรอบจัดส่ง\nกรุณาติดต่อโรงงาน 0949592455");
+                return;
+            }
+
             if (!selectedRound) {
                 alert("กรุณาเลือกรอบจัดส่งก่อนครับ");
                 return;
@@ -767,6 +938,13 @@
 
             if (!hasItems && borrowQty === 0) {
                 alert("กรุณากรอกจำนวนสินค้าครับ");
+                return;
+            }
+
+            // ตรวจสอบโควต้า
+            const quotaCheck = checkQuota();
+            if (!quotaCheck.valid) {
+                alert(quotaCheck.message);
                 return;
             }
 
@@ -924,6 +1102,18 @@
                             orderId: data.orderId || invoiceNo
                         })
                     });
+                }
+
+                // ถ้าเป็นรอบเสริม ให้ล็อคกลับหลังสั่งเสร็จ
+                if (selectedRound === 'extra') {
+                    const roundData = customerRounds.find(r => r.round_number === 'extra');
+                    if (roundData) {
+                        await fetch(`${BASE_URL}/toggle-extra-round`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ roundId: roundData.id, unlock: false })
+                        });
+                    }
                 }
 
                 const thaiDate = formatDateThai(document.getElementById('orderDate').value);
