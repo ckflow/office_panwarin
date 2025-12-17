@@ -912,11 +912,36 @@
         let editingOrder = null;
         let editingItems = [];
         
-        function editOrder(orderId) {
+        async function editOrder(orderId) {
             editingOrder = myOrders.find(o => o.id === orderId);
             if (!editingOrder) {
                 alert('ไม่พบออเดอร์');
                 return;
+            }
+            
+            // โหลดราคาของลูกค้าเจ้าของออเดอร์ก่อน (ถ้ายังไม่มี)
+            if (editingOrder.customer_id && Object.keys(customerPrices).length === 0) {
+                try {
+                    const res = await fetch(`${BASE_URL}/get-prices-by-customer`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ customerId: editingOrder.customer_id })
+                    });
+                    const data = await res.json();
+                    customerPrices = {};
+                    data.forEach(item => {
+                        if (item.product_code) {
+                            customerPrices[item.product_code] = { 
+                                price: parseFloat(item.price) || 0, 
+                                promo_type: item.promo_type, 
+                                buy_qty: item.buy_qty, 
+                                free_qty: item.free_qty 
+                            };
+                        }
+                    });
+                } catch (e) {
+                    console.error('Error loading prices for edit:', e);
+                }
             }
             
             // ตั้งค่า Invoice No
@@ -947,6 +972,15 @@
             
             if (!matches) return [];
             
+            // Map ชื่อสินค้า → product code
+            const nameToCode = {
+                'หลอดใหญ่': 'tube_l', 'หลอดเล็ก': 'tube_s',
+                'แพ็คกระสอบ': 'pack_l', 'แพ็คเล็ก': 'pack_s',
+                'บด(ถุงขาว)': 'crush_white', 'บด(ถุงบีซ)': 'crush_sack', 'บด(ซอง)': 'crush_sachet',
+                'ก้อน(ซอง)': 'cube_sachet', 'ก้อน(ลูก)': 'cube_kak', 'ก้อน(กั๊ก)': 'cube_hand',
+                'กระสอบ(มัด)': 'sack'
+            };
+            
             const result = [];
             matches.forEach(m => {
                 const line = m.replace(/^"|"$/g, '');
@@ -957,16 +991,29 @@
                 const match = cleanLine.match(/(.+?):\s*(\d+)\s*(.+?)\s*\((\d+,?\d*)\s*บาท\)/);
                 
                 if (match) {
+                    const name = match[1].trim();
                     const qty = parseInt(match[2]);
-                    const price = parseInt(match[4].replace(',', ''));
-                    const unitPrice = qty > 0 ? Math.round(price / qty) : 0;
+                    const priceFromOrder = parseInt(match[4].replace(',', ''));
+                    
+                    // หา product code และราคาจาก customerPrices
+                    const code = nameToCode[name];
+                    let unitPrice = 0;
+                    
+                    if (code && customerPrices[code]) {
+                        // ใช้ราคาจาก customerPrices (ราคาปัจจุบัน)
+                        unitPrice = customerPrices[code].price || 0;
+                    } else if (qty > 0 && priceFromOrder > 0) {
+                        // ใช้ราคาจากออเดอร์เดิม
+                        unitPrice = Math.round(priceFromOrder / qty);
+                    }
                     
                     result.push({
-                        name: match[1].trim(),
+                        name: name,
                         qty: qty,
                         unit: match[3].trim(),
-                        price: price,
+                        price: qty * unitPrice,
                         unitPrice: unitPrice,
+                        productCode: code,
                         deleted: false
                     });
                 }
@@ -980,7 +1027,7 @@
             let html = '';
             
             editingItems.forEach((item, index) => {
-                const unitPrice = item.qty > 0 ? Math.round(item.price / item.qty) : (item.unitPrice || 0);
+                const unitPrice = item.unitPrice || 0;
                 const isDeleted = item.deleted === true;
                 html += `
                     <div class="edit-item-row ${isDeleted ? 'deleted' : ''}" id="editRow_${index}">
