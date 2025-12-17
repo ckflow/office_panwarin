@@ -44,14 +44,14 @@
             font-size: 14px;
         }
         .date-input {
-            width: 140px;
+            width: 130px;
+        }
+        .time-input {
+            width: 90px;
         }
         .customer-select {
             min-width: 150px;
             max-width: 200px;
-        }
-        .status-select {
-            width: 120px;
         }
         
         /* Tab Navigation */
@@ -241,10 +241,11 @@
             .filter-group select, .filter-group input {
                 flex: 1;
             }
-            .date-input {
-                width: 100%;
+            .date-input, .time-input {
+                width: auto;
+                flex: 1;
             }
-            .customer-select, .status-select {
+            .customer-select {
                 width: 100%;
                 max-width: none;
             }
@@ -274,10 +275,12 @@
             <div class="filter-group">
                 <label><i class="fas fa-calendar-alt text-primary me-1"></i>จาก</label>
                 <input type="date" id="dateFrom" class="form-control form-control-sm date-input" onchange="loadOrders()">
+                <input type="time" id="timeFrom" class="form-control form-control-sm time-input" onchange="filterByTime()" value="00:00">
             </div>
             <div class="filter-group">
                 <label>ถึง</label>
                 <input type="date" id="dateTo" class="form-control form-control-sm date-input" onchange="loadOrders()">
+                <input type="time" id="timeTo" class="form-control form-control-sm time-input" onchange="filterByTime()" value="23:59">
             </div>
             <div class="filter-group">
                 <label><i class="fas fa-user text-primary me-1"></i>ลูกค้า</label>
@@ -333,12 +336,70 @@
         let allOrders = [];
         let allCustomers = [];
         let currentStatusFilter = ''; // เริ่มต้นแสดงทั้งหมด
+        let autoRefreshInterval = null;
+        const AUTO_REFRESH_SECONDS = 10;
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             initDate();
             loadCustomers();
             loadOrders();
+            startAutoRefresh();
+        });
+        
+        // Auto-refresh functions
+        function startAutoRefresh() {
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+            autoRefreshInterval = setInterval(() => {
+                if (document.visibilityState === 'visible') {
+                    silentRefreshOrders();
+                }
+            }, AUTO_REFRESH_SECONDS * 1000);
+        }
+        
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+            }
+        }
+        
+        async function silentRefreshOrders() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            const customerId = document.getElementById('customerFilter').value;
+            
+            try {
+                const res = await fetch(`${BASE_URL}/get-pending-orders`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        dateFrom,
+                        dateTo,
+                        customerId: customerId || null,
+                        status: null
+                    })
+                });
+                const newOrders = await res.json();
+                if (!Array.isArray(newOrders)) return;
+                
+                // เช็คว่ามีการเปลี่ยนแปลงหรือไม่
+                if (JSON.stringify(allOrders) !== JSON.stringify(newOrders)) {
+                    allOrders = newOrders;
+                    updateSummary();
+                    renderOrders();
+                    console.log('🔄 Orders refreshed:', new Date().toLocaleTimeString());
+                }
+            } catch (e) {
+                console.error('Silent refresh error:', e);
+            }
+        }
+        
+        // Handle visibility change
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                silentRefreshOrders();
+            }
         });
 
         function filterByStatus(status) {
@@ -358,6 +419,11 @@
             }
             
             renderOrders(); // render ใหม่ตาม filter ที่เลือก
+        }
+        
+        function filterByTime() {
+            updateSummary();
+            renderOrders();
         }
 
         function initDate() {
@@ -438,6 +504,15 @@
             if (currentStatusFilter) {
                 filteredOrders = allOrders.filter(o => o.status === currentStatusFilter);
             }
+            
+            // Filter by time
+            const timeFrom = document.getElementById('timeFrom').value || '00:00';
+            const timeTo = document.getElementById('timeTo').value || '23:59';
+            
+            filteredOrders = filteredOrders.filter(o => {
+                const orderTime = o.order_time ? o.order_time.substring(0, 5) : '00:00';
+                return orderTime >= timeFrom && orderTime <= timeTo;
+            });
             
             const pickupOrders = filteredOrders.filter(o => o.delivery_round === 'pickup');
             const deliveryOrders = filteredOrders.filter(o => o.delivery_round !== 'pickup');
@@ -628,14 +703,23 @@
         }
 
         function updateSummary() {
-            const pending = allOrders.filter(o => o.status === 'pending').length;
-            const confirmed = allOrders.filter(o => o.status === 'confirmed').length;
-            const cancelled = allOrders.filter(o => o.status === 'cancelled').length;
+            // Filter by time first
+            const timeFrom = document.getElementById('timeFrom').value || '00:00';
+            const timeTo = document.getElementById('timeTo').value || '23:59';
+            
+            const filteredByTime = allOrders.filter(o => {
+                const orderTime = o.order_time ? o.order_time.substring(0, 5) : '00:00';
+                return orderTime >= timeFrom && orderTime <= timeTo;
+            });
+            
+            const pending = filteredByTime.filter(o => o.status === 'pending').length;
+            const confirmed = filteredByTime.filter(o => o.status === 'confirmed').length;
+            const cancelled = filteredByTime.filter(o => o.status === 'cancelled').length;
             
             document.getElementById('countPending').textContent = pending;
             document.getElementById('countConfirmed').textContent = confirmed;
             document.getElementById('countCancelled').textContent = cancelled;
-            document.getElementById('countTotal').textContent = allOrders.length;
+            document.getElementById('countTotal').textContent = filteredByTime.length;
         }
 
         async function confirmOrder(orderId, invoiceNo) {
