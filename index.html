@@ -1359,7 +1359,10 @@
                     const urlParams = new URLSearchParams(window.location.search);
                     const devMode = urlParams.get('dev') === '1';
                     if (!devMode) {
-                        document.getElementById('myOrdersTab').style.display = 'none';
+                    document.getElementById('myOrdersTab').style.display = 'none';
+                    } else {
+    // Dev mode: โหลดร้านที่ผูกกับ LINE ID ของ Admin
+                        await loadMyShops();  // ← เพิ่มตรงนี้!
                     }
                     
                     await loadAllCustomers();
@@ -1836,3 +1839,4 @@
     </script>
 </body>
 </html>
+
