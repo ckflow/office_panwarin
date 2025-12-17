@@ -180,27 +180,45 @@
         
         .summary-bar {
             background: white;
-            padding: 10px 15px;
+            padding: 6px;
             margin: 0 15px 15px;
             border-radius: 12px;
             display: flex;
-            justify-content: space-around;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            gap: 4px;
         }
         .summary-item {
+            flex: 1;
             text-align: center;
+            padding: 8px 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        .summary-item:hover {
+            background: #f8f9fa;
+        }
+        .summary-item.active {
+            border-color: currentColor;
+            background: #f8f9fa;
         }
         .summary-number {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: bold;
         }
         .summary-label {
-            font-size: 11px;
+            font-size: 10px;
             color: #888;
         }
         .summary-pending .summary-number { color: #ffc107; }
+        .summary-pending.active { border-color: #ffc107; background: #fff9e6; }
         .summary-confirmed .summary-number { color: #198754; }
+        .summary-confirmed.active { border-color: #198754; background: #e8f5e9; }
+        .summary-cancelled .summary-number { color: #dc3545; }
+        .summary-cancelled.active { border-color: #dc3545; background: #fdeaea; }
         .summary-total .summary-number { color: #667eea; }
+        .summary-total.active { border-color: #667eea; background: #eef2ff; }
         
         .loading-overlay {
             position: fixed;
@@ -267,28 +285,23 @@
                     <option value="">ทุกร้าน</option>
                 </select>
             </div>
-            <div class="filter-group">
-                <label><i class="fas fa-filter text-primary me-1"></i>สถานะ</label>
-                <select id="statusFilter" class="form-select form-select-sm status-select" onchange="loadOrders()">
-                    <option value="">ทั้งหมด</option>
-                    <option value="pending" selected>รอยืนยัน</option>
-                    <option value="confirmed">ยืนยันแล้ว</option>
-                    <option value="cancelled">ยกเลิก</option>
-                </select>
-            </div>
         </div>
     </div>
 
     <div class="summary-bar">
-        <div class="summary-item summary-pending">
+        <div class="summary-item summary-pending" onclick="filterByStatus('pending')">
             <div class="summary-number" id="countPending">0</div>
             <div class="summary-label">รอยืนยัน</div>
         </div>
-        <div class="summary-item summary-confirmed">
+        <div class="summary-item summary-confirmed" onclick="filterByStatus('confirmed')">
             <div class="summary-number" id="countConfirmed">0</div>
             <div class="summary-label">ยืนยันแล้ว</div>
         </div>
-        <div class="summary-item summary-total">
+        <div class="summary-item summary-cancelled" onclick="filterByStatus('cancelled')">
+            <div class="summary-number" id="countCancelled">0</div>
+            <div class="summary-label">ยกเลิก</div>
+        </div>
+        <div class="summary-item summary-total active" onclick="filterByStatus('')">
             <div class="summary-number" id="countTotal">0</div>
             <div class="summary-label">ทั้งหมด</div>
         </div>
@@ -319,6 +332,7 @@
         const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
         let allOrders = [];
         let allCustomers = [];
+        let currentStatusFilter = ''; // เริ่มต้นแสดงทั้งหมด
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
@@ -326,6 +340,25 @@
             loadCustomers();
             loadOrders();
         });
+
+        function filterByStatus(status) {
+            currentStatusFilter = status;
+            
+            // Update active state
+            document.querySelectorAll('.summary-item').forEach(item => item.classList.remove('active'));
+            
+            if (status === 'pending') {
+                document.querySelector('.summary-pending').classList.add('active');
+            } else if (status === 'confirmed') {
+                document.querySelector('.summary-confirmed').classList.add('active');
+            } else if (status === 'cancelled') {
+                document.querySelector('.summary-cancelled').classList.add('active');
+            } else {
+                document.querySelector('.summary-total').classList.add('active');
+            }
+            
+            renderOrders(); // render ใหม่ตาม filter ที่เลือก
+        }
 
         function initDate() {
             const today = new Date();
@@ -372,9 +405,9 @@
             const dateFrom = document.getElementById('dateFrom').value;
             const dateTo = document.getElementById('dateTo').value;
             const customerId = document.getElementById('customerFilter').value;
-            const status = document.getElementById('statusFilter').value;
             
             try {
+                // ดึงข้อมูลทั้งหมด (ไม่ filter status ที่ backend)
                 const res = await fetch(`${BASE_URL}/get-pending-orders`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -382,14 +415,14 @@
                         dateFrom,
                         dateTo,
                         customerId: customerId || null,
-                        status: status || null 
+                        status: null  // ดึงทุกสถานะ
                     })
                 });
                 allOrders = await res.json();
                 if (!Array.isArray(allOrders)) allOrders = [];
                 
-                renderOrders();
                 updateSummary();
+                renderOrders();
             } catch (e) {
                 console.error('Error loading orders:', e);
                 allOrders = [];
@@ -400,10 +433,16 @@
         }
 
         function renderOrders() {
-            const pickupOrders = allOrders.filter(o => o.delivery_round === 'pickup');
-            const deliveryOrders = allOrders.filter(o => o.delivery_round !== 'pickup');
+            // Filter by status first
+            let filteredOrders = allOrders;
+            if (currentStatusFilter) {
+                filteredOrders = allOrders.filter(o => o.status === currentStatusFilter);
+            }
             
-            // Update badges
+            const pickupOrders = filteredOrders.filter(o => o.delivery_round === 'pickup');
+            const deliveryOrders = filteredOrders.filter(o => o.delivery_round !== 'pickup');
+            
+            // Update badges (นับเฉพาะ pending)
             const pendingPickup = pickupOrders.filter(o => o.status === 'pending').length;
             const pendingDelivery = deliveryOrders.filter(o => o.status === 'pending').length;
             document.getElementById('badgePickup').textContent = pendingPickup;
@@ -591,9 +630,11 @@
         function updateSummary() {
             const pending = allOrders.filter(o => o.status === 'pending').length;
             const confirmed = allOrders.filter(o => o.status === 'confirmed').length;
+            const cancelled = allOrders.filter(o => o.status === 'cancelled').length;
             
             document.getElementById('countPending').textContent = pending;
             document.getElementById('countConfirmed').textContent = confirmed;
+            document.getElementById('countCancelled').textContent = cancelled;
             document.getElementById('countTotal').textContent = allOrders.length;
         }
 
