@@ -919,6 +919,9 @@
                 return;
             }
             
+            console.log('📋 Editing order:', editingOrder);
+            console.log('🔑 customer_id:', editingOrder.customer_id);
+            
             // แสดง loading
             const btn = event?.target;
             if (btn) {
@@ -929,12 +932,14 @@
             // โหลดราคาของลูกค้าเจ้าของออเดอร์ (ทุกครั้ง)
             if (editingOrder.customer_id) {
                 try {
+                    console.log('🔄 Loading prices for customer:', editingOrder.customer_id);
                     const res = await fetch(`${BASE_URL}/get-prices-by-customer`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ customerId: editingOrder.customer_id })
                     });
                     const data = await res.json();
+                    console.log('💰 Prices loaded:', data);
                     // เก็บราคาสำหรับการแก้ไขนี้
                     customerPrices = {};
                     data.forEach(item => {
@@ -947,9 +952,12 @@
                             };
                         }
                     });
+                    console.log('✅ customerPrices:', customerPrices);
                 } catch (e) {
                     console.error('Error loading prices for edit:', e);
                 }
+            } else {
+                console.warn('⚠️ No customer_id in order!');
             }
             
             // คืนค่าปุ่ม
