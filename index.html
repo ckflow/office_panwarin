@@ -220,6 +220,114 @@
             margin-bottom: 15px;
             color: #ddd;
         }
+        
+        /* Date Filter for My Orders */
+        .order-filter-section {
+            background: white;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .order-filter-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .order-filter-row label {
+            font-size: 12px;
+            color: #666;
+            white-space: nowrap;
+        }
+        .order-filter-row input[type="date"] {
+            flex: 1;
+            min-width: 120px;
+            padding: 6px 8px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        .order-filter-row .btn-filter {
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        
+        /* Edit Order Modal */
+        .edit-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+        }
+        .edit-modal-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .edit-modal-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .edit-modal-header .drag-handle {
+            width: 40px;
+            height: 4px;
+            background: #ddd;
+            border-radius: 2px;
+            margin: 0 auto 15px;
+        }
+        .edit-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .edit-item-name {
+            font-size: 14px;
+            color: #333;
+        }
+        .edit-item-input {
+            width: 70px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 6px;
+            color: #0d6efd;
+        }
+        .edit-date-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 12px;
+            margin: 15px 0;
+        }
+        .edit-date-section label {
+            font-size: 13px;
+            color: #666;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .edit-date-section input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -343,10 +451,55 @@
 
         <!-- Tab: ออเดอร์ของฉัน -->
         <div id="tabMyOrders" class="tab-content">
-            <div class="container mt-2" id="myOrdersList">
-                <div class="text-center text-muted py-4">
-                    <div class="spinner-border text-primary mb-2" role="status"></div>
-                    <div>กำลังโหลด...</div>
+            <div class="container mt-2">
+                <!-- Date Filter -->
+                <div class="order-filter-section">
+                    <div class="order-filter-row">
+                        <label>📅 จาก:</label>
+                        <input type="date" id="myOrderDateFrom">
+                        <label>ถึง:</label>
+                        <input type="date" id="myOrderDateTo">
+                        <button class="btn btn-primary btn-filter" onclick="loadMyOrders()">🔍 ค้นหา</button>
+                    </div>
+                </div>
+                
+                <!-- Orders List -->
+                <div id="myOrdersList">
+                    <div class="text-center text-muted py-4">
+                        <div class="spinner-border text-primary mb-2" role="status"></div>
+                        <div>กำลังโหลด...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Order Modal -->
+        <div id="editOrderModal" class="edit-modal-overlay" onclick="closeEditModal(event)">
+            <div class="edit-modal-content" onclick="event.stopPropagation()">
+                <div class="edit-modal-header">
+                    <div class="drag-handle"></div>
+                    <h5>✏️ แก้ไขออเดอร์ <span id="editInvoiceNo"></span></h5>
+                </div>
+                
+                <!-- วันที่ -->
+                <div class="edit-date-section">
+                    <label>📅 วันที่ส่ง:</label>
+                    <input type="date" id="editOrderDate">
+                </div>
+                
+                <!-- รายการสินค้า -->
+                <div id="editItemsList"></div>
+                
+                <!-- ยอดรวม -->
+                <div style="background: #f0fff4; border-radius: 10px; padding: 12px; margin-top: 15px; text-align: center;">
+                    <span style="font-size: 14px; color: #666;">ยอดรวมใหม่:</span>
+                    <div id="editNewTotal" style="font-size: 22px; font-weight: bold; color: #198754;">0 บาท</div>
+                </div>
+                
+                <!-- Buttons -->
+                <div class="d-flex gap-2 mt-4">
+                    <button class="btn btn-outline-secondary flex-fill" style="border-radius: 25px; padding: 12px;" onclick="closeEditModalDirect()">ยกเลิก</button>
+                    <button class="btn btn-success flex-fill" id="saveEditBtn" style="border-radius: 25px; padding: 12px; font-weight: bold;" onclick="saveEditOrder()">💾 บันทึก</button>
                 </div>
             </div>
         </div>
@@ -454,6 +607,7 @@
             } else {
                 document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
                 document.getElementById('tabMyOrders').classList.add('active');
+                initMyOrdersDateFilter();
                 loadMyOrders();
             }
         }
@@ -462,11 +616,18 @@
             const container = document.getElementById('myOrdersList');
             container.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border text-primary mb-2"></div><div>กำลังโหลด...</div></div>';
             
+            const dateFrom = document.getElementById('myOrderDateFrom').value;
+            const dateTo = document.getElementById('myOrderDateTo').value;
+            
             try {
                 const res = await fetch(`${BASE_URL}/get-my-orders`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lineId: currentUserId })
+                    body: JSON.stringify({ 
+                        lineId: currentUserId,
+                        dateFrom: dateFrom,
+                        dateTo: dateTo
+                    })
                 });
                 myOrders = await res.json();
                 if (!Array.isArray(myOrders)) myOrders = [];
@@ -475,6 +636,22 @@
                 console.error('Error loading my orders:', e);
                 container.innerHTML = '<div class="empty-orders"><i class="fas fa-exclamation-circle"></i><h5>โหลดข้อมูลไม่สำเร็จ</h5></div>';
             }
+        }
+        
+        function initMyOrdersDateFilter() {
+            const today = new Date();
+            const dateFrom = new Date();
+            dateFrom.setDate(today.getDate() - 7); // 7 วันย้อนหลัง
+            
+            const formatDate = (d) => {
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                return `${yyyy}-${mm}-${dd}`;
+            };
+            
+            document.getElementById('myOrderDateFrom').value = formatDate(dateFrom);
+            document.getElementById('myOrderDateTo').value = formatDate(today);
         }
 
         function renderMyOrders() {
@@ -489,7 +666,7 @@
             myOrders.forEach(order => {
                 const statusClass = getStatusClass(order.status);
                 const statusText = getStatusText(order.status);
-                const canCancel = order.status === 'pending';
+                const canEdit = order.status === 'pending';
                 const roundText = getRoundDisplayText(order.delivery_round, order.pickup_time);
                 
                 html += `
@@ -508,13 +685,13 @@
                             <div class="my-order-round">🚚 ${roundText}</div>
                             <div class="my-order-items">${formatOrderItems(order.order_items)}</div>
                             ${order.total_bags > 0 ? `<div style="font-size:12px; color:#666;">👜 ยืมถุง: ${order.total_bags} ใบ</div>` : ''}
-                            ${canCancel ? `
+                            ${canEdit ? `
                                 <div class="my-order-actions mt-3">
-                                    <button class="btn btn-outline-danger" onclick="cancelOrder(${order.id}, '${order.invoice_no}')">❌ ยกเลิกออเดอร์</button>
+                                    <button class="btn btn-outline-primary" onclick="editOrder(${order.id})">✏️ แก้ไขออเดอร์</button>
                                 </div>
                             ` : `
                                 <div class="text-center mt-2" style="font-size: 12px; color: #888;">
-                                    ${order.status === 'confirmed' ? '✅ ยืนยันแล้ว ไม่สามารถยกเลิกได้' : ''}
+                                    ${order.status === 'confirmed' ? '✅ ยืนยันแล้ว ไม่สามารถแก้ไขได้' : ''}
                                     ${order.status === 'cancelled' ? '❌ ยกเลิกแล้ว' : ''}
                                 </div>
                             `}
@@ -575,24 +752,196 @@
         }
 
         async function cancelOrder(orderId, invoiceNo) {
-            if (!confirm(`❌ ยกเลิกออเดอร์ ${invoiceNo}?\n\nเมื่อยกเลิกแล้วจะไม่สามารถกู้คืนได้`)) return;
+            // ไม่ใช้แล้ว - เปลี่ยนเป็นแก้ไขแทน
+        }
+        
+        // ==================== EDIT ORDER FUNCTIONS ====================
+        let editingOrder = null;
+        let editingItems = [];
+        
+        function editOrder(orderId) {
+            editingOrder = myOrders.find(o => o.id === orderId);
+            if (!editingOrder) {
+                alert('ไม่พบออเดอร์');
+                return;
+            }
+            
+            // ตั้งค่า Invoice No
+            document.getElementById('editInvoiceNo').textContent = editingOrder.invoice_no;
+            
+            // ตั้งค่าวันที่
+            const orderDate = editingOrder.order_date ? editingOrder.order_date.split('T')[0] : '';
+            document.getElementById('editOrderDate').value = orderDate;
+            
+            // Parse order items
+            editingItems = parseOrderItemsForEdit(editingOrder.order_items);
+            renderEditItems();
+            calculateEditTotal();
+            
+            // แสดง Modal
+            document.getElementById('editOrderModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function parseOrderItemsForEdit(items) {
+            if (!items) return [];
+            
+            let itemsStr = typeof items === 'object' ? JSON.stringify(items) : String(items);
+            const matches = itemsStr.match(/"([^"]+)"/g);
+            
+            if (!matches) return [];
+            
+            const result = [];
+            matches.forEach(m => {
+                const line = m.replace(/^"|"$/g, '');
+                if (line.startsWith('---') || line.includes('ยืมถุง') || line.includes('คืนถุง')) return;
+                
+                // Parse: "หลอดใหญ่: 10 กระสอบ (240 บาท)" หรือ "- หลอดใหญ่: 10 กระสอบ (240 บาท)"
+                const cleanLine = line.replace(/^-\s*/, '');
+                const match = cleanLine.match(/(.+?):\s*(\d+)\s*(.+?)\s*\((\d+,?\d*)\s*บาท\)/);
+                
+                if (match) {
+                    result.push({
+                        name: match[1].trim(),
+                        qty: parseInt(match[2]),
+                        unit: match[3].trim(),
+                        price: parseInt(match[4].replace(',', ''))
+                    });
+                }
+            });
+            
+            return result;
+        }
+        
+        function renderEditItems() {
+            const container = document.getElementById('editItemsList');
+            let html = '';
+            
+            editingItems.forEach((item, index) => {
+                const unitPrice = item.qty > 0 ? Math.round(item.price / item.qty) : 0;
+                html += `
+                    <div class="edit-item-row">
+                        <div class="edit-item-name">
+                            ${item.name}
+                            <div style="font-size:11px; color:#888;">${unitPrice.toLocaleString()} บาท/${item.unit}</div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:12px; color:#888;">${item.unit}</span>
+                            <input type="number" class="edit-item-input" 
+                                value="${item.qty}" min="0" 
+                                data-index="${index}" 
+                                data-unit-price="${unitPrice}"
+                                onchange="updateEditItem(this)" 
+                                oninput="updateEditItem(this)">
+                        </div>
+                    </div>
+                `;
+            });
+            
+            if (editingItems.length === 0) {
+                html = '<div class="text-center text-muted py-3">ไม่พบรายการสินค้า</div>';
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function updateEditItem(input) {
+            const index = parseInt(input.dataset.index);
+            const unitPrice = parseInt(input.dataset.unitPrice) || 0;
+            const newQty = parseInt(input.value) || 0;
+            
+            editingItems[index].qty = newQty;
+            editingItems[index].price = newQty * unitPrice;
+            
+            calculateEditTotal();
+        }
+        
+        function calculateEditTotal() {
+            let total = 0;
+            editingItems.forEach(item => {
+                total += item.price || 0;
+            });
+            document.getElementById('editNewTotal').textContent = total.toLocaleString() + ' บาท';
+        }
+        
+        function closeEditModal(event) {
+            if (event.target.id === 'editOrderModal') {
+                closeEditModalDirect();
+            }
+        }
+        
+        function closeEditModalDirect() {
+            document.getElementById('editOrderModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+            editingOrder = null;
+            editingItems = [];
+        }
+        
+        async function saveEditOrder() {
+            if (!editingOrder) return;
+            
+            const newDate = document.getElementById('editOrderDate').value;
+            if (!newDate) {
+                alert('กรุณาเลือกวันที่');
+                return;
+            }
+            
+            // สร้าง order items ใหม่
+            const newItems = editingItems
+                .filter(item => item.qty > 0)
+                .map(item => `- ${item.name}: ${item.qty} ${item.unit} (${item.price.toLocaleString()} บาท)`);
+            
+            if (newItems.length === 0) {
+                alert('กรุณาใส่จำนวนสินค้าอย่างน้อย 1 รายการ');
+                return;
+            }
+            
+            // คำนวณยอดรวมใหม่
+            let newTotal = 0;
+            editingItems.forEach(item => { newTotal += item.price || 0; });
+            
+            // คำนวณถุงยืมใหม่
+            let newBags = 0;
+            editingItems.forEach(item => {
+                const name = item.name.toLowerCase();
+                if (name.includes('หลอด') || name.includes('แพ็ค') || name.includes('บด')) {
+                    newBags += item.qty;
+                }
+            });
+            
+            const btn = document.getElementById('saveEditBtn');
+            const oldText = btn.innerText;
+            btn.innerText = '⏳ กำลังบันทึก...';
+            btn.disabled = true;
             
             try {
-                const res = await fetch(`${BASE_URL}/cancel-order`, {
+                const res = await fetch(`${BASE_URL}/update-order`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ orderId, lineId: currentUserId })
+                    body: JSON.stringify({
+                        orderId: editingOrder.id,
+                        lineId: currentUserId,
+                        orderDate: newDate,
+                        items: newItems,
+                        total: newTotal,
+                        totalBags: newBags
+                    })
                 });
+                
                 const result = await res.json();
                 
                 if (result.success) {
-                    alert('✅ ยกเลิกออเดอร์แล้ว');
+                    alert('✅ บันทึกการแก้ไขแล้ว');
+                    closeEditModalDirect();
                     loadMyOrders();
                 } else {
-                    alert('❌ ' + (result.message || 'ไม่สามารถยกเลิกได้'));
+                    alert('❌ ' + (result.message || 'ไม่สามารถบันทึกได้'));
                 }
             } catch (e) {
                 alert('เกิดข้อผิดพลาด: ' + e.message);
+            } finally {
+                btn.innerText = oldText;
+                btn.disabled = false;
             }
         }
 
