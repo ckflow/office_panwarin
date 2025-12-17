@@ -1026,37 +1026,46 @@
             const select = document.getElementById('addItemSelect');
             select.innerHTML = '<option value="">-- เลือกสินค้า --</option>';
             
-            // ดึงรายชื่อสินค้าจาก customerPrices
+            // ใช้ลำดับเดียวกับหน้าสั่งซื้อ
+            const productOrder = [
+                'tube_l', 'tube_s',           // น้ำแข็งหลอด
+                'pack_l', 'pack_s',           // น้ำแข็งแพ็ค
+                'crush_white', 'crush_sack', 'crush_sachet',  // น้ำแข็งบด
+                'cube_sachet', 'cube_kak', 'cube_hand', 'sack' // ก้อน & อื่นๆ
+            ];
+            
             const productNames = {
                 'tube_l': 'หลอดใหญ่', 'tube_s': 'หลอดเล็ก', 
                 'pack_l': 'แพ็คกระสอบ', 'pack_s': 'แพ็คเล็ก',
-                'crush_sack': 'บด(ถุงบีซ)', 'crush_sachet': 'บด(ซอง)', 'crush_white': 'บด(ถุงขาว)',
+                'crush_white': 'บด(ถุงขาว)', 'crush_sack': 'บด(ถุงบีซ)', 'crush_sachet': 'บด(ซอง)',
                 'cube_sachet': 'ก้อน(ซอง)', 'cube_kak': 'ก้อน(ลูก)', 'cube_hand': 'ก้อน(กั๊ก)', 
                 'sack': 'กระสอบ(มัด)'
             };
             const productUnits = {
                 'tube_l': 'กระสอบ', 'tube_s': 'กระสอบ',
                 'pack_l': 'แพ็ค', 'pack_s': 'แพ็ค',
-                'crush_sack': 'ถุง', 'crush_sachet': 'ซอง', 'crush_white': 'ถุง',
+                'crush_white': 'ถุง', 'crush_sack': 'ถุง', 'crush_sachet': 'ซอง',
                 'cube_sachet': 'ซอง', 'cube_kak': 'ลูก', 'cube_hand': 'กั๊ก',
                 'sack': 'มัด'
             };
             
-            // สร้าง options จาก customerPrices หรือจาก default list
+            // สร้าง options ตามลำดับที่กำหนด
             if (Object.keys(customerPrices).length > 0) {
-                for (const code in customerPrices) {
-                    const name = productNames[code] || code;
-                    const price = customerPrices[code].price;
-                    const unit = productUnits[code] || 'หน่วย';
-                    select.innerHTML += `<option value="${code}" data-price="${price}" data-unit="${unit}" data-name="${name}">${name} (${price} บาท/${unit})</option>`;
-                }
+                productOrder.forEach(code => {
+                    if (customerPrices[code]) {
+                        const name = productNames[code] || code;
+                        const price = customerPrices[code].price;
+                        const unit = productUnits[code] || 'หน่วย';
+                        select.innerHTML += `<option value="${code}" data-price="${price}" data-unit="${unit}" data-name="${name}">${name} (${price} บาท/${unit})</option>`;
+                    }
+                });
             } else {
                 // ใช้ default list ถ้าไม่มี customerPrices
-                for (const code in productNames) {
+                productOrder.forEach(code => {
                     const name = productNames[code];
                     const unit = productUnits[code];
                     select.innerHTML += `<option value="${code}" data-price="0" data-unit="${unit}" data-name="${name}">${name}</option>`;
-                }
+                });
             }
         }
         
