@@ -328,6 +328,53 @@
             border-radius: 8px;
             font-size: 14px;
         }
+        .add-item-section {
+            background: #e7f1ff;
+            border: 1px solid #b6d4fe;
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 15px;
+        }
+        .edit-item-delete {
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            padding: 5px 8px;
+            border-radius: 5px;
+        }
+        .edit-item-delete:hover {
+            background: #fdeaea;
+        }
+        .edit-item-row.deleted {
+            opacity: 0.5;
+            background: #f8d7da;
+            text-decoration: line-through;
+        }
+        .edit-item-row.deleted .edit-item-delete {
+            color: #198754;
+        }
+        .edit-item-delete {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .edit-item-delete:hover {
+            background: #c82333;
+        }
+        .edit-item-row.deleted {
+            opacity: 0.4;
+            text-decoration: line-through;
+        }
     </style>
 </head>
 <body>
@@ -455,6 +502,12 @@
                 <!-- Date Filter -->
                 <div class="order-filter-section">
                     <div class="order-filter-row">
+                        <label>🏪 ร้าน:</label>
+                        <select id="myOrderShopFilter" class="form-select form-select-sm" style="flex:1; min-width:120px;" onchange="loadMyOrders()">
+                            <option value="">ทุกร้าน</option>
+                        </select>
+                    </div>
+                    <div class="order-filter-row mt-2">
                         <label>📅 จาก:</label>
                         <input type="date" id="myOrderDateFrom">
                         <label>ถึง:</label>
@@ -489,6 +542,18 @@
                 
                 <!-- รายการสินค้า -->
                 <div id="editItemsList"></div>
+                
+                <!-- เพิ่มสินค้า -->
+                <div class="add-item-section">
+                    <div style="font-size: 13px; color: #666; margin-bottom: 8px;">➕ เพิ่มสินค้า:</div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <select id="addItemSelect" class="form-select form-select-sm" style="flex: 1;">
+                            <option value="">-- เลือกสินค้า --</option>
+                        </select>
+                        <input type="number" id="addItemQty" class="form-control form-control-sm" style="width: 70px;" placeholder="จำนวน" min="1" value="1">
+                        <button type="button" class="btn btn-sm btn-primary" onclick="addNewItem()">เพิ่ม</button>
+                    </div>
+                </div>
                 
                 <!-- ยอดรวม -->
                 <div style="background: #f0fff4; border-radius: 10px; padding: 12px; margin-top: 15px; text-align: center;">
@@ -619,6 +684,7 @@
         async function silentRefreshMyOrders() {
             const dateFrom = document.getElementById('myOrderDateFrom').value;
             const dateTo = document.getElementById('myOrderDateTo').value;
+            const customerId = document.getElementById('myOrderShopFilter').value;
             
             if (!dateFrom || !dateTo) return;
             
@@ -629,7 +695,8 @@
                     body: JSON.stringify({ 
                         lineId: currentUserId,
                         dateFrom: dateFrom,
-                        dateTo: dateTo
+                        dateTo: dateTo,
+                        customerId: customerId || null
                     })
                 });
                 const newOrders = await res.json();
@@ -669,6 +736,7 @@
             
             const dateFrom = document.getElementById('myOrderDateFrom').value;
             const dateTo = document.getElementById('myOrderDateTo').value;
+            const customerId = document.getElementById('myOrderShopFilter').value;
             
             try {
                 const res = await fetch(`${BASE_URL}/get-my-orders`, {
@@ -677,7 +745,8 @@
                     body: JSON.stringify({ 
                         lineId: currentUserId,
                         dateFrom: dateFrom,
-                        dateTo: dateTo
+                        dateTo: dateTo,
+                        customerId: customerId || null
                     })
                 });
                 myOrders = await res.json();
@@ -703,6 +772,15 @@
             
             document.getElementById('myOrderDateFrom').value = formatDate(dateFrom);
             document.getElementById('myOrderDateTo').value = formatDate(today);
+            
+            // Populate shop dropdown
+            const shopSelect = document.getElementById('myOrderShopFilter');
+            shopSelect.innerHTML = '<option value="">ทุกร้าน</option>';
+            if (myShops && myShops.length > 0) {
+                myShops.forEach(s => {
+                    shopSelect.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+                });
+            }
         }
 
         function renderMyOrders() {
@@ -829,6 +907,9 @@
             renderEditItems();
             calculateEditTotal();
             
+            // Populate add item dropdown
+            populateAddItemDropdown();
+            
             // แสดง Modal
             document.getElementById('editOrderModal').style.display = 'block';
             document.body.style.overflow = 'hidden';
@@ -852,11 +933,17 @@
                 const match = cleanLine.match(/(.+?):\s*(\d+)\s*(.+?)\s*\((\d+,?\d*)\s*บาท\)/);
                 
                 if (match) {
+                    const qty = parseInt(match[2]);
+                    const price = parseInt(match[4].replace(',', ''));
+                    const unitPrice = qty > 0 ? Math.round(price / qty) : 0;
+                    
                     result.push({
                         name: match[1].trim(),
-                        qty: parseInt(match[2]),
+                        qty: qty,
                         unit: match[3].trim(),
-                        price: parseInt(match[4].replace(',', ''))
+                        price: price,
+                        unitPrice: unitPrice,
+                        deleted: false
                     });
                 }
             });
@@ -869,10 +956,11 @@
             let html = '';
             
             editingItems.forEach((item, index) => {
-                const unitPrice = item.qty > 0 ? Math.round(item.price / item.qty) : 0;
+                const unitPrice = item.qty > 0 ? Math.round(item.price / item.qty) : (item.unitPrice || 0);
+                const isDeleted = item.deleted === true;
                 html += `
-                    <div class="edit-item-row">
-                        <div class="edit-item-name">
+                    <div class="edit-item-row ${isDeleted ? 'deleted' : ''}" id="editRow_${index}">
+                        <div class="edit-item-name" style="flex:1;">
                             ${item.name}
                             <div style="font-size:11px; color:#888;">${unitPrice.toLocaleString()} บาท/${item.unit}</div>
                         </div>
@@ -883,7 +971,11 @@
                                 data-index="${index}" 
                                 data-unit-price="${unitPrice}"
                                 onchange="updateEditItem(this)" 
-                                oninput="updateEditItem(this)">
+                                oninput="updateEditItem(this)"
+                                ${isDeleted ? 'disabled' : ''}>
+                            <button type="button" class="edit-item-delete" onclick="toggleDeleteItem(${index})" title="${isDeleted ? 'กู้คืน' : 'ลบ'}">
+                                <i class="fas fa-${isDeleted ? 'undo' : 'trash'}"></i>
+                            </button>
                         </div>
                     </div>
                 `;
@@ -896,9 +988,104 @@
             container.innerHTML = html;
         }
         
+        function toggleDeleteItem(index) {
+            editingItems[index].deleted = !editingItems[index].deleted;
+            if (editingItems[index].deleted) {
+                editingItems[index].qty = 0;
+                editingItems[index].price = 0;
+            }
+            renderEditItems();
+            calculateEditTotal();
+        }
+        
+        function populateAddItemDropdown() {
+            const select = document.getElementById('addItemSelect');
+            select.innerHTML = '<option value="">-- เลือกสินค้า --</option>';
+            
+            // ดึงรายชื่อสินค้าจาก customerPrices
+            const productNames = {
+                'tube_l': 'หลอดใหญ่', 'tube_s': 'หลอดเล็ก', 
+                'pack_l': 'แพ็คกระสอบ', 'pack_s': 'แพ็คเล็ก',
+                'crush_sack': 'บด(ถุงบีซ)', 'crush_sachet': 'บด(ซอง)', 'crush_white': 'บด(ถุงขาว)',
+                'cube_sachet': 'ก้อน(ซอง)', 'cube_kak': 'ก้อน(ลูก)', 'cube_hand': 'ก้อน(กั๊ก)', 
+                'sack': 'กระสอบ(มัด)'
+            };
+            const productUnits = {
+                'tube_l': 'กระสอบ', 'tube_s': 'กระสอบ',
+                'pack_l': 'แพ็ค', 'pack_s': 'แพ็ค',
+                'crush_sack': 'ถุง', 'crush_sachet': 'ซอง', 'crush_white': 'ถุง',
+                'cube_sachet': 'ซอง', 'cube_kak': 'ลูก', 'cube_hand': 'กั๊ก',
+                'sack': 'มัด'
+            };
+            
+            // สร้าง options จาก customerPrices หรือจาก default list
+            if (Object.keys(customerPrices).length > 0) {
+                for (const code in customerPrices) {
+                    const name = productNames[code] || code;
+                    const price = customerPrices[code].price;
+                    const unit = productUnits[code] || 'หน่วย';
+                    select.innerHTML += `<option value="${code}" data-price="${price}" data-unit="${unit}" data-name="${name}">${name} (${price} บาท/${unit})</option>`;
+                }
+            } else {
+                // ใช้ default list ถ้าไม่มี customerPrices
+                for (const code in productNames) {
+                    const name = productNames[code];
+                    const unit = productUnits[code];
+                    select.innerHTML += `<option value="${code}" data-price="0" data-unit="${unit}" data-name="${name}">${name}</option>`;
+                }
+            }
+        }
+        
+        function addNewItem() {
+            const select = document.getElementById('addItemSelect');
+            const qtyInput = document.getElementById('addItemQty');
+            
+            if (!select.value) {
+                alert('กรุณาเลือกสินค้า');
+                return;
+            }
+            
+            const qty = parseInt(qtyInput.value) || 1;
+            if (qty <= 0) {
+                alert('กรุณาใส่จำนวน');
+                return;
+            }
+            
+            const option = select.options[select.selectedIndex];
+            const name = option.dataset.name;
+            const unit = option.dataset.unit;
+            const unitPrice = parseFloat(option.dataset.price) || 0;
+            
+            // เช็คว่ามีสินค้านี้ในรายการแล้วหรือยัง
+            const existingIndex = editingItems.findIndex(item => item.name === name && !item.deleted);
+            
+            if (existingIndex >= 0) {
+                // เพิ่มจำนวนให้สินค้าที่มีอยู่แล้ว
+                editingItems[existingIndex].qty += qty;
+                editingItems[existingIndex].price = editingItems[existingIndex].qty * unitPrice;
+            } else {
+                // เพิ่มสินค้าใหม่
+                editingItems.push({
+                    name: name,
+                    qty: qty,
+                    unit: unit,
+                    price: qty * unitPrice,
+                    unitPrice: unitPrice,
+                    isNew: true
+                });
+            }
+            
+            // Reset form
+            select.value = '';
+            qtyInput.value = 1;
+            
+            renderEditItems();
+            calculateEditTotal();
+        }
+        
         function updateEditItem(input) {
             const index = parseInt(input.dataset.index);
-            const unitPrice = parseInt(input.dataset.unitPrice) || 0;
+            const unitPrice = parseInt(input.dataset.unitPrice) || editingItems[index].unitPrice || 0;
             const newQty = parseInt(input.value) || 0;
             
             editingItems[index].qty = newQty;
@@ -910,7 +1097,9 @@
         function calculateEditTotal() {
             let total = 0;
             editingItems.forEach(item => {
-                total += item.price || 0;
+                if (!item.deleted) {
+                    total += item.price || 0;
+                }
             });
             document.getElementById('editNewTotal').textContent = total.toLocaleString() + ' บาท';
         }
@@ -937,9 +1126,9 @@
                 return;
             }
             
-            // สร้าง order items ใหม่
+            // สร้าง order items ใหม่ (ไม่รวมรายการที่ลบ)
             const newItems = editingItems
-                .filter(item => item.qty > 0)
+                .filter(item => item.qty > 0 && !item.deleted)
                 .map(item => `- ${item.name}: ${item.qty} ${item.unit} (${item.price.toLocaleString()} บาท)`);
             
             if (newItems.length === 0) {
@@ -949,14 +1138,20 @@
             
             // คำนวณยอดรวมใหม่
             let newTotal = 0;
-            editingItems.forEach(item => { newTotal += item.price || 0; });
+            editingItems.forEach(item => { 
+                if (!item.deleted) {
+                    newTotal += item.price || 0; 
+                }
+            });
             
             // คำนวณถุงยืมใหม่
             let newBags = 0;
             editingItems.forEach(item => {
-                const name = item.name.toLowerCase();
-                if (name.includes('หลอด') || name.includes('แพ็ค') || name.includes('บด')) {
-                    newBags += item.qty;
+                if (!item.deleted) {
+                    const name = item.name.toLowerCase();
+                    if (name.includes('หลอด') || name.includes('แพ็ค') || name.includes('บด')) {
+                        newBags += item.qty;
+                    }
                 }
             });
             
@@ -1141,11 +1336,13 @@
                     document.getElementById('adminInputSection').style.display = 'block';
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
                     document.getElementById('qty_bag_borrow').removeAttribute('readonly');
-
+                    
+                    // Dev mode: เพิ่ม ?dev=1 ใน URL เพื่อแสดง tab ออเดอร์ของฉัน
                     const urlParams = new URLSearchParams(window.location.search);
                     const devMode = urlParams.get('dev') === '1';
                     if (!devMode) {
-                    document.getElementById('myOrdersTab').style.display = 'none';}
+                        document.getElementById('myOrdersTab').style.display = 'none';
+                    }
                     
                     await loadAllCustomers();
                     renderProductsForAdmin();
@@ -1621,5 +1818,3 @@
     </script>
 </body>
 </html>
-
-
