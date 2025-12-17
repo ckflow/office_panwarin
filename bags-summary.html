@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สรุปยอดถุง</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background-color: #f4f6f9; padding-bottom: 30px; font-family: 'Sarabun', sans-serif; }
+        
+        .header-section { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; 
+            padding: 15px 20px; 
+            position: sticky; 
+            top: 0; 
+            z-index: 999;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .loading-screen { 
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+            background: #f4f6f9; 
+            display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; 
+            z-index: 9999; 
+        }
+        
+        .summary-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .summary-item {
+            text-align: center;
+            padding: 15px 10px;
+            border-radius: 12px;
+        }
+        
+        .summary-item.borrow {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border: 1px solid #90caf9;
+        }
+        .summary-item.return {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border: 1px solid #a5d6a7;
+        }
+        .summary-item.balance {
+            background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+            border: 1px solid #ffe082;
+        }
+        .summary-item.balance.zero {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border: 1px solid #a5d6a7;
+        }
+        .summary-item.balance.negative {
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+            border: 1px solid #ef9a9a;
+        }
+        
+        .summary-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+        }
+        .summary-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .filter-section {
+            background: white;
+            border-radius: 12px;
+            padding: 12px 15px;
+            margin: 0 15px 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .filter-row label {
+            font-size: 13px;
+            color: #666;
+            white-space: nowrap;
+        }
+        
+        .filter-row input[type="date"],
+        .filter-row select {
+            padding: 6px 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        
+        .customer-table {
+            background: white;
+            border-radius: 12px;
+            margin: 0 15px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .customer-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .customer-row:hover {
+            background: #f8f9fa;
+        }
+        .customer-row:last-child {
+            border-bottom: none;
+        }
+        
+        .customer-name {
+            font-weight: bold;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .customer-balance {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .customer-balance.positive { color: #f57c00; }
+        .customer-balance.zero { color: #4caf50; }
+        .customer-balance.negative { color: #f44336; }
+        
+        .badge-borrowed {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            margin-right: 5px;
+        }
+        .badge-returned {
+            background: #e8f5e9;
+            color: #388e3c;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+        
+        .history-section {
+            margin: 15px;
+        }
+        
+        .history-title {
+            font-size: 14px;
+            color: #666;
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding-left: 5px;
+        }
+        
+        .history-item {
+            background: white;
+            border-radius: 10px;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .history-item.borrow {
+            border-left: 4px solid #2196f3;
+        }
+        .history-item.return {
+            border-left: 4px solid #4caf50;
+        }
+        
+        .history-date {
+            font-size: 11px;
+            color: #999;
+        }
+        
+        .history-source {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .history-qty {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .history-qty.borrow { color: #1976d2; }
+        .history-qty.return { color: #388e3c; }
+        
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .drag-handle {
+            width: 40px;
+            height: 4px;
+            background: #ddd;
+            border-radius: 2px;
+            margin: 0 auto 15px;
+        }
+        
+        .no-permission {
+            text-align: center;
+            padding: 50px 20px;
+            color: #666;
+        }
+        
+        .customer-select-card {
+            background: #fff3cd;
+            border: 1px solid #ffe69c;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+        .empty-state i {
+            font-size: 50px;
+            margin-bottom: 15px;
+            color: #ddd;
+        }
+        
+        .btn-add-return {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 100;
+        }
+        .btn-add-return:hover {
+            transform: scale(1.05);
+        }
+        
+        .tab-nav {
+            display: flex;
+            background: white;
+            margin: 15px;
+            border-radius: 12px;
+            padding: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            font-size: 13px;
+            font-weight: bold;
+            color: #666;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loadingScreen" class="loading-screen">
+        <div class="spinner-border text-primary mb-3" role="status"></div>
+        <h5>👜 กำลังโหลด...</h5>
+    </div>
+
+    <div id="noPermissionScreen" class="no-permission" style="display: none;">
+        <i class="fas fa-lock" style="font-size: 50px; color: #ddd; margin-bottom: 15px;"></i>
+        <h4>😕 ไม่พบข้อมูลร้านค้า</h4>
+        <p>LINE ID ของคุณยังไม่ได้ผูกกับร้านค้า<br>กรุณาติดต่อโรงงาน</p>
+    </div>
+
+    <div id="mainContent" style="display: none;">
+        <div class="header-section">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-shopping-bag me-2"></i>สรุปยอดถุง</h5>
+                <button onclick="refreshData()" class="btn btn-light btn-sm">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Admin: Tab Navigation -->
+        <div class="tab-nav" id="adminTabs" style="display: none;">
+            <button class="tab-btn active" onclick="switchTab('all')">📊 ภาพรวม</button>
+            <button class="tab-btn" onclick="switchTab('detail')">🔍 รายละเอียด</button>
+        </div>
+
+        <!-- Admin: เลือกลูกค้า (ใน Tab รายละเอียด) -->
+        <div id="adminSelectSection" style="display: none;">
+            <div class="customer-select-card">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="fas fa-user text-warning me-2"></i>
+                    <span class="fw-bold">เลือกลูกค้าดูรายละเอียด</span>
+                </div>
+                <select id="customerSelect" class="form-select" onchange="onCustomerSelect()">
+                    <option value="">-- เลือกลูกค้า --</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- ลูกค้า: เลือกร้าน (ถ้ามีหลายร้าน) -->
+        <div id="shopSelectSection" style="display: none;">
+            <div class="customer-select-card" style="background: #e7f1ff; border-color: #b6d4fe;">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="fas fa-store text-primary me-2"></i>
+                    <span class="fw-bold">เลือกร้านของคุณ</span>
+                </div>
+                <select id="myShopSelect" class="form-select" onchange="onMyShopSelect()">
+                    <option value="">-- เลือกร้าน --</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Tab: ภาพรวมทุกลูกค้า (Admin) -->
+        <div id="tabAll" class="tab-content active">
+            <!-- Filter -->
+            <div class="filter-section">
+                <div class="filter-row">
+                    <label>📅 จาก:</label>
+                    <input type="date" id="allDateFrom">
+                    <label>ถึง:</label>
+                    <input type="date" id="allDateTo">
+                    <button class="btn btn-primary btn-sm" onclick="loadAllSummary()">🔍</button>
+                </div>
+            </div>
+
+            <!-- ตารางลูกค้าทั้งหมด -->
+            <div class="customer-table" id="allCustomersTable">
+                <div class="empty-state">
+                    <i class="fas fa-users"></i>
+                    <p>กำลังโหลดข้อมูล...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: รายละเอียด (Admin) หรือ หน้าหลัก (ลูกค้า) -->
+        <div id="tabDetail" class="tab-content">
+            <!-- Filter -->
+            <div class="filter-section" id="detailFilterSection" style="display: none;">
+                <div class="filter-row">
+                    <label>📅 จาก:</label>
+                    <input type="date" id="detailDateFrom" onchange="loadCustomerDetail()">
+                    <label>ถึง:</label>
+                    <input type="date" id="detailDateTo" onchange="loadCustomerDetail()">
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="summary-card" id="summaryCard" style="display: none;">
+                <div class="text-center mb-3">
+                    <span class="fw-bold" id="detailCustomerName">-</span>
+                </div>
+                <div class="summary-grid">
+                    <div class="summary-item borrow">
+                        <div class="summary-value" id="totalBorrowed">0</div>
+                        <div class="summary-label">📦 ยืม (ใบ)</div>
+                    </div>
+                    <div class="summary-item return">
+                        <div class="summary-value" id="totalReturned">0</div>
+                        <div class="summary-label">♻️ คืน (ใบ)</div>
+                    </div>
+                    <div class="summary-item balance" id="balanceCard">
+                        <div class="summary-value" id="totalBalance">0</div>
+                        <div class="summary-label">👜 ค้าง (ใบ)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History -->
+            <div class="history-section" id="historySection" style="display: none;">
+                <div class="history-title">📋 ประวัติการยืม/คืน</div>
+                <div id="historyList">
+                    <div class="empty-state">
+                        <i class="fas fa-history"></i>
+                        <p>ยังไม่มีประวัติ</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAB: เพิ่มยอดคืน (Admin only) -->
+        <button class="btn-add-return" id="fabAddReturn" style="display: none;" onclick="openAddReturnModal()">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
+
+    <!-- Modal: เพิ่มยอดคืนถุง -->
+    <div id="addReturnModal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="drag-handle"></div>
+                <h5>♻️ เพิ่มยอดคืนถุง</h5>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label small text-muted">ลูกค้า</label>
+                <select id="returnCustomerSelect" class="form-select">
+                    <option value="">-- เลือกลูกค้า --</option>
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label small text-muted">จำนวน (ใบ)</label>
+                <input type="number" id="returnQuantity" class="form-control form-control-lg text-center" placeholder="0" min="1">
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label small text-muted">วันที่</label>
+                <input type="date" id="returnDate" class="form-control">
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label small text-muted">หมายเหตุ</label>
+                <input type="text" id="returnNote" class="form-control" placeholder="เช่น คืนถุงเพิ่ม">
+            </div>
+            
+            <div class="d-flex gap-2 mt-4">
+                <button class="btn btn-light flex-fill" onclick="closeModalDirect()">ยกเลิก</button>
+                <button class="btn btn-success flex-fill" onclick="saveManualReturn()">
+                    <i class="fas fa-save"></i> บันทึก
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script>
+        const MY_LIFF_ID = "2008689090-CnrdxM5k";
+        const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
+        
+        const ADMIN_IDS = [
+            "U4dc8fa32570dca3dfb4093b48a5c2093",
+            "U4cc74cb6346dece926adf6b2a3b7cb77",
+            "Ufab5bb133c511730b583f47104965370",
+        ];
+
+        let currentUserId = null;
+        let currentCustomerId = null;
+        let currentCustomerName = null;
+        let isAdmin = false;
+        let allCustomers = [];
+        let myShops = [];
+
+        async function main() {
+            try {
+                await liff.init({ liffId: MY_LIFF_ID });
+                
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                    return;
+                }
+
+                const profile = await liff.getProfile();
+                currentUserId = profile.userId;
+                isAdmin = ADMIN_IDS.includes(currentUserId);
+
+                // Set default dates
+                const today = new Date();
+                const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+                
+                document.getElementById('allDateFrom').value = formatDateInput(firstDayOfMonth);
+                document.getElementById('allDateTo').value = formatDateInput(today);
+                document.getElementById('detailDateFrom').value = formatDateInput(firstDayOfMonth);
+                document.getElementById('detailDateTo').value = formatDateInput(today);
+                document.getElementById('returnDate').value = formatDateInput(today);
+
+                if (isAdmin) {
+                    // Admin mode
+                    document.getElementById('adminTabs').style.display = 'flex';
+                    document.getElementById('fabAddReturn').style.display = 'flex';
+                    
+                    await loadAllCustomers();
+                    await loadAllSummary();
+                    
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                } else {
+                    // Customer mode
+                    document.getElementById('tabAll').classList.remove('active');
+                    document.getElementById('tabDetail').classList.add('active');
+                    
+                    await loadMyShops();
+                }
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('loadingScreen').innerHTML = '<h4>❌ เกิดข้อผิดพลาด</h4>';
+            }
+        }
+        main();
+
+        function formatDateInput(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        function formatDateThai(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
+        }
+
+        // ==================== Admin Functions ====================
+        
+        async function loadAllCustomers() {
+            try {
+                const res = await fetch(`${BASE_URL}/get-all-customers`);
+                allCustomers = await res.json();
+                
+                // Populate dropdowns
+                const customerSelect = document.getElementById('customerSelect');
+                const returnSelect = document.getElementById('returnCustomerSelect');
+                
+                customerSelect.innerHTML = '<option value="">-- เลือกลูกค้า --</option>';
+                returnSelect.innerHTML = '<option value="">-- เลือกลูกค้า --</option>';
+                
+                allCustomers.forEach(c => {
+                    customerSelect.innerHTML += `<option value="${c.id}" data-name="${c.name}">${c.name}</option>`;
+                    returnSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+                });
+            } catch (e) {
+                console.error('Error loading customers:', e);
+            }
+        }
+
+        async function loadAllSummary() {
+            const dateFrom = document.getElementById('allDateFrom').value;
+            const dateTo = document.getElementById('allDateTo').value;
+            
+            const container = document.getElementById('allCustomersTable');
+            container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
+            
+            try {
+                const res = await fetch(`${BASE_URL}/get-all-bags-summary`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ dateFrom, dateTo })
+                });
+                const data = await res.json();
+                
+                if (!data || data.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-box-open"></i>
+                            <p>ไม่พบข้อมูล</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Sort by balance descending
+                data.sort((a, b) => b.balance - a.balance);
+                
+                container.innerHTML = data.map(c => {
+                    const balanceClass = c.balance > 0 ? 'positive' : (c.balance < 0 ? 'negative' : 'zero');
+                    const balanceIcon = c.balance > 0 ? '⚠️' : (c.balance < 0 ? '❌' : '✅');
+                    
+                    return `
+                        <div class="customer-row" onclick="viewCustomerDetail(${c.customer_id}, '${escapeHtml(c.customer_name)}')">
+                            <div>
+                                <div class="customer-name">${c.customer_name}</div>
+                                <div>
+                                    <span class="badge-borrowed">ยืม ${c.total_borrowed || 0}</span>
+                                    <span class="badge-returned">คืน ${c.total_returned || 0}</span>
+                                </div>
+                            </div>
+                            <div class="customer-balance ${balanceClass}">
+                                ${balanceIcon} ${c.balance || 0}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (e) {
+                console.error('Error loading summary:', e);
+                container.innerHTML = '<div class="empty-state"><p>โหลดข้อมูลไม่สำเร็จ</p></div>';
+            }
+        }
+
+        function viewCustomerDetail(customerId, customerName) {
+            currentCustomerId = customerId;
+            currentCustomerName = customerName;
+            
+            // Set dropdown
+            document.getElementById('customerSelect').value = customerId;
+            
+            // Switch to detail tab
+            switchTab('detail');
+            
+            // Load detail
+            loadCustomerDetail();
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            if (tab === 'all') {
+                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+                document.getElementById('tabAll').classList.add('active');
+                document.getElementById('adminSelectSection').style.display = 'none';
+            } else {
+                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+                document.getElementById('tabDetail').classList.add('active');
+                document.getElementById('adminSelectSection').style.display = 'block';
+            }
+        }
+
+        async function onCustomerSelect() {
+            const select = document.getElementById('customerSelect');
+            const customerId = select.value;
+            
+            if (!customerId) {
+                currentCustomerId = null;
+                currentCustomerName = null;
+                document.getElementById('summaryCard').style.display = 'none';
+                document.getElementById('historySection').style.display = 'none';
+                document.getElementById('detailFilterSection').style.display = 'none';
+                return;
+            }
+            
+            currentCustomerId = parseInt(customerId);
+            currentCustomerName = select.options[select.selectedIndex].dataset.name;
+            
+            await loadCustomerDetail();
+        }
+
+        // ==================== Customer Functions ====================
+        
+        async function loadMyShops() {
+            try {
+                const res = await fetch(`${BASE_URL}/get-my-shops`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lineId: currentUserId })
+                });
+                myShops = await res.json();
+                
+                if (myShops.length === 0) {
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('noPermissionScreen').style.display = 'block';
+                } else if (myShops.length === 1) {
+                    currentCustomerId = myShops[0].id;
+                    currentCustomerName = myShops[0].name;
+                    await showCustomerView();
+                } else {
+                    // Multiple shops
+                    const select = document.getElementById('myShopSelect');
+                    select.innerHTML = '<option value="">-- เลือกร้าน --</option>';
+                    myShops.forEach(s => {
+                        select.innerHTML += `<option value="${s.id}" data-name="${s.name}">${s.name}</option>`;
+                    });
+                    
+                    document.getElementById('shopSelectSection').style.display = 'block';
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                }
+                
+            } catch (e) {
+                console.error('Error loading shops:', e);
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('noPermissionScreen').style.display = 'block';
+            }
+        }
+
+        async function onMyShopSelect() {
+            const select = document.getElementById('myShopSelect');
+            const shopId = select.value;
+            
+            if (!shopId) {
+                currentCustomerId = null;
+                currentCustomerName = null;
+                document.getElementById('summaryCard').style.display = 'none';
+                document.getElementById('historySection').style.display = 'none';
+                document.getElementById('detailFilterSection').style.display = 'none';
+                return;
+            }
+            
+            currentCustomerId = parseInt(shopId);
+            currentCustomerName = select.options[select.selectedIndex].dataset.name;
+            
+            await loadCustomerDetail();
+        }
+
+        async function showCustomerView() {
+            document.getElementById('detailFilterSection').style.display = 'block';
+            await loadCustomerDetail();
+            
+            document.getElementById('loadingScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+        }
+
+        // ==================== Common Functions ====================
+        
+        async function loadCustomerDetail() {
+            if (!currentCustomerId) return;
+            
+            const dateFrom = document.getElementById('detailDateFrom').value;
+            const dateTo = document.getElementById('detailDateTo').value;
+            
+            document.getElementById('detailCustomerName').textContent = currentCustomerName;
+            document.getElementById('detailFilterSection').style.display = 'block';
+            document.getElementById('summaryCard').style.display = 'block';
+            document.getElementById('historySection').style.display = 'block';
+            
+            try {
+                const res = await fetch(`${BASE_URL}/get-bags-summary`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        customerId: currentCustomerId,
+                        dateFrom,
+                        dateTo
+                    })
+                });
+                const data = await res.json();
+                
+                // Update summary
+                const borrowed = data.summary?.totalBorrowed || 0;
+                const returned = data.summary?.totalReturned || 0;
+                const balance = data.summary?.balance || 0;
+                
+                document.getElementById('totalBorrowed').textContent = borrowed;
+                document.getElementById('totalReturned').textContent = returned;
+                document.getElementById('totalBalance').textContent = balance;
+                
+                // Update balance card style
+                const balanceCard = document.getElementById('balanceCard');
+                balanceCard.classList.remove('zero', 'negative');
+                if (balance === 0) {
+                    balanceCard.classList.add('zero');
+                } else if (balance < 0) {
+                    balanceCard.classList.add('negative');
+                }
+                
+                // Update history
+                renderHistory(data.details || []);
+                
+            } catch (e) {
+                console.error('Error loading customer detail:', e);
+            }
+        }
+
+        function renderHistory(details) {
+            const container = document.getElementById('historyList');
+            
+            if (!details || details.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-history"></i>
+                        <p>ยังไม่มีประวัติในช่วงเวลานี้</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = details.map(d => {
+                const isBorrow = d.type === 'borrow';
+                const icon = isBorrow ? '📦' : '♻️';
+                const typeText = isBorrow ? 'ยืม' : 'คืน';
+                const sourceText = getSourceText(d.source);
+                
+                return `
+                    <div class="history-item ${d.type}">
+                        <div>
+                            <div><strong>${icon} ${typeText}</strong> <span class="history-source">(${sourceText})</span></div>
+                            <div class="history-date">${formatDateThai(d.date)} ${d.sourceRef ? '| ' + d.sourceRef : ''} ${d.note ? '| ' + d.note : ''}</div>
+                        </div>
+                        <div class="history-qty ${d.type}">${isBorrow ? '+' : '-'}${d.quantity}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getSourceText(source) {
+            const sources = {
+                'order': 'จากออเดอร์',
+                'order_return': 'คืนตอนส่ง',
+                'leftover': 'ยอดเหลือ',
+                'manual': 'บันทึกเอง'
+            };
+            return sources[source] || source;
+        }
+
+        // ==================== Modal Functions ====================
+        
+        function openAddReturnModal() {
+            // Pre-select current customer if viewing
+            if (currentCustomerId) {
+                document.getElementById('returnCustomerSelect').value = currentCustomerId;
+            }
+            document.getElementById('returnQuantity').value = '';
+            document.getElementById('returnNote').value = '';
+            document.getElementById('addReturnModal').style.display = 'flex';
+        }
+
+        function closeModal(event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                closeModalDirect();
+            }
+        }
+
+        function closeModalDirect() {
+            document.getElementById('addReturnModal').style.display = 'none';
+        }
+
+        async function saveManualReturn() {
+            const customerId = document.getElementById('returnCustomerSelect').value;
+            const quantity = parseInt(document.getElementById('returnQuantity').value) || 0;
+            const returnDate = document.getElementById('returnDate').value;
+            const note = document.getElementById('returnNote').value;
+            
+            if (!customerId) {
+                alert('กรุณาเลือกลูกค้า');
+                return;
+            }
+            if (quantity <= 0) {
+                alert('กรุณาใส่จำนวน');
+                return;
+            }
+            
+            try {
+                await fetch(`${BASE_URL}/add-bag-return`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        customerId: parseInt(customerId),
+                        quantity,
+                        returnDate,
+                        note: note || 'คืนถุง (manual)'
+                    })
+                });
+                
+                alert('✅ บันทึกสำเร็จ!');
+                closeModalDirect();
+                
+                // Refresh data
+                if (isAdmin) {
+                    await loadAllSummary();
+                }
+                if (currentCustomerId) {
+                    await loadCustomerDetail();
+                }
+                
+            } catch (e) {
+                console.error('Error saving return:', e);
+                alert('เกิดข้อผิดพลาด');
+            }
+        }
+
+        async function refreshData() {
+            if (isAdmin) {
+                await loadAllSummary();
+            }
+            if (currentCustomerId) {
+                await loadCustomerDetail();
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        }
+    </script>
+</body>
+</html>
