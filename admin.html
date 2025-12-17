@@ -72,6 +72,38 @@
         
         .round-locked { color: #dc3545; font-size: 11px; }
         .round-unlocked { color: #198754; font-size: 11px; }
+        
+        /* Page Navigation */
+        .page-nav {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .page-nav-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            font-size: 13px;
+            font-weight: bold;
+            color: #666;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            text-align: center;
+        }
+        .page-nav-btn:hover {
+            background: #f8f9fa;
+            color: #667eea;
+        }
+        .page-nav-btn.active {
+            background: #667eea;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -79,11 +111,23 @@
     <div id="auth-check" class="text-center mt-5"><h4>🔒 กำลังตรวจสอบสิทธิ์...</h4></div>
 
     <div id="content" class="container" style="display: none;">
+        <!-- Page Navigation -->
+        <div class="page-nav">
+            <a href="admin.html" class="page-nav-btn active">
+                <i class="fas fa-cog me-1"></i> จัดการลูกค้า
+            </a>
+            <a href="orders.html" class="page-nav-btn">
+                <i class="fas fa-clipboard-list me-1"></i> จัดการออเดอร์
+            </a>
+            <a href="index.html?dev=1" class="page-nav-btn">
+                <i class="fas fa-shopping-cart me-1"></i> สั่งซื้อ
+            </a>
+        </div>
+        
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div><h4 class="text-primary fw-bold mb-0">📋 จัดการลูกค้า</h4></div>
             <div>
-                <a href="orders.html" class="btn btn-outline-primary btn-sm"><i class="fas fa-receipt"></i> ออเดอร์</a>
-                <a href="drivers.html" class="btn btn-outline-info btn-sm ms-1"><i class="fas fa-truck"></i> คนขับ</a>
+                <a href="drivers.html" class="btn btn-outline-info btn-sm"><i class="fas fa-truck"></i> คนขับ</a>
                 <button class="btn btn-success btn-sm shadow-sm ms-1" onclick="openCreateCustomerModal()"><i class="fas fa-user-plus"></i> ลูกค้าใหม่</button>
                 <button class="btn btn-sm btn-outline-secondary ms-1" onclick="window.location.reload()"><i class="fas fa-sync"></i></button>
             </div>
@@ -294,13 +338,12 @@
     <script>
         const MY_LIFF_ID = "2008689090-CnrdxM5k";
         const ADMIN_IDS = [
-            "U4dc8fa32570dca3dfb4093b48a5c2093", //แชมป์
-            "U4cc74cb6346dece926adf6b2a3b7cb77", //บี
-            "Ufab5bb133c511730b583f47104965370", //ก้อย
+            "U4dc8fa32570dca3dfb4093b48a5c2093",
+            "U4cc74cb6346dece926adf6b2a3b7cb77",
+            "Ufab5bb133c511730b583f47104965370",
         ];
         const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
 
-        // API Endpoints
         const API = {
             GET_PRICES: `${BASE_URL}/get-prices`,
             GET_PRODUCTS: `${BASE_URL}/get-products`,
@@ -332,13 +375,11 @@
         let roundsCache = {};
         let deliveryGroupsCache = [];
 
-        // สินค้าที่ต้องมีตัวคูณ
         const MULTIPLIER_PRODUCTS = {
             'crush_sachet': { name: 'บด(ซอง)', options: [6, 7, 8] },
             'cube_kak': { name: 'ก้อน(ลูก)', options: [2] }
         };
 
-        // ==================== INIT ====================
         async function main() {
             try {
                 await liff.init({ liffId: MY_LIFF_ID });
@@ -362,7 +403,6 @@
         }
         main();
 
-        // ==================== LOAD DATA ====================
         async function loadProducts() {
             try {
                 const res = await fetch(API.GET_PRODUCTS);
@@ -458,7 +498,6 @@
             const container = document.getElementById('customer-list');
             container.innerHTML = '';
 
-            // Group by customer
             const grouped = {};
             data.forEach(item => {
                 if (!grouped[item.customer_id]) {
@@ -485,21 +524,17 @@
                 return;
             }
 
-            // โหลด multipliers และ rounds ของทุกลูกค้าก่อน
             const customerIds = Object.keys(grouped);
             await Promise.all([
                 ...customerIds.map(id => loadMultipliers(id)),
                 ...customerIds.map(id => loadRounds(id))
             ]);
 
-            // เรียงตามชื่อ ก-ฮ, A-Z
             const sortedCustomers = Object.values(grouped).sort((a, b) => a.name.localeCompare(b.name, 'th'));
 
             sortedCustomers.forEach(customer => {
-                // ดึง multipliers ของลูกค้านี้
                 const custMultipliers = multipliersCache[customer.id] || [];
                 
-                // Prices HTML
                 let pricesHtml = '';
                 if (customer.prices.length > 0) {
                     pricesHtml = customer.prices.map(p => {
@@ -532,7 +567,6 @@
                                 <span>▼</span>
                             </div>
                             <div class="card-body-custom">
-                                <!-- รอบจัดส่ง -->
                                 <div class="section-title">
                                     <span class="title-text">🚚 รอบจัดส่ง</span>
                                     <span class="title-btn">
@@ -544,7 +578,6 @@
                                     <div class="empty-text">กำลังโหลด...</div>
                                 </div>
 
-                                <!-- LINE ID -->
                                 <div class="section-title">
                                     <span class="title-text">📱 LINE ID</span>
                                     <span class="title-btn">
@@ -554,7 +587,6 @@
                                 </div>
                                 <div id="lines-${customer.id}" style="margin-bottom:10px;"></div>
 
-                                <!-- สิทธิ์ฝาก -->
                                 <div class="section-title">
                                     <span class="title-text">📦 สิทธิ์ฝาก</span>
                                     <span class="title-btn"></span>
@@ -571,7 +603,6 @@
                                     </div>
                                 </div>
 
-                                <!-- ตัวคูณถุง -->
                                 <div class="section-title">
                                     <span class="title-text">🛍️ ตัวคูณถุง</span>
                                     <span class="title-btn">
@@ -583,7 +614,6 @@
                                     <div class="empty-text">กำลังโหลด...</div>
                                 </div>
 
-                                <!-- โปรโมชั่น -->
                                 <div class="section-title">
                                     <span class="title-text">🎁 โปรโมชั่น</span>
                                     <span class="title-btn">
@@ -595,7 +625,6 @@
                                     <div class="empty-text">กำลังโหลด...</div>
                                 </div>
 
-                                <!-- ตั้งราคา -->
                                 <div class="section-title mt-3">
                                     <span class="title-text">💰 ตั้งราคา</span>
                                     <span class="title-btn">
@@ -615,13 +644,11 @@
                 `;
                 container.insertAdjacentHTML('beforeend', cardHtml);
 
-                // Load multipliers and rounds for this customer
                 loadAndRenderMultipliers(customer.id);
                 loadAndRenderRounds(customer.id);
             });
         }
 
-        // ==================== ROUNDS SECTION ====================
         async function loadAndRenderRounds(customerId) {
             const container = document.getElementById(`rounds-${customerId}`);
             const rounds = await loadRounds(customerId);
@@ -631,7 +658,6 @@
                 return;
             }
             
-            // Sort: 1, 2, 3, extra
             const order = { '1': 1, '2': 2, '3': 3, 'extra': 4 };
             rounds.sort((a, b) => (order[a.round_number] || 99) - (order[b.round_number] || 99));
             
@@ -640,7 +666,6 @@
                 const roundName = isExtra ? 'รอบเสริม' : `รอบ ${r.round_number}`;
                 const timeText = isExtra ? '' : `${formatTime(r.time_start)} - ${formatTime(r.time_end)}`;
                 
-                // หาชื่อกลุ่มคนขับ
                 let driverGroupText = '';
                 if (r.delivery_group_id) {
                     const group = deliveryGroupsCache.find(g => g.id == r.delivery_group_id);
@@ -682,7 +707,6 @@
 
         function formatTime(timeStr) {
             if (!timeStr) return '';
-            // แปลง "06:00:00" -> "06:00"
             return timeStr.substring(0, 5);
         }
 
@@ -707,7 +731,6 @@
                 timeFields.style.display = 'none';
             } else {
                 timeFields.style.display = 'block';
-                // ตั้งค่าเริ่มต้นตามรอบ
                 if (roundNumber === '1') {
                     document.getElementById('roundTimeStart').value = '06:00';
                     document.getElementById('roundTimeEnd').value = '08:00';
@@ -782,7 +805,6 @@
             }
         }
 
-        // ==================== MULTIPLIER SECTION ====================
         async function loadAndRenderMultipliers(customerId) {
             const container = document.getElementById(`multipliers-${customerId}`);
             const multipliers = await loadMultipliers(customerId);
@@ -812,7 +834,6 @@
             body.style.display = body.style.display === 'none' || body.style.display === '' ? 'block' : 'none';
         }
 
-        // ==================== DEPOSIT PERMISSION ====================
         async function toggleDepositPermission(customerId, enabled) {
             try {
                 await fetch(API.UPDATE_DEPOSIT_PERMISSION, {
@@ -832,7 +853,6 @@
             }
         }
 
-        // ==================== MULTIPLIER MODAL ====================
         function openAddMultiplierModal(customerId, name) {
             currentCustomer = { id: customerId, name };
             document.getElementById('multiplierModalCustomerName').textContent = name;
@@ -894,7 +914,6 @@
             }
         }
 
-        // ==================== PROMO SECTION ====================
         async function togglePromoSection(btn, customerId) {
             const body = document.getElementById(`promos-${customerId}`);
             
@@ -921,9 +940,7 @@
                 if (promos.length === 0) {
                     container.innerHTML = `
                         <div class="empty-text">- ยังไม่มีโปร -</div>
-                        <button class="btn btn-warning btn-sm w-100" onclick="openAddPromoModal(${customerId})">
-                            + เพิ่มโปร
-                        </button>
+                        <button class="btn btn-warning btn-sm w-100" onclick="openAddPromoModal(${customerId})">+ เพิ่มโปร</button>
                     `;
                 } else {
                     let html = promos.map(p => {
@@ -949,12 +966,10 @@
             }
         }
 
-        // ==================== MODALS ====================
         function closeModal(id) {
             document.getElementById(id).style.display = 'none';
         }
 
-        // LINE ID Modal
         async function openManageLineModal(customerId, name) {
             currentCustomer = { id: customerId, name };
             document.getElementById('lineModalCustomerName').textContent = name;
@@ -1021,7 +1036,6 @@
             }
         }
 
-        // Price Modal
         function openAddPriceModal(customerId, name) {
             currentCustomer = { id: customerId, name };
             document.getElementById('priceModalCustomerName').textContent = name;
@@ -1090,7 +1104,6 @@
             }
         }
 
-        // Promo Modal
         function openAddPromoModal(customerId) {
             currentCustomer.id = customerId;
             document.getElementById('promoModalCustomerName').textContent = currentCustomer.name || 'ลูกค้า';
@@ -1161,7 +1174,6 @@
             }
         }
 
-        // Settings
         async function updateCanSeePrice(customerId, canSeePrice) {
             try {
                 await fetch(API.UPDATE_SETTINGS, {
@@ -1174,7 +1186,6 @@
             }
         }
 
-        // Create Customer
         function openCreateCustomerModal() {
             document.getElementById('newCustomerName').value = '';
             document.getElementById('newCustomerLineId').value = '';
@@ -1201,7 +1212,6 @@
             }
         }
 
-        // Delete Customer
         async function deleteCustomer(customerId, customerName) {
             if (!confirm(`⚠️ ลบลูกค้า "${customerName}"?\n\nจะลบข้อมูลทั้งหมด:\n- LINE ID ที่ผูก\n- ราคาที่ตั้งไว้\n- โปรโมชั่น\n- ตัวคูณถุง\n- รอบจัดส่ง`)) return;
             if (!confirm(`❗ ยืนยันอีกครั้ง: ลบ "${customerName}" ?`)) return;
