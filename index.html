@@ -525,9 +525,9 @@
                     </div>
                     <div class="order-filter-row mt-2">
                         <label>📅 จาก:</label>
-                        <input type="date" id="myOrderDateFrom">
+                        <input type="date" id="myOrderDateFrom" onchange="loadMyOrders()">
                         <label>ถึง:</label>
-                        <input type="date" id="myOrderDateTo">
+                        <input type="date" id="myOrderDateTo" onchange="loadMyOrders()">
                         <button class="btn btn-primary btn-filter" onclick="loadMyOrders()">🔍</button>
                     </div>
                 </div>
