@@ -405,10 +405,10 @@
         }
         .page-nav-btn {
             flex: 1;
-            padding: 10px;
+            padding: 8px 5px;
             border: none;
             background: transparent;
-            font-size: 13px;
+            font-size: 11px;
             font-weight: bold;
             color: #666;
             border-radius: 8px;
@@ -446,11 +446,17 @@
 
         <!-- Page Navigation (Admin Only) -->
         <div class="page-nav" id="adminPageNav">
-            <a href="orders.html" class="page-nav-btn">
-                <i class="fas fa-clipboard-list me-1"></i> จัดการออเดอร์
-            </a>
             <a href="index.html" class="page-nav-btn active">
-                <i class="fas fa-shopping-cart me-1"></i> สั่งซื้อ
+                <i class="fas fa-shopping-cart"></i> สั่งซื้อ
+            </a>
+            <a href="orders.html" class="page-nav-btn">
+                <i class="fas fa-clipboard-list"></i> ออเดอร์
+            </a>
+            <a href="bags-summary.html" class="page-nav-btn">
+                <i class="fas fa-shopping-bag"></i> ยอดถุง
+            </a>
+            <a href="deposit.html" class="page-nav-btn">
+                <i class="fas fa-box"></i> ฝาก-เหลือ
             </a>
         </div>
 
@@ -537,6 +543,13 @@
                             <input type="number" id="qty_bag_borrow" class="qty-input" value="0" min="0" readonly>
                             <button class="stepper-btn plus admin-only" style="display:none;" onclick="manualAdjustBag(1)"><i class="fas fa-plus"></i></button>
                         </div>
+                    </div>
+                    <!-- ยอดถุงคงค้าง (แสดงในบรรทัดเดียวกัน) -->
+                    <div class="product-row" id="bagBalanceRow" style="display: none; border-top: 1px dashed #b6d4fe; padding-top: 10px; margin-top: 10px;">
+                        <div class="product-info">
+                            <div class="product-name" style="font-size: 13px; color: #f57c00;">📊 ยอดคงค้างสะสม</div>
+                        </div>
+                        <div style="font-weight: bold; font-size: 18px;" id="bagBalanceValue">-</div>
                     </div>
                 </div>
             </div>
@@ -1724,6 +1737,7 @@
                 await loadMultipliers(customerId);
                 await loadPendingDeposits(customerId);
                 await loadCustomerRounds(customerId);
+                await loadBagBalance(customerId);
                 await checkFirstBill();
                 renderProducts();
                 startDepositPolling();
@@ -1751,6 +1765,49 @@
                 depositTotal = 0;
                 pendingDeposits.forEach(d => { const price = customerPrices[d.product_code]?.price || 0; depositTotal += (parseInt(d.quantity) || 0) * price; });
             } catch (e) { console.error('Error loading pending deposits:', e); pendingDeposits = []; depositTotal = 0; }
+        }
+
+        async function loadBagBalance(customerId) {
+            const row = document.getElementById('bagBalanceRow');
+            const valueEl = document.getElementById('bagBalanceValue');
+            
+            if (!row || !valueEl) return;
+            
+            try {
+                const today = new Date();
+                const startOfYear = new Date(today.getFullYear(), 0, 1);
+                const dateFrom = startOfYear.toISOString().split('T')[0];
+                const dateTo = today.toISOString().split('T')[0];
+                
+                const res = await fetch(`${BASE_URL}/get-bags-summary`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customerId, dateFrom, dateTo })
+                });
+                const data = await res.json();
+                
+                if (data && data.summary) {
+                    const balance = data.summary.balance || 0;
+                    
+                    valueEl.textContent = balance + ' ใบ';
+                    
+                    // เปลี่ยนสีตามยอดคงค้าง
+                    if (balance > 0) {
+                        valueEl.style.color = '#f57c00'; // ส้ม - ค้างอยู่
+                    } else if (balance === 0) {
+                        valueEl.style.color = '#388e3c'; // เขียว - ไม่ค้าง
+                    } else {
+                        valueEl.style.color = '#d32f2f'; // แดง - คืนเกิน
+                    }
+                    
+                    row.style.display = 'flex';
+                } else {
+                    row.style.display = 'none';
+                }
+            } catch (e) {
+                console.error('Error loading bag balance:', e);
+                row.style.display = 'none';
+            }
         }
 
         async function loadAllCustomers() {
