@@ -575,7 +575,15 @@
             }
             
             if (Array.isArray(items)) {
-                return items.map(item => `<div>• ${item}</div>`).join('');
+                return items
+                    .filter(item => item && !item.startsWith('---'))  // ตัดเส้นขีดออก
+                    .filter(item => !item.includes('ยืมถุง'))          // ตัดยืมถุงออก (แสดงแยก)
+                    .map(item => {
+                        // ตัด "- " ที่ขึ้นต้นออก
+                        let cleanItem = item.replace(/^-\s*/, '');
+                        return `<div>• ${cleanItem}</div>`;
+                    })
+                    .join('');
             }
             
             return '<span style="color:#999;">ไม่มีรายการ</span>';
