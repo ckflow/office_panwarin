@@ -229,6 +229,38 @@
             justify-content: center;
             z-index: 9999;
         }
+        
+        /* Page Navigation */
+        .page-nav {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            padding: 4px;
+            margin: 15px 15px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .page-nav-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            font-size: 13px;
+            font-weight: bold;
+            color: #666;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            text-align: center;
+        }
+        .page-nav-btn:hover {
+            background: #f8f9fa;
+            color: #667eea;
+        }
+        .page-nav-btn.active {
+            background: #667eea;
+            color: white;
+        }
 
         @media (max-width: 576px) {
             .filter-row {
@@ -268,6 +300,19 @@
                 <i class="fas fa-sync-alt"></i>
             </button>
         </div>
+    </div>
+
+    <!-- Page Navigation -->
+    <div class="page-nav">
+        <a href="admin.html" class="page-nav-btn">
+            <i class="fas fa-cog me-1"></i> จัดการลูกค้า
+        </a>
+        <a href="orders.html" class="page-nav-btn active">
+            <i class="fas fa-clipboard-list me-1"></i> จัดการออเดอร์
+        </a>
+        <a href="index.html?dev=1" class="page-nav-btn">
+            <i class="fas fa-shopping-cart me-1"></i> สั่งซื้อ
+        </a>
     </div>
 
     <div class="filter-container">
@@ -335,11 +380,10 @@
         const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
         let allOrders = [];
         let allCustomers = [];
-        let currentStatusFilter = ''; // เริ่มต้นแสดงทั้งหมด
+        let currentStatusFilter = '';
         let autoRefreshInterval = null;
         const AUTO_REFRESH_SECONDS = 10;
 
-        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             initDate();
             loadCustomers();
@@ -347,7 +391,6 @@
             startAutoRefresh();
         });
         
-        // Auto-refresh functions
         function startAutoRefresh() {
             if (autoRefreshInterval) clearInterval(autoRefreshInterval);
             autoRefreshInterval = setInterval(() => {
@@ -383,7 +426,6 @@
                 const newOrders = await res.json();
                 if (!Array.isArray(newOrders)) return;
                 
-                // เช็คว่ามีการเปลี่ยนแปลงหรือไม่
                 if (JSON.stringify(allOrders) !== JSON.stringify(newOrders)) {
                     allOrders = newOrders;
                     updateSummary();
@@ -395,7 +437,6 @@
             }
         }
         
-        // Handle visibility change
         document.addEventListener('visibilitychange', function() {
             if (document.visibilityState === 'visible') {
                 silentRefreshOrders();
@@ -405,7 +446,6 @@
         function filterByStatus(status) {
             currentStatusFilter = status;
             
-            // Update active state
             document.querySelectorAll('.summary-item').forEach(item => item.classList.remove('active'));
             
             if (status === 'pending') {
@@ -418,7 +458,7 @@
                 document.querySelector('.summary-total').classList.add('active');
             }
             
-            renderOrders(); // render ใหม่ตาม filter ที่เลือก
+            renderOrders();
         }
         
         function filterByTime() {
@@ -473,7 +513,6 @@
             const customerId = document.getElementById('customerFilter').value;
             
             try {
-                // ดึงข้อมูลทั้งหมด (ไม่ filter status ที่ backend)
                 const res = await fetch(`${BASE_URL}/get-pending-orders`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -481,7 +520,7 @@
                         dateFrom,
                         dateTo,
                         customerId: customerId || null,
-                        status: null  // ดึงทุกสถานะ
+                        status: null
                     })
                 });
                 allOrders = await res.json();
@@ -499,13 +538,11 @@
         }
 
         function renderOrders() {
-            // Filter by status first
             let filteredOrders = allOrders;
             if (currentStatusFilter) {
                 filteredOrders = allOrders.filter(o => o.status === currentStatusFilter);
             }
             
-            // Filter by time
             const timeFrom = document.getElementById('timeFrom').value || '00:00';
             const timeTo = document.getElementById('timeTo').value || '23:59';
             
@@ -517,13 +554,11 @@
             const pickupOrders = filteredOrders.filter(o => o.delivery_round === 'pickup');
             const deliveryOrders = filteredOrders.filter(o => o.delivery_round !== 'pickup');
             
-            // Update badges (นับเฉพาะ pending)
             const pendingPickup = pickupOrders.filter(o => o.status === 'pending').length;
             const pendingDelivery = deliveryOrders.filter(o => o.status === 'pending').length;
             document.getElementById('badgePickup').textContent = pendingPickup;
             document.getElementById('badgeDelivery').textContent = pendingDelivery;
             
-            // Render pickup orders
             const pickupContainer = document.getElementById('pickupOrdersList');
             if (pickupOrders.length === 0) {
                 pickupContainer.innerHTML = `
@@ -533,7 +568,6 @@
                     </div>
                 `;
             } else {
-                // Group by date if multiple dates
                 const grouped = {};
                 pickupOrders.forEach(o => {
                     const date = o.order_date || 'ไม่ระบุ';
@@ -551,7 +585,6 @@
                 pickupContainer.innerHTML = html;
             }
             
-            // Render delivery orders
             const deliveryContainer = document.getElementById('deliveryOrdersList');
             if (deliveryOrders.length === 0) {
                 deliveryContainer.innerHTML = `
@@ -561,7 +594,6 @@
                     </div>
                 `;
             } else {
-                // Group by date first, then by delivery round
                 const groupedByDate = {};
                 deliveryOrders.forEach(o => {
                     const date = o.order_date || 'ไม่ระบุ';
@@ -591,7 +623,6 @@
                         }
                     });
                     
-                    // Other rounds
                     Object.keys(grouped).forEach(round => {
                         if (!roundOrder.includes(round)) {
                             html += `<div style="margin: 10px 15px; font-weight: bold; color: #084298;">
@@ -680,19 +711,16 @@
         function formatOrderItems(items) {
             if (!items) return '<span style="color:#999;">ไม่มีรายการ</span>';
             
-            // แปลงเป็น string ก่อน
             let itemsStr = typeof items === 'object' ? JSON.stringify(items) : String(items);
-            
-            // ใช้ regex ดึงข้อมูลจาก string
             const matches = itemsStr.match(/"([^"]+)"/g);
             
             if (matches && matches.length > 0) {
                 const result = matches
-                    .map(m => m.replace(/^"|"$/g, '')) // ตัด quotes ออก
-                    .filter(item => item && !item.startsWith('---'))  // ตัดเส้นขีด
-                    .filter(item => !item.includes('ยืมถุง'))  // ตัดยืมถุง
+                    .map(m => m.replace(/^"|"$/g, ''))
+                    .filter(item => item && !item.startsWith('---'))
+                    .filter(item => !item.includes('ยืมถุง'))
                     .map(item => {
-                        let cleanItem = item.replace(/^-\s*/, ''); // ตัด "- " ขึ้นต้น
+                        let cleanItem = item.replace(/^-\s*/, '');
                         return `<div>• ${cleanItem}</div>`;
                     });
                 
@@ -703,7 +731,6 @@
         }
 
         function updateSummary() {
-            // Filter by time first
             const timeFrom = document.getElementById('timeFrom').value || '00:00';
             const timeTo = document.getElementById('timeTo').value || '23:59';
             
