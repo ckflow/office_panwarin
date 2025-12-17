@@ -908,76 +908,36 @@
                 return;
             }
             
-            let originalData;
             const editedAt = order.edited_at ? new Date(order.edited_at).toLocaleString('th-TH') : '-';
+            const rawData = order.original_data;
             
-            try {
-                if (typeof order.original_data === 'object') {
-                    originalData = order.original_data;
-                } else {
-                    // ลอง parse ปกติก่อน
-                    originalData = JSON.parse(order.original_data);
-                }
-            } catch (e) {
-                console.error('Parse error:', e);
-                // ถ้า parse ไม่ได้ ลองดึงข้อมูลด้วย regex
-                const rawData = order.original_data;
-                
-                // ดึงค่าจาก JSON string ด้วย regex
-                const dateMatch = rawData.match(/"order_date":"([^"]+)"/);
-                const totalMatch = rawData.match(/"total":"?([0-9.]+)"?/);
-                const bagsMatch = rawData.match(/"total_bags":(\d+)/);
-                const itemsMatch = rawData.match(/"order_items":"(\[.*?\])"/);
-                
-                originalData = {
-                    order_date: dateMatch ? dateMatch[1] : '-',
-                    total: totalMatch ? totalMatch[1] : '0',
-                    total_bags: bagsMatch ? parseInt(bagsMatch[1]) : 0,
-                    order_items: null
-                };
-                
-                // ลอง parse order_items
-                if (itemsMatch) {
-                    try {
-                        // แปลง escaped quotes กลับ
-                        const itemsStr = itemsMatch[1].replace(/\\"/g, '"');
-                        originalData.order_items = JSON.parse(itemsStr);
-                    } catch (e2) {
-                        // ถ้ายังไม่ได้ ลองหาจาก rawData โดยตรง
-                        const allItems = rawData.match(/- [^"\\]+: \d+ [^"\\]+ \(\d+[,\d]* บาท\)/g);
-                        originalData.order_items = allItems || [];
-                    }
-                }
-            }
+            // ดึงค่าจาก JSON string ด้วย regex
+            const dateMatch = rawData.match(/"order_date":"([^"]+)"/);
+            const totalMatch = rawData.match(/"total":"?([0-9.]+)"?/);
+            const bagsMatch = rawData.match(/"total_bags":(\d+)/);
+            
+            // ดึงรายการสินค้าด้วย regex - หา pattern "- ชื่อสินค้า: จำนวน หน่วย (ราคา บาท)"
+            const itemMatches = rawData.match(/- [^"\\]+?: \d+ [^"\\]+? \(\d+[,\d]* บาท\)/g);
+            
+            const originalData = {
+                order_date: dateMatch ? dateMatch[1] : '-',
+                total: totalMatch ? totalMatch[1] : '0',
+                total_bags: bagsMatch ? parseInt(bagsMatch[1]) : 0,
+                order_items: itemMatches || []
+            };
             
             // Format order items
             let itemsHtml = '<span class="text-muted">ไม่มีรายการ</span>';
-            if (originalData.order_items) {
-                let items = originalData.order_items;
-                
-                // ถ้าเป็น string ลอง parse เป็น array
-                if (typeof items === 'string') {
-                    try {
-                        items = JSON.parse(items.replace(/\\"/g, '"'));
-                    } catch (e) {
-                        items = [items];
-                    }
-                }
-                
-                // ถ้าเป็น array
-                if (Array.isArray(items)) {
-                    const filteredItems = items.filter(item => 
-                        item && 
-                        !item.includes('---') && 
-                        !item.includes('ยืมถุง') && 
-                        !item.includes('คืนถุง')
-                    );
-                    if (filteredItems.length > 0) {
-                        itemsHtml = filteredItems.map(item => {
-                            const cleanItem = item.replace(/^-\s*/, '');
-                            return `<div>• ${cleanItem}</div>`;
-                        }).join('');
-                    }
+            if (originalData.order_items.length > 0) {
+                itemsHtml = originalData.order_items
+                    .filter(item => !item.includes('---') && !item.includes('ยืมถุง') && !item.includes('คืนถุง'))
+                    .map(item => {
+                        const cleanItem = item.replace(/^-\s*/, '');
+                        return `<div>• ${cleanItem}</div>`;
+                    }).join('');
+                    
+                if (!itemsHtml) {
+                    itemsHtml = '<span class="text-muted">ไม่มีรายการ</span>';
                 }
             }
             
