@@ -90,25 +90,14 @@
             color: #adb5bd;
         }
         .round-btn.pickup {
-            background: #fff3cd;
-            border-color: #ffc107;
-            color: #856404;
+            background: white;
+            border-color: #dee2e6;
+            color: #666;
         }
         .round-btn.pickup.active {
-            background: #ffc107;
-            border-color: #e0a800;
-            color: #000;
-        }
-        .pickup-time-container {
-            display: none;
-            margin-top: 10px;
-            padding: 10px;
-            background: #fff3cd;
-            border-radius: 8px;
-            border: 1px solid #ffc107;
-        }
-        .pickup-time-container.show {
-            display: block;
+            background: #198754;
+            border-color: #198754;
+            color: white;
         }
         
         /* Tab Navigation */
@@ -1482,11 +1471,14 @@
             }
             
             selectedRound = round;
-            document.querySelectorAll('.round-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.round-btn').forEach(btn => {
+                btn.classList.remove('active');
+                // Reset ปุ่มรับเองกลับเป็นปกติ
+                if (btn.dataset.round === 'pickup') {
+                    btn.innerHTML = '<span class="round-icon">🏭</span>รับเอง';
+                }
+            });
             document.querySelector(`.round-btn[data-round="${round}"]`).classList.add('active');
-            
-            const pickupContainer = document.getElementById('pickupTimeContainer');
-            if (pickupContainer) pickupContainer.classList.remove('show');
         }
 
         function getRoundText(round) {
@@ -1550,12 +1542,8 @@
             
             html += `
                 <button type="button" class="round-btn pickup" data-round="pickup" onclick="selectPickup()">
-                    <span class="round-icon">🏭</span>รับเอง<br><small style="font-size:10px;">คลิก....</small>
+                    <span class="round-icon">🏭</span>รับเอง
                 </button>
-                <div class="pickup-time-container" id="pickupTimeContainer">
-                    <label class="small text-muted">⏰ เลือกเวลารับ:</label>
-                    <input type="time" id="pickupTime" class="form-control mt-1" value="10:00" onchange="updatePickupTime()">
-                </div>
             `;
             
             container.innerHTML = html;
@@ -1564,13 +1552,23 @@
 
         function selectPickup() {
             selectedRound = 'pickup';
-            document.querySelectorAll('.round-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelector('.round-btn.pickup').classList.add('active');
-            document.getElementById('pickupTimeContainer').classList.add('show');
+            document.querySelectorAll('.round-btn').forEach(btn => {
+                btn.classList.remove('active');
+                // Reset ปุ่มรับเองกลับเป็นปกติ
+                if (btn.dataset.round === 'pickup') {
+                    btn.innerHTML = '<span class="round-icon">🏭</span>รับเอง';
+                }
+            });
+            const pickupBtn = document.querySelector('.round-btn.pickup');
+            pickupBtn.classList.add('active');
+            pickupBtn.innerHTML = '<span class="round-icon">✓</span>รับเอง';
         }
 
-        function updatePickupTime() { console.log('Pickup time:', document.getElementById('pickupTime').value); }
-        function getPickupTime() { const input = document.getElementById('pickupTime'); return input ? input.value : '10:00'; }
+        function getPickupTime() { 
+            // ใช้เวลาจาก orderTime แทน
+            const input = document.getElementById('orderTime'); 
+            return input ? input.value : '10:00'; 
+        }
 
         function checkQuota() {
             if (!selectedRound) return { valid: false, message: "กรุณาเลือกรอบจัดส่งก่อน" };
@@ -2037,6 +2035,33 @@
             dateInput.value = formattedDate;
             dateInput.min = formattedDate; 
             timeInput.value = `${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}`;
+            
+            // เพิ่ม event listener สำหรับ validate เวลา
+            dateInput.addEventListener('change', validateOrderTime);
+            timeInput.addEventListener('change', validateOrderTime);
+        }
+        
+        function validateOrderTime() {
+            const dateInput = document.getElementById('orderDate');
+            const timeInput = document.getElementById('orderTime');
+            const selectedDate = dateInput.value;
+            const selectedTime = timeInput.value;
+            
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            
+            // ถ้าเป็นวันนี้ ห้ามเลือกเวลาย้อนหลัง
+            if (selectedDate === todayStr) {
+                const nowHour = today.getHours();
+                const nowMin = today.getMinutes();
+                const nowTimeStr = `${String(nowHour).padStart(2, '0')}:${String(nowMin).padStart(2, '0')}`;
+                
+                if (selectedTime < nowTimeStr) {
+                    // ตั้งเวลาเป็นเวลาปัจจุบัน
+                    timeInput.value = nowTimeStr;
+                    // alert('⚠️ ไม่สามารถเลือกเวลาย้อนหลังได้');
+                }
+            }
         }
 
         function formatDateThai(dateString) {
