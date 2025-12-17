@@ -501,18 +501,19 @@
             <div class="container mt-2">
                 <!-- Date Filter -->
                 <div class="order-filter-section">
-                    <div class="order-filter-row">
+                    <div class="order-filter-row" id="shopFilterRow">
                         <label>🏪 ร้าน:</label>
                         <select id="myOrderShopFilter" class="form-select form-select-sm" style="flex:1; min-width:120px;" onchange="loadMyOrders()">
                             <option value="">ทุกร้าน</option>
                         </select>
+                        <span id="shopNameDisplay" style="flex:1; font-weight:bold; color:#0d6efd; display:none;"></span>
                     </div>
                     <div class="order-filter-row mt-2">
                         <label>📅 จาก:</label>
                         <input type="date" id="myOrderDateFrom">
                         <label>ถึง:</label>
                         <input type="date" id="myOrderDateTo">
-                        <button class="btn btn-primary btn-filter" onclick="loadMyOrders()">🔍 ค้นหา</button>
+                        <button class="btn btn-primary btn-filter" onclick="loadMyOrders()">🔍</button>
                     </div>
                 </div>
                 
@@ -774,12 +775,29 @@
             document.getElementById('myOrderDateTo').value = formatDate(today);
             
             // Populate shop dropdown
+            const shopFilterRow = document.getElementById('shopFilterRow');
             const shopSelect = document.getElementById('myOrderShopFilter');
-            shopSelect.innerHTML = '<option value="">ทุกร้าน</option>';
-            if (myShops && myShops.length > 0) {
+            const shopNameDisplay = document.getElementById('shopNameDisplay');
+            
+            if (myShops && myShops.length > 1) {
+                // หลายร้าน: แสดง dropdown
+                shopFilterRow.style.display = 'flex';
+                shopSelect.style.display = 'block';
+                shopNameDisplay.style.display = 'none';
+                
+                shopSelect.innerHTML = '<option value="">ทุกร้าน</option>';
                 myShops.forEach(s => {
                     shopSelect.innerHTML += `<option value="${s.id}">${s.name}</option>`;
                 });
+            } else if (myShops && myShops.length === 1) {
+                // ร้านเดียว: แสดงชื่อร้านเฉยๆ
+                shopFilterRow.style.display = 'flex';
+                shopSelect.style.display = 'none';
+                shopNameDisplay.style.display = 'block';
+                shopNameDisplay.textContent = myShops[0].name;
+            } else {
+                // ไม่มีร้าน: ซ่อนทั้งแถว
+                shopFilterRow.style.display = 'none';
             }
         }
 
