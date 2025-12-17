@@ -566,24 +566,40 @@
         function formatOrderItems(items) {
             if (!items) return '<span style="color:#999;">ไม่มีรายการ</span>';
             
+            // ถ้าเป็น string ให้ลอง parse
             if (typeof items === 'string') {
-                try {
-                    items = JSON.parse(items);
-                } catch (e) {
-                    return items.replace(/\n/g, '<br>');
+                // ลอง parse หลายรอบ (กรณี double-encoded)
+                let parsed = items;
+                for (let i = 0; i < 3; i++) {
+                    if (typeof parsed === 'string') {
+                        try {
+                            parsed = JSON.parse(parsed);
+                        } catch (e) {
+                            break;
+                        }
+                    }
                 }
+                items = parsed;
             }
             
+            // ถ้าเป็น array
             if (Array.isArray(items)) {
-                return items
-                    .filter(item => item && !item.startsWith('---'))  // ตัดเส้นขีดออก
-                    .filter(item => !item.includes('ยืมถุง'))          // ตัดยืมถุงออก (แสดงแยก)
+                const filtered = items
+                    .filter(item => item && typeof item === 'string')
+                    .filter(item => !item.startsWith('---'))  // ตัดเส้นขีดออก
+                    .filter(item => !item.includes('ยืมถุง'))  // ตัดยืมถุงออก
                     .map(item => {
                         // ตัด "- " ที่ขึ้นต้นออก
                         let cleanItem = item.replace(/^-\s*/, '');
                         return `<div>• ${cleanItem}</div>`;
-                    })
-                    .join('');
+                    });
+                
+                return filtered.length > 0 ? filtered.join('') : '<span style="color:#999;">ไม่มีรายการ</span>';
+            }
+            
+            // ถ้ายังเป็น string อยู่ (parse ไม่ได้)
+            if (typeof items === 'string') {
+                return items.replace(/\n/g, '<br>');
             }
             
             return '<span style="color:#999;">ไม่มีรายการ</span>';
