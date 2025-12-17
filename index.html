@@ -830,6 +830,7 @@
                     document.getElementById('adminInputSection').style.display = 'block';
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
                     document.getElementById('qty_bag_borrow').removeAttribute('readonly');
+                    document.querySelector('.tab-btn:nth-child(2)').style.display = 'none';
                     
                     await loadAllCustomers();
                     renderProductsForAdmin();
@@ -1498,3 +1499,4 @@
     </script>
 </body>
 </html>
+
