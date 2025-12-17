@@ -449,13 +449,13 @@
             <a href="orders.html" class="page-nav-btn">
                 <i class="fas fa-clipboard-list me-1"></i> จัดการออเดอร์
             </a>
-            <a href="index.html?dev=1" class="page-nav-btn active">
+            <a href="index.html" class="page-nav-btn active">
                 <i class="fas fa-shopping-cart me-1"></i> สั่งซื้อ
             </a>
         </div>
 
         <!-- Tab Navigation -->
-        <div class="tab-nav">
+        <div class="tab-nav" id="tabNav">
             <button class="tab-btn active" onclick="switchTab('order')">🛒 สั่งซื้อ</button>
             <button class="tab-btn" id="myOrdersTab" onclick="switchTab('myorders')">📋 ออเดอร์ของฉัน</button>
         </div>
@@ -1608,15 +1608,8 @@
                     // แสดง Page Navigation สำหรับ Admin
                     document.getElementById('adminPageNav').classList.add('show');
                     
-                    // Dev mode: เพิ่ม ?dev=1 ใน URL เพื่อแสดง tab ออเดอร์ของฉัน
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const devMode = urlParams.get('dev') === '1';
-                    if (!devMode) {
-                        document.getElementById('myOrdersTab').style.display = 'none';
-                    } else {
-                        // Dev mode: โหลดร้านที่ผูกกับ LINE ID ของ Admin
-                        await loadMyShops();
-                    }
+                    // ซ่อน Tab Navigation สำหรับ Admin (ใช้ Page Nav แทน)
+                    document.getElementById('tabNav').style.display = 'none';
                     
                     await loadAllCustomers();
                     renderProductsForAdmin();
