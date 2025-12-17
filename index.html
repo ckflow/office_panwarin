@@ -213,6 +213,15 @@
         .status-pending { background: #fff3cd; color: #856404; }
         .status-confirmed { background: #d1e7dd; color: #0f5132; }
         .status-cancelled { background: #f8d7da; color: #842029; }
+        .status-edited { 
+            background: #e0cffc; 
+            color: #6f42c1; 
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        .status-edited:hover {
+            background: #d4b9fa;
+        }
         .empty-orders {
             text-align: center;
             padding: 40px 20px;
@@ -535,6 +544,30 @@
 
         <!-- Edit Order Modal -->
         <div id="editOrderModal" class="edit-modal-overlay" onclick="closeEditModal(event)">
+
+        <!-- Original Order Modal -->
+        <div id="originalOrderModal" class="edit-modal-overlay" onclick="closeOriginalModal(event)">
+            <div class="edit-modal-content" onclick="event.stopPropagation()" style="max-height: 70vh;">
+                <div class="edit-modal-header">
+                    <div class="drag-handle"></div>
+                    <h5>📜 ข้อมูลก่อนแก้ไข</h5>
+                </div>
+                
+                <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 10px; padding: 12px; margin-bottom: 15px;">
+                    <div style="font-size: 12px; color: #856404;">
+                        <i class="fas fa-info-circle"></i> นี่คือข้อมูลออเดอร์ก่อนที่จะถูกแก้ไข
+                    </div>
+                </div>
+                
+                <div id="originalOrderContent" style="background: #f8f9fa; border-radius: 10px; padding: 15px;">
+                    <!-- Content will be inserted here -->
+                </div>
+                
+                <div class="d-flex gap-2 mt-4">
+                    <button class="btn btn-secondary flex-fill" style="border-radius: 25px; padding: 12px;" onclick="closeOriginalModalDirect()">ปิด</button>
+                </div>
+            </div>
+        </div>
             <div class="edit-modal-content" onclick="event.stopPropagation()">
                 <div class="edit-modal-header">
                     <div class="drag-handle"></div>
@@ -821,6 +854,7 @@
                 const statusText = getStatusText(order.status);
                 const canEdit = order.status === 'pending';
                 const roundText = getRoundDisplayText(order.delivery_round, order.pickup_time);
+                const isEdited = order.is_edited == 1;
                 
                 html += `
                     <div class="my-order-card">
@@ -832,6 +866,7 @@
                             <div class="text-end">
                                 <div class="my-order-total">${parseFloat(order.total || 0).toLocaleString()} บาท</div>
                                 <span class="status-badge ${statusClass}">${statusText}</span>
+                                ${isEdited ? `<span class="status-badge status-edited" onclick="showOriginalOrder(${order.id})" title="คลิกดูข้อมูลก่อนแก้ไข">✏️ แก้ไขแล้ว</span>` : ''}
                             </div>
                         </div>
                         <div class="my-order-body">
@@ -864,6 +899,71 @@
         function getStatusText(status) {
             const texts = { 'pending': '⏳ รอยืนยัน', 'confirmed': '✅ ยืนยันแล้ว', 'delivered': '🚚 ส่งแล้ว', 'cancelled': '❌ ยกเลิก' };
             return texts[status] || 'รอดำเนินการ';
+        }
+        
+        function showOriginalOrder(orderId) {
+            const order = myOrders.find(o => o.id === orderId);
+            if (!order || !order.original_data) {
+                alert('ไม่พบข้อมูลก่อนแก้ไข');
+                return;
+            }
+            
+            let originalData;
+            try {
+                originalData = typeof order.original_data === 'string' 
+                    ? JSON.parse(order.original_data) 
+                    : order.original_data;
+            } catch (e) {
+                alert('ไม่สามารถอ่านข้อมูลก่อนแก้ไขได้');
+                return;
+            }
+            
+            const editedAt = order.edited_at ? new Date(order.edited_at).toLocaleString('th-TH') : '-';
+            
+            let html = `
+                <div style="margin-bottom: 15px;">
+                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">📅 วันที่ส่ง (เดิม):</div>
+                    <div style="font-weight: bold;">${formatOrderDate(originalData.order_date)}</div>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">📦 รายการสินค้า (เดิม):</div>
+                    <div>${formatOrderItems(originalData.order_items)}</div>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">💰 ยอดรวม (เดิม):</div>
+                    <div style="font-weight: bold; color: #198754;">${parseFloat(originalData.total || 0).toLocaleString()} บาท</div>
+                </div>
+                
+                ${originalData.total_bags > 0 ? `
+                <div style="margin-bottom: 15px;">
+                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">👜 ยืมถุง (เดิม):</div>
+                    <div>${originalData.total_bags} ใบ</div>
+                </div>
+                ` : ''}
+                
+                <div style="border-top: 1px solid #dee2e6; padding-top: 10px; margin-top: 10px;">
+                    <div style="font-size: 11px; color: #888;">
+                        <i class="fas fa-clock"></i> แก้ไขเมื่อ: ${editedAt}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('originalOrderContent').innerHTML = html;
+            document.getElementById('originalOrderModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeOriginalModal(event) {
+            if (event.target.id === 'originalOrderModal') {
+                closeOriginalModalDirect();
+            }
+        }
+        
+        function closeOriginalModalDirect() {
+            document.getElementById('originalOrderModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
         }
 
         function getRoundDisplayText(round, pickupTime) {
