@@ -242,7 +242,7 @@
         <!-- Tab Navigation -->
         <div class="tab-nav">
             <button class="tab-btn active" onclick="switchTab('order')">🛒 สั่งซื้อ</button>
-            <button class="tab-btn" onclick="switchTab('myorders')">📋 ออเดอร์ของฉัน</button>
+            <button class="tab-btn" id="myOrdersTab" onclick="switchTab('myorders')">📋 ออเดอร์ของฉัน</button>
         </div>
 
         <!-- Tab: สั่งซื้อ -->
@@ -263,7 +263,6 @@
                     <div class="product-info">
                         <div class="product-name text-success mb-2">🚚 เลือกรอบจัดส่ง</div>
                         <div class="round-btn-group" id="roundButtonGroup">
-                            <!-- จะถูก render โดย JavaScript -->
                             <div class="text-muted" style="font-size: 13px;">กรุณาเลือกลูกค้าก่อน</div>
                         </div>
                     </div>
@@ -294,11 +293,8 @@
                 </div>
             </div>
 
-            <div class="container mt-2" id="productList">
-                <!-- Products will be rendered here -->
-            </div>
+            <div class="container mt-2" id="productList"></div>
 
-            <!-- Loading Overlay สำหรับตอนโหลดราคา -->
             <div id="productLoading" class="product-loading-overlay">
                 <div class="text-center">
                     <div class="spinner-border text-primary mb-2" role="status"></div>
@@ -330,7 +326,6 @@
                 </div>
             </div>
 
-            <!-- ยอดรวมและปุ่มยืนยัน -->
             <div class="container">
                 <div class="bottom-bar">
                     <div class="d-flex justify-content-between align-items-center">
@@ -365,14 +360,11 @@
                     <h5 style="margin: 0;">📋 สรุปรายการ</h5>
                 </div>
                 
-                <!-- แสดงรอบที่เลือก -->
                 <div id="confirmRoundInfo" style="background: #f0fff4; border: 1px solid #86efac; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; text-align: center;">
                     <span style="color: #16a34a; font-weight: bold;">🚚 รอบ: <span id="confirmRoundText">-</span></span>
                 </div>
                 
-                <div id="confirmOrderLines" style="background: #f8f9fa; border-radius: 10px; padding: 12px; margin-bottom: 15px; font-size: 14px;">
-                    <!-- Order lines will be inserted here -->
-                </div>
+                <div id="confirmOrderLines" style="background: #f8f9fa; border-radius: 10px; padding: 12px; margin-bottom: 15px; font-size: 14px;"></div>
                 
                 <div style="border-top: 1px solid #eee; padding-top: 12px;">
                     <div class="d-flex justify-content-between mb-2">
@@ -394,12 +386,8 @@
                 </div>
                 
                 <div class="d-flex gap-2 mt-4">
-                    <button class="btn btn-outline-secondary flex-fill" style="border-radius: 25px; padding: 12px;" onclick="closeConfirmModal()">
-                        ยกเลิก
-                    </button>
-                    <button class="btn btn-primary flex-fill" id="finalConfirmBtn" style="border-radius: 25px; padding: 12px; font-weight: bold;" onclick="submitOrder()">
-                        ✅ ยืนยันสั่ง
-                    </button>
+                    <button class="btn btn-outline-secondary flex-fill" style="border-radius: 25px; padding: 12px;" onclick="closeConfirmModal()">ยกเลิก</button>
+                    <button class="btn btn-primary flex-fill" id="finalConfirmBtn" style="border-radius: 25px; padding: 12px; font-weight: bold;" onclick="submitOrder()">✅ ยืนยันสั่ง</button>
                 </div>
             </div>
         </div>
@@ -418,8 +406,8 @@
         const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
         
         const ADMIN_IDS = [
-            "U4dc8fa32570dca3dfb4093b48a5c2093", //แชมป์
-            "U4cc74cb6346dece926adf6b2a3b7cb77", //บี
+            "U4dc8fa32570dca3dfb4093b48a5c2093",
+            "U4cc74cb6346dece926adf6b2a3b7cb77",
         ]; 
 
         const productIcons = {
@@ -456,7 +444,6 @@
         const QUOTA_BAG_PRODUCTS = ['tube_l', 'tube_s', 'pack_l', 'pack_s', 'crush_sack', 'crush_sachet', 'crush_white', 'sack'];
         const QUOTA_CUBE_PRODUCTS = ['cube_sachet', 'cube_kak', 'cube_hand'];
 
-        // ==================== TAB FUNCTIONS ====================
         function switchTab(tab) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -471,7 +458,6 @@
             }
         }
 
-        // ==================== MY ORDERS FUNCTIONS ====================
         async function loadMyOrders() {
             const container = document.getElementById('myOrdersList');
             container.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border text-primary mb-2"></div><div>กำลังโหลด...</div></div>';
@@ -541,29 +527,17 @@
         }
 
         function getStatusClass(status) {
-            const classes = {
-                'pending': 'status-pending',
-                'confirmed': 'status-confirmed',
-                'delivered': 'status-confirmed',
-                'cancelled': 'status-cancelled'
-            };
+            const classes = { 'pending': 'status-pending', 'confirmed': 'status-confirmed', 'delivered': 'status-confirmed', 'cancelled': 'status-cancelled' };
             return classes[status] || 'status-pending';
         }
 
         function getStatusText(status) {
-            const texts = {
-                'pending': '⏳ รอยืนยัน',
-                'confirmed': '✅ ยืนยันแล้ว',
-                'delivered': '🚚 ส่งแล้ว',
-                'cancelled': '❌ ยกเลิก'
-            };
+            const texts = { 'pending': '⏳ รอยืนยัน', 'confirmed': '✅ ยืนยันแล้ว', 'delivered': '🚚 ส่งแล้ว', 'cancelled': '❌ ยกเลิก' };
             return texts[status] || 'รอดำเนินการ';
         }
 
         function getRoundDisplayText(round, pickupTime) {
-            if (round === 'pickup') {
-                return `รับเองหน้าโรง (${pickupTime || '-'} น.)`;
-            }
+            if (round === 'pickup') return `รับเองหน้าโรง (${pickupTime || '-'} น.)`;
             if (round === 'extra') return 'รอบเสริม';
             if (round) return `รอบ ${round}`;
             return '-';
@@ -581,16 +555,20 @@
         function formatOrderItems(items) {
             if (!items) return '<span class="text-muted">ไม่มีรายการ</span>';
             
-            if (typeof items === 'string') {
-                try {
-                    items = JSON.parse(items);
-                } catch (e) {
-                    return items.replace(/\n/g, '<br>');
-                }
-            }
+            let itemsStr = typeof items === 'object' ? JSON.stringify(items) : String(items);
+            const matches = itemsStr.match(/"([^"]+)"/g);
             
-            if (Array.isArray(items)) {
-                return items.map(item => `<div>• ${item}</div>`).join('');
+            if (matches && matches.length > 0) {
+                const result = matches
+                    .map(m => m.replace(/^"|"$/g, ''))
+                    .filter(item => item && !item.startsWith('---'))
+                    .filter(item => !item.includes('ยืมถุง'))
+                    .map(item => {
+                        let cleanItem = item.replace(/^-\s*/, '');
+                        return `<div>• ${cleanItem}</div>`;
+                    });
+                
+                return result.length > 0 ? result.join('') : '<span class="text-muted">ไม่มีรายการ</span>';
             }
             
             return '<span class="text-muted">ไม่มีรายการ</span>';
@@ -618,13 +596,9 @@
             }
         }
 
-        // ==================== ROUND FUNCTIONS ====================
         function selectRound(round) {
             const roundData = customerRounds.find(r => r.round_number == round);
-            if (!roundData) {
-                alert("ลูกค้านี้ไม่มีรอบนี้");
-                return;
-            }
+            if (!roundData) { alert("ลูกค้านี้ไม่มีรอบนี้"); return; }
             
             if (round === 'extra' && !roundData.is_unlocked) {
                 alert("🔒 รอบเสริมยังไม่ได้ปลดล็อค\nกรุณาติดต่อโรงงาน 0949592455");
@@ -640,32 +614,16 @@
         }
 
         function getRoundText(round) {
-            if (round === 'pickup') {
-                const time = getPickupTime();
-                return `รับเองหน้าโรง (${time} น.)`;
-            }
-            
+            if (round === 'pickup') return `รับเองหน้าโรง (${getPickupTime()} น.)`;
             const roundData = customerRounds.find(r => r.round_number == round);
-            if (round === 1 || round === '1') {
-                const time = roundData ? `(${formatTime(roundData.time_start)}-${formatTime(roundData.time_end)})` : '';
-                return `รอบ 1 ${time}`;
-            }
-            if (round === 2 || round === '2') {
-                const time = roundData ? `(${formatTime(roundData.time_start)}-${formatTime(roundData.time_end)})` : '';
-                return `รอบ 2 ${time}`;
-            }
-            if (round === 3 || round === '3') {
-                const time = roundData ? `(${formatTime(roundData.time_start)}-${formatTime(roundData.time_end)})` : '';
-                return `รอบ 3 ${time}`;
-            }
+            if (round === 1 || round === '1') return `รอบ 1 ${roundData ? '(' + formatTime(roundData.time_start) + '-' + formatTime(roundData.time_end) + ')' : ''}`;
+            if (round === 2 || round === '2') return `รอบ 2 ${roundData ? '(' + formatTime(roundData.time_start) + '-' + formatTime(roundData.time_end) + ')' : ''}`;
+            if (round === 3 || round === '3') return `รอบ 3 ${roundData ? '(' + formatTime(roundData.time_start) + '-' + formatTime(roundData.time_end) + ')' : ''}`;
             if (round === 'extra') return 'รอบเสริม';
             return '-';
         }
 
-        function formatTime(timeStr) {
-            if (!timeStr) return '';
-            return timeStr.substring(0, 5);
-        }
+        function formatTime(timeStr) { return timeStr ? timeStr.substring(0, 5) : ''; }
 
         async function loadCustomerRounds(customerId) {
             try {
@@ -691,11 +649,7 @@
             let html = '';
             
             if (customerRounds.length === 0) {
-                html += `
-                    <div class="alert alert-warning mb-2" style="font-size: 13px;">
-                        ⚠️ ยังไม่ได้ตั้งรอบจัดส่ง (ส่งไม่ได้ แต่รับเองหน้าโรงได้)
-                    </div>
-                `;
+                html += `<div class="alert alert-warning mb-2" style="font-size: 13px;">⚠️ ยังไม่ได้ตั้งรอบจัดส่ง (ส่งไม่ได้ แต่รับเองหน้าโรงได้)</div>`;
             } else {
                 const order = { '1': 1, '2': 2, '3': 3, 'extra': 4 };
                 customerRounds.sort((a, b) => (order[a.round_number] || 99) - (order[b.round_number] || 99));
@@ -708,11 +662,8 @@
                     const icon = isExtra ? '➕' : ['①', '②', '③'][parseInt(r.round_number) - 1] || '●';
                     
                     html += `
-                        <button type="button" 
-                            class="round-btn ${isLocked ? 'locked' : ''}" 
-                            data-round="${r.round_number}" 
-                            onclick="selectRound('${r.round_number}')"
-                            ${isLocked ? 'title="🔒 รอบเสริมยังไม่ได้ปลดล็อค"' : ''}>
+                        <button type="button" class="round-btn ${isLocked ? 'locked' : ''}" data-round="${r.round_number}" 
+                            onclick="selectRound('${r.round_number}')" ${isLocked ? 'title="🔒 รอบเสริมยังไม่ได้ปลดล็อค"' : ''}>
                             <span class="round-icon">${isLocked ? '🔒' : icon}</span>
                             ${roundName}
                             ${timeText ? `<br><small style="font-size:10px;">${timeText}</small>` : ''}
@@ -722,17 +673,9 @@
             }
             
             html += `
-                <button type="button" 
-                    class="round-btn pickup" 
-                    data-round="pickup" 
-                    onclick="selectPickup()">
-                    <span class="round-icon">🏭</span>
-                    รับเอง
-                    <br><small style="font-size:10px;">คลิก....</small>
+                <button type="button" class="round-btn pickup" data-round="pickup" onclick="selectPickup()">
+                    <span class="round-icon">🏭</span>รับเอง<br><small style="font-size:10px;">คลิก....</small>
                 </button>
-            `;
-            
-            html += `
                 <div class="pickup-time-container" id="pickupTimeContainer">
                     <label class="small text-muted">⏰ เลือกเวลารับ:</label>
                     <input type="time" id="pickupTime" class="form-control mt-1" value="10:00" onchange="updatePickupTime()">
@@ -750,77 +693,45 @@
             document.getElementById('pickupTimeContainer').classList.add('show');
         }
 
-        function updatePickupTime() {
-            const time = document.getElementById('pickupTime').value;
-            console.log('Pickup time:', time);
-        }
-
-        function getPickupTime() {
-            const input = document.getElementById('pickupTime');
-            return input ? input.value : '10:00';
-        }
+        function updatePickupTime() { console.log('Pickup time:', document.getElementById('pickupTime').value); }
+        function getPickupTime() { const input = document.getElementById('pickupTime'); return input ? input.value : '10:00'; }
 
         function checkQuota() {
             if (!selectedRound) return { valid: false, message: "กรุณาเลือกรอบจัดส่งก่อน" };
-            
-            if (selectedRound === 'pickup') {
-                return { valid: true };
-            }
+            if (selectedRound === 'pickup') return { valid: true };
             
             const roundData = customerRounds.find(r => r.round_number == selectedRound);
             if (!roundData) return { valid: false, message: "ไม่พบข้อมูลรอบนี้" };
             
-            let totalBags = 0;
-            let totalCubes = 0;
+            let totalBags = 0, totalCubes = 0;
             
             for (const code in customerPrices) {
                 const qty = getQty(code);
                 if (qty > 0) {
-                    if (QUOTA_BAG_PRODUCTS.includes(code)) {
-                        totalBags += qty;
-                    } else if (QUOTA_CUBE_PRODUCTS.includes(code)) {
-                        totalCubes += qty;
-                    }
+                    if (QUOTA_BAG_PRODUCTS.includes(code)) totalBags += qty;
+                    else if (QUOTA_CUBE_PRODUCTS.includes(code)) totalCubes += qty;
                 }
             }
             
             const quotaBags = roundData.quota_bags || 0;
             const quotaCubes = roundData.quota_cubes || 0;
-            
             let errors = [];
-            if (quotaBags > 0 && totalBags > quotaBags) {
-                errors.push(`สั่งยูนิต+บด: ${totalBags} / โควต้า: ${quotaBags} ❌`);
-            }
-            if (quotaCubes > 0 && totalCubes > quotaCubes) {
-                errors.push(`สั่งก้อน ซอง: ${totalCubes} / โควต้า: ${quotaCubes} ❌`);
-            }
             
-            if (errors.length > 0) {
-                return {
-                    valid: false,
-                    message: `⚠️ คำขอออเดอร์เกินที่รถจะรับไหว\nโปรดติดต่อโรงงาน 0949592455\n\n${errors.join('\n')}`
-                };
-            }
+            if (quotaBags > 0 && totalBags > quotaBags) errors.push(`สั่งยูนิต+บด: ${totalBags} / โควต้า: ${quotaBags} ❌`);
+            if (quotaCubes > 0 && totalCubes > quotaCubes) errors.push(`สั่งก้อน ซอง: ${totalCubes} / โควต้า: ${quotaCubes} ❌`);
             
+            if (errors.length > 0) return { valid: false, message: `⚠️ คำขอออเดอร์เกินที่รถจะรับไหว\nโปรดติดต่อโรงงาน 0949592455\n\n${errors.join('\n')}` };
             return { valid: true };
         }
 
-        function showProductLoading() {
-            document.getElementById('productLoading').style.display = 'flex';
-        }
-        
-        function hideProductLoading() {
-            document.getElementById('productLoading').style.display = 'none';
-        }
+        function showProductLoading() { document.getElementById('productLoading').style.display = 'flex'; }
+        function hideProductLoading() { document.getElementById('productLoading').style.display = 'none'; }
 
         async function main() {
             try {
                 initDateTimeInput();
                 await liff.init({ liffId: MY_LIFF_ID });
-                if (!liff.isLoggedIn()) { 
-                    liff.login(); 
-                    return;
-                }
+                if (!liff.isLoggedIn()) { liff.login(); return; }
                 
                 const profile = await liff.getProfile();
                 currentUserId = profile.userId;
@@ -830,7 +741,7 @@
                     document.getElementById('adminInputSection').style.display = 'block';
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
                     document.getElementById('qty_bag_borrow').removeAttribute('readonly');
-                    document.querySelector('.tab-btn:nth-child(2)').style.display = 'none';
+                    document.getElementById('myOrdersTab').style.display = 'none';
                     
                     await loadAllCustomers();
                     renderProductsForAdmin();
@@ -860,19 +771,11 @@
         function startDepositPolling() {
             if (depositPollingInterval) clearInterval(depositPollingInterval);
             depositPollingInterval = setInterval(async () => {
-                if (currentCustomerId) {
-                    await loadPendingDeposits(currentCustomerId);
-                    updateTotals();
-                }
+                if (currentCustomerId) { await loadPendingDeposits(currentCustomerId); updateTotals(); }
             }, 10000);
         }
         
-        function stopDepositPolling() {
-            if (depositPollingInterval) {
-                clearInterval(depositPollingInterval);
-                depositPollingInterval = null;
-            }
-        }
+        function stopDepositPolling() { if (depositPollingInterval) { clearInterval(depositPollingInterval); depositPollingInterval = null; } }
 
         async function loadMyShops() {
             try {
@@ -893,9 +796,7 @@
                 } else {
                     const select = document.getElementById('myShopSelect');
                     select.innerHTML = '<option value="">-- เลือกร้าน --</option>';
-                    myShops.forEach(s => {
-                        select.innerHTML += `<option value="${s.id}" data-name="${s.name}">${s.name}</option>`;
-                    });
+                    myShops.forEach(s => { select.innerHTML += `<option value="${s.id}" data-name="${s.name}">${s.name}</option>`; });
                     
                     document.getElementById('shopSelectSection').style.display = 'block';
                     renderProductsForAdmin();
@@ -915,18 +816,9 @@
             const shopId = select.value;
             
             if (!shopId) {
-                currentCustomerId = null;
-                currentCustomerName = null;
-                customerPrices = {};
-                customerMultipliers = {};
-                pendingDeposits = [];
-                depositTotal = 0;
-                customerRounds = [];
-                selectedRound = null;
-                stopDepositPolling();
-                renderProductsForAdmin();
-                renderRoundButtons();
-                updateTotals();
+                currentCustomerId = null; currentCustomerName = null; customerPrices = {}; customerMultipliers = {};
+                pendingDeposits = []; depositTotal = 0; customerRounds = []; selectedRound = null;
+                stopDepositPolling(); renderProductsForAdmin(); renderRoundButtons(); updateTotals();
                 return;
             }
             
@@ -950,12 +842,7 @@
                 customerPrices = {};
                 data.forEach(item => {
                     if (item.product_code) {
-                        customerPrices[item.product_code] = {
-                            price: parseFloat(item.price) || 0,
-                            promo_type: item.promo_type,
-                            buy_qty: item.buy_qty,
-                            free_qty: item.free_qty
-                        };
+                        customerPrices[item.product_code] = { price: parseFloat(item.price) || 0, promo_type: item.promo_type, buy_qty: item.buy_qty, free_qty: item.free_qty };
                     }
                 });
                 
@@ -969,69 +856,36 @@
                 document.getElementById('loadingScreen').style.display = 'none';
                 document.getElementById('mainContent').style.display = 'block';
                 
-            } catch (e) {
-                console.error('Error loading prices:', e);
-                alert('โหลดราคาไม่สำเร็จ');
-            }
+            } catch (e) { console.error('Error loading prices:', e); alert('โหลดราคาไม่สำเร็จ'); }
         }
 
         async function loadMultipliers(customerId) {
             try {
-                const res = await fetch(`${BASE_URL}/get-multipliers`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ customerId: customerId })
-                });
+                const res = await fetch(`${BASE_URL}/get-multipliers`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customerId }) });
                 const data = await res.json();
-                
                 customerMultipliers = {};
-                data.forEach(item => {
-                    if (item.product_code) {
-                        customerMultipliers[item.product_code] = item.multiplier;
-                    }
-                });
-            } catch (e) {
-                console.error('Error loading multipliers:', e);
-                customerMultipliers = {};
-            }
+                data.forEach(item => { if (item.product_code) customerMultipliers[item.product_code] = item.multiplier; });
+            } catch (e) { console.error('Error loading multipliers:', e); customerMultipliers = {}; }
         }
 
         async function loadPendingDeposits(customerId) {
             try {
-                const res = await fetch(`${BASE_URL}/get-pending-deposits`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ customerId: customerId })
-                });
+                const res = await fetch(`${BASE_URL}/get-pending-deposits`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customerId }) });
                 const data = await res.json();
                 pendingDeposits = Array.isArray(data) ? data : [];
-                
                 depositTotal = 0;
-                pendingDeposits.forEach(d => {
-                    const price = customerPrices[d.product_code]?.price || 0;
-                    const qty = parseInt(d.quantity) || 0;
-                    depositTotal += qty * price;
-                });
-            } catch (e) {
-                console.error('Error loading pending deposits:', e);
-                pendingDeposits = [];
-                depositTotal = 0;
-            }
+                pendingDeposits.forEach(d => { const price = customerPrices[d.product_code]?.price || 0; depositTotal += (parseInt(d.quantity) || 0) * price; });
+            } catch (e) { console.error('Error loading pending deposits:', e); pendingDeposits = []; depositTotal = 0; }
         }
 
         async function loadAllCustomers() {
             try {
                 const res = await fetch(`${BASE_URL}/get-all-customers`);
                 allCustomers = await res.json();
-                
                 const select = document.getElementById('customerSelect');
                 select.innerHTML = '<option value="">-- เลือกลูกค้า --</option>';
-                allCustomers.forEach(c => {
-                    select.innerHTML += `<option value="${c.id}" data-name="${c.name}">${c.name}</option>`;
-                });
-            } catch (e) {
-                console.error('Error loading customers:', e);
-            }
+                allCustomers.forEach(c => { select.innerHTML += `<option value="${c.id}" data-name="${c.name}">${c.name}</option>`; });
+            } catch (e) { console.error('Error loading customers:', e); }
         }
 
         async function onCustomerSelect() {
@@ -1039,18 +893,9 @@
             const customerId = select.value;
             
             if (!customerId) {
-                currentCustomerId = null;
-                currentCustomerName = null;
-                customerPrices = {};
-                customerMultipliers = {};
-                pendingDeposits = [];
-                depositTotal = 0;
-                customerRounds = [];
-                selectedRound = null;
-                stopDepositPolling();
-                renderProductsForAdmin();
-                renderRoundButtons();
-                updateTotals();
+                currentCustomerId = null; currentCustomerName = null; customerPrices = {}; customerMultipliers = {};
+                pendingDeposits = []; depositTotal = 0; customerRounds = []; selectedRound = null;
+                stopDepositPolling(); renderProductsForAdmin(); renderRoundButtons(); updateTotals();
                 return;
             }
             
@@ -1064,20 +909,12 @@
 
         async function checkFirstBill() {
             if (!currentCustomerId) return;
-            
             try {
                 const orderDate = document.getElementById('orderDate').value;
-                const res = await fetch(`${BASE_URL}/check-first-bill`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ customerId: currentCustomerId, orderDate })
-                });
+                const res = await fetch(`${BASE_URL}/check-first-bill`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customerId: currentCustomerId, orderDate }) });
                 const data = await res.json();
                 isFirstBill = data.isFirstBill;
-            } catch (e) {
-                console.error('Error checking first bill:', e);
-                isFirstBill = false;
-            }
+            } catch (e) { console.error('Error checking first bill:', e); isFirstBill = false; }
         }
 
         function renderProducts() {
@@ -1094,11 +931,8 @@
                     const p = customerPrices[code];
                     const icon = productIcons[code] || '📦';
                     const hasMultiplier = MULTIPLIER_PRODUCTS.includes(code);
-                    
                     let multiplierBadge = '';
-                    if (hasMultiplier && customerMultipliers[code]) {
-                        multiplierBadge = `<span class="multiplier-badge" id="badge_${code}">×${customerMultipliers[code]}ถุง</span>`;
-                    }
+                    if (hasMultiplier && customerMultipliers[code]) multiplierBadge = `<span class="multiplier-badge" id="badge_${code}">×${customerMultipliers[code]}ถุง</span>`;
                     
                     html += `
                         <div class="product-card" id="card_${code}">
@@ -1109,21 +943,16 @@
                                 </div>
                                 <div class="product-right">
                                     <span class="line-total" id="total_${code}">0</span>
-                                    <input type="number" id="qty_${code}" class="qty-input calculate-trigger" 
-                                        placeholder="0" min="0" onchange="calculateAll()" oninput="calculateAll()">
+                                    <input type="number" id="qty_${code}" class="qty-input calculate-trigger" placeholder="0" min="0" onchange="calculateAll()" oninput="calculateAll()">
                                 </div>
                             </div>
                             <div class="promo-line" id="promo_${code}" style="display:none;"></div>
                         </div>
                     `;
                 });
-                
                 container.innerHTML += html;
             }
-            
-            document.querySelectorAll('.calculate-trigger').forEach(input => {
-                input.addEventListener('input', autoCalculateBags);
-            });
+            document.querySelectorAll('.calculate-trigger').forEach(input => { input.addEventListener('input', autoCalculateBags); });
         }
 
         function renderProductsForAdmin() {
@@ -1132,10 +961,8 @@
             
             for (const [category, codes] of Object.entries(productCategories)) {
                 let html = `<div class="cat-title">${category}</div>`;
-                
                 codes.forEach(code => {
                     const icon = productIcons[code] || '📦';
-                    
                     html += `
                         <div class="product-card" id="card_${code}">
                             <div class="product-row">
@@ -1150,42 +977,25 @@
                         </div>
                     `;
                 });
-                
                 container.innerHTML += html;
             }
-            
-            document.querySelectorAll('.calculate-trigger').forEach(input => {
-                input.addEventListener('input', autoCalculateBags);
-            });
+            document.querySelectorAll('.calculate-trigger').forEach(input => { input.addEventListener('input', autoCalculateBags); });
         }
 
         function getProductName(code) {
-            const names = {
-                'tube_l': 'หลอดใหญ่', 'tube_s': 'หลอดเล็ก',
-                'pack_l': 'แพ็คกระสอบ', 'pack_s': 'แพ็คเล็ก',
-                'crush_sack': 'บด(ถุงบีซ)', 'crush_sachet': 'บด(ซอง)', 'crush_white': 'บด(ถุงขาว)',
-                'cube_sachet': 'ก้อน(ซอง)', 'cube_kak': 'ก้อน(ลูก)',
-                'cube_hand': 'ก้อน(กั๊ก)', 'sack': 'กระสอบ(มัด)'
-            };
+            const names = { 'tube_l': 'หลอดใหญ่', 'tube_s': 'หลอดเล็ก', 'pack_l': 'แพ็คกระสอบ', 'pack_s': 'แพ็คเล็ก', 'crush_sack': 'บด(ถุงบีซ)', 'crush_sachet': 'บด(ซอง)', 'crush_white': 'บด(ถุงขาว)', 'cube_sachet': 'ก้อน(ซอง)', 'cube_kak': 'ก้อน(ลูก)', 'cube_hand': 'ก้อน(กั๊ก)', 'sack': 'กระสอบ(มัด)' };
             return names[code] || code;
         }
 
         function getUnit(code) {
-            const units = {
-                'tube_l': 'กระสอบ', 'tube_s': 'กระสอบ',
-                'pack_l': 'แพ็ค', 'pack_s': 'แพ็ค',
-                'crush_sack': 'ถุง', 'crush_sachet': 'ซอง', 'crush_white': 'ถุง',
-                'cube_sachet': 'ซอง', 'cube_kak': 'ลูก',
-                'cube_hand': 'กั๊ก', 'sack': 'มัด'
-            };
+            const units = { 'tube_l': 'กระสอบ', 'tube_s': 'กระสอบ', 'pack_l': 'แพ็ค', 'pack_s': 'แพ็ค', 'crush_sack': 'ถุง', 'crush_sachet': 'ซอง', 'crush_white': 'ถุง', 'cube_sachet': 'ซอง', 'cube_kak': 'ลูก', 'cube_hand': 'กั๊ก', 'sack': 'มัด' };
             return units[code] || 'หน่วย';
         }
 
         function calculateAll() { updateTotals(); }
 
         function updateTotals() {
-            let subtotal = 0;
-            let totalDiscount = 0;
+            let subtotal = 0, totalDiscount = 0;
             
             for (const code in customerPrices) {
                 const qtyEl = document.getElementById(`qty_${code}`);
@@ -1194,17 +1004,12 @@
                 const qty = parseInt(qtyEl.value) || 0;
                 const p = customerPrices[code];
                 const price = p.price;
-                
-                let discount = 0;
-                let promoText = '';
+                let discount = 0, promoText = '';
                 
                 if (qty > 0 && p.promo_type) {
                     if (p.promo_type === 'buy_x_free_y' && p.buy_qty && p.free_qty) {
                         const freeCount = Math.floor(qty / (p.buy_qty + p.free_qty)) * p.free_qty;
-                        if (freeCount > 0) {
-                            discount = freeCount * price;
-                            promoText = `🎁 แถม ${freeCount} (-${discount.toLocaleString()})`;
-                        }
+                        if (freeCount > 0) { discount = freeCount * price; promoText = `🎁 แถม ${freeCount} (-${discount.toLocaleString()})`; }
                     } else if (p.promo_type === 'first_bill_free' && isFirstBill && p.free_qty) {
                         discount = p.free_qty * price;
                         promoText = `🎁 บิลแรกแถม ${p.free_qty} (-${discount.toLocaleString()})`;
@@ -1218,42 +1023,24 @@
                 const promoEl = document.getElementById(`promo_${code}`);
                 
                 if (totalEl) totalEl.textContent = qty > 0 ? (qty * price).toLocaleString() : '0';
-                if (promoEl) {
-                    if (promoText) { promoEl.textContent = promoText; promoEl.style.display = 'block'; }
-                    else { promoEl.style.display = 'none'; }
-                }
+                if (promoEl) { if (promoText) { promoEl.textContent = promoText; promoEl.style.display = 'block'; } else promoEl.style.display = 'none'; }
             }
             
             const safeDepositTotal = depositTotal && !isNaN(depositTotal) ? depositTotal : 0;
             const grandTotal = Math.max(0, subtotal - totalDiscount - safeDepositTotal);
-            
             document.getElementById('grandTotalDisplay').textContent = grandTotal.toLocaleString() + ' บาท';
             autoCalculateBags();
         }
 
-        let cachedSubtotal = 0;
-        let cachedDiscount = 0;
+        let cachedSubtotal = 0, cachedDiscount = 0;
 
         function openConfirmModal() {
-            if (selectedRound !== 'pickup' && customerRounds.length === 0) {
-                alert("⚠️ ยังไม่ได้ตั้งรอบจัดส่ง\nกรุณาเลือก 'รับเองหน้าโรง' หรือติดต่อโรงงาน 0949592455");
-                return;
-            }
+            if (selectedRound !== 'pickup' && customerRounds.length === 0) { alert("⚠️ ยังไม่ได้ตั้งรอบจัดส่ง\nกรุณาเลือก 'รับเองหน้าโรง' หรือติดต่อโรงงาน 0949592455"); return; }
+            if (!selectedRound) { alert("กรุณาเลือกรอบจัดส่งก่อนครับ"); return; }
+            if (!currentCustomerId) { alert(isAdmin ? "กรุณาเลือกลูกค้าก่อนครับ" : "กรุณาเลือกร้านก่อนครับ"); return; }
 
-            if (!selectedRound) {
-                alert("กรุณาเลือกรอบจัดส่งก่อนครับ");
-                return;
-            }
-
-            if (!currentCustomerId) {
-                alert(isAdmin ? "กรุณาเลือกลูกค้าก่อนครับ" : "กรุณาเลือกร้านก่อนครับ");
-                return;
-            }
-
-            let orderLines = [];
-            let hasItems = false;
-            cachedSubtotal = 0;
-            cachedDiscount = 0;
+            let orderLines = [], hasItems = false;
+            cachedSubtotal = 0; cachedDiscount = 0;
 
             for (const code in customerPrices) {
                 const qty = getQty(code);
@@ -1262,20 +1049,15 @@
                     const p = customerPrices[code];
                     const unit = getUnit(code);
                     cachedSubtotal += qty * p.price;
-                    
                     let line = `${getProductName(code)}: ${qty} ${unit} = ${(qty * p.price).toLocaleString()} บาท`;
                     
                     if (p.promo_type === 'buy_x_free_y' && p.buy_qty && p.free_qty) {
                         const freeCount = Math.floor(qty / (p.buy_qty + p.free_qty)) * p.free_qty;
-                        if (freeCount > 0) {
-                            cachedDiscount += freeCount * p.price;
-                            line += `<br><span style="color:#dc3545; font-size:12px;">🎁 แถม ${freeCount} (-${(freeCount * p.price).toLocaleString()})</span>`;
-                        }
+                        if (freeCount > 0) { cachedDiscount += freeCount * p.price; line += `<br><span style="color:#dc3545; font-size:12px;">🎁 แถม ${freeCount} (-${(freeCount * p.price).toLocaleString()})</span>`; }
                     } else if (p.promo_type === 'first_bill_free' && isFirstBill && p.free_qty) {
                         cachedDiscount += p.free_qty * p.price;
                         line += `<br><span style="color:#dc3545; font-size:12px;">🎁 บิลแรกแถม ${p.free_qty} (-${(p.free_qty * p.price).toLocaleString()})</span>`;
                     }
-                    
                     orderLines.push(line);
                 }
             }
@@ -1286,16 +1068,10 @@
             const borrowQty = getQty('bag_borrow');
             if (borrowQty > 0) orderLines.push(`👜 ยืมถุง: ${borrowQty} ใบ`);
 
-            if (!hasItems && borrowQty === 0) {
-                alert("กรุณากรอกจำนวนสินค้าครับ");
-                return;
-            }
+            if (!hasItems && borrowQty === 0) { alert("กรุณากรอกจำนวนสินค้าครับ"); return; }
 
             const quotaCheck = checkQuota();
-            if (!quotaCheck.valid) {
-                alert(quotaCheck.message);
-                return;
-            }
+            if (!quotaCheck.valid) { alert(quotaCheck.message); return; }
 
             document.getElementById('confirmRoundText').textContent = getRoundText(selectedRound);
             document.getElementById('confirmOrderLines').innerHTML = orderLines.join('<br>');
@@ -1316,10 +1092,7 @@
             document.body.style.overflow = 'hidden';
         }
 
-        function closeConfirmModal() {
-            document.getElementById('confirmModal').style.display = 'none';
-            document.body.style.overflow = 'auto';
-        }
+        function closeConfirmModal() { document.getElementById('confirmModal').style.display = 'none'; document.body.style.overflow = 'auto'; }
 
         function initDateTimeInput() {
             const dateInput = document.getElementById('orderDate');
@@ -1329,27 +1102,17 @@
             const mm = String(today.getMonth() + 1).padStart(2, '0');
             const dd = String(today.getDate()).padStart(2, '0');
             const formattedDate = `${yyyy}-${mm}-${dd}`;
-            
             dateInput.value = formattedDate;
             dateInput.min = formattedDate; 
-            const hh = String(today.getHours()).padStart(2, '0');
-            const mn = String(today.getMinutes()).padStart(2, '0');
-            timeInput.value = `${hh}:${mn}`;
+            timeInput.value = `${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}`;
         }
 
         function formatDateThai(dateString) {
             const date = new Date(dateString);
-            const day = date.getDate();
-            const month = date.toLocaleDateString('th-TH', { month: 'long' });
-            const year = date.getFullYear() + 543;
-            return `${day} ${month} ${year}`;
+            return `${date.getDate()} ${date.toLocaleDateString('th-TH', { month: 'long' })} ${date.getFullYear() + 543}`;
         }
 
-        function getQty(id) {
-            const el = document.getElementById('qty_' + id);
-            if (!el) return 0;
-            return parseInt(el.value) || 0;
-        }
+        function getQty(id) { const el = document.getElementById('qty_' + id); return el ? (parseInt(el.value) || 0) : 0; }
 
         function autoCalculateBags() {
             let totalBags = 0;
@@ -1360,11 +1123,8 @@
                 const multiplier = customerMultipliers[code] || 0;
                 const bagCount = qty * multiplier;
                 totalBags += bagCount;
-                
                 const badgeEl = document.getElementById(`badge_${code}`);
-                if (badgeEl && multiplier > 0) {
-                    badgeEl.textContent = qty > 0 ? `${bagCount}ถุง` : `×${multiplier}ถุง`;
-                }
+                if (badgeEl && multiplier > 0) badgeEl.textContent = qty > 0 ? `${bagCount}ถุง` : `×${multiplier}ถุง`;
             });
             
             document.getElementById('qty_bag_borrow').value = totalBags;
@@ -1372,14 +1132,11 @@
 
         function manualAdjustBag(amount) {
             let bagInput = document.getElementById('qty_bag_borrow');
-            let currentVal = parseInt(bagInput.value) || 0;
-            let newVal = Math.max(0, currentVal + amount);
-            bagInput.value = newVal;
+            bagInput.value = Math.max(0, (parseInt(bagInput.value) || 0) + amount);
         }
 
         async function submitOrder() {
-            let orderLines = [];
-            let hasItems = false;
+            let orderLines = [], hasItems = false;
             
             for (const code in customerPrices) {
                 const qty = getQty(code);
@@ -1395,7 +1152,6 @@
                     } else if (p.promo_type === 'first_bill_free' && isFirstBill && p.free_qty) {
                         line += `\n  🎁 บิลแรกแถม ${p.free_qty} (-${(p.free_qty * p.price).toLocaleString()})`;
                     }
-                    
                     orderLines.push(line);
                 }
             }
@@ -1417,86 +1173,40 @@
                 const grandTotal = Math.max(0, cachedSubtotal - cachedDiscount - safeDepositTotal);
 
                 let payload = {
-                    lineId: currentUserId,
-                    customerId: currentCustomerId,
-                    customerName: finalCustomerName,
-                    items: orderLines,
-                    totalBags: borrowQty,
-                    subtotal: cachedSubtotal,
-                    discount: cachedDiscount,
-                    depositDeduction: safeDepositTotal,
-                    total: grandTotal,
-                    orderDate: document.getElementById('orderDate').value,
-                    orderTime: document.getElementById('orderTime').value,
-                    deliveryRound: selectedRound,
-                    pickupTime: selectedRound === 'pickup' ? getPickupTime() : null
+                    lineId: currentUserId, customerId: currentCustomerId, customerName: finalCustomerName,
+                    items: orderLines, totalBags: borrowQty, subtotal: cachedSubtotal, discount: cachedDiscount,
+                    depositDeduction: safeDepositTotal, total: grandTotal,
+                    orderDate: document.getElementById('orderDate').value, orderTime: document.getElementById('orderTime').value,
+                    deliveryRound: selectedRound, pickupTime: selectedRound === 'pickup' ? getPickupTime() : null
                 };
 
-                const response = await fetch(`${BASE_URL}/order-id`, { 
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
+                const response = await fetch(`${BASE_URL}/order-id`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 if (!response.ok) throw new Error("Server ตอบกลับผิดพลาด");
                 
                 const data = await response.json(); 
                 let invoiceNo = data.invoiceNo;
 
                 if (pendingDeposits.length > 0 && currentCustomerId) {
-                    await fetch(`${BASE_URL}/use-deposit`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ 
-                            customerId: currentCustomerId,
-                            orderId: data.orderId || invoiceNo
-                        })
-                    });
+                    await fetch(`${BASE_URL}/use-deposit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customerId: currentCustomerId, orderId: data.orderId || invoiceNo }) });
                 }
 
                 if (selectedRound === 'extra') {
                     const roundData = customerRounds.find(r => r.round_number === 'extra');
-                    if (roundData) {
-                        await fetch(`${BASE_URL}/toggle-extra-round`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ roundId: roundData.id, unlock: false })
-                        });
-                    }
+                    if (roundData) await fetch(`${BASE_URL}/toggle-extra-round`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ roundId: roundData.id, unlock: false }) });
                 }
 
                 const thaiDate = formatDateThai(document.getElementById('orderDate').value);
                 const selectedTime = document.getElementById('orderTime').value;
 
-                let messageText = `🧾 บิลเลขที่: ${invoiceNo}\n` + 
-                                  `👤 ลูกค้า: ${finalCustomerName}\n` +
-                                  `📋 วันที่: ${thaiDate} (${selectedTime} น.)\n` + 
-                                  `🚚 ${getRoundText(selectedRound)}\n` +
-                                  `------------------\n` +
-                                  orderLines.join("\n") +
-                                  `\n------------------\n` +
-                                  `💰 รวม: ${cachedSubtotal.toLocaleString()} บาท\n` +
-                                  (cachedDiscount > 0 ? `🎁 ส่วนลด: -${cachedDiscount.toLocaleString()} บาท\n` : '') +
-                                  (safeDepositTotal > 0 ? `📦 หักยอดฝาก: -${safeDepositTotal.toLocaleString()} บาท\n` : '') +
-                                  `✅ สุทธิ: ${grandTotal.toLocaleString()} บาท`;
+                let messageText = `🧾 บิลเลขที่: ${invoiceNo}\n👤 ลูกค้า: ${finalCustomerName}\n📋 วันที่: ${thaiDate} (${selectedTime} น.)\n🚚 ${getRoundText(selectedRound)}\n------------------\n${orderLines.join("\n")}\n------------------\n💰 รวม: ${cachedSubtotal.toLocaleString()} บาท\n${cachedDiscount > 0 ? '🎁 ส่วนลด: -' + cachedDiscount.toLocaleString() + ' บาท\n' : ''}${safeDepositTotal > 0 ? '📦 หักยอดฝาก: -' + safeDepositTotal.toLocaleString() + ' บาท\n' : ''}✅ สุทธิ: ${grandTotal.toLocaleString()} บาท`;
 
                 closeConfirmModal();
 
-                if (liff.isInClient()) {
-                    await liff.sendMessages([{ type: 'text', text: messageText }]);
-                    liff.closeWindow();
-                } else {
-                    alert("บันทึกสำเร็จ!\n" + messageText);
-                    location.reload(); 
-                }
+                if (liff.isInClient()) { await liff.sendMessages([{ type: 'text', text: messageText }]); liff.closeWindow(); }
+                else { alert("บันทึกสำเร็จ!\n" + messageText); location.reload(); }
 
-            } catch (err) {
-                alert("เกิดข้อผิดพลาด: " + err.message);
-                btn.innerText = oldText;
-                btn.disabled = false;
-            }
+            } catch (err) { alert("เกิดข้อผิดพลาด: " + err.message); btn.innerText = oldText; btn.disabled = false; }
         }
     </script>
 </body>
 </html>
-
