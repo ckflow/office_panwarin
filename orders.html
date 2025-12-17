@@ -283,16 +283,25 @@
             }
         }
     </style>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
 
-    <div id="loadingOverlay" class="loading-overlay">
+    <div id="auth-check" class="loading-overlay" style="display: flex;">
+        <div class="text-center">
+            <div class="spinner-border text-primary mb-3" role="status"></div>
+            <div>🔒 กำลังตรวจสอบสิทธิ์...</div>
+        </div>
+    </div>
+
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
         <div class="text-center">
             <div class="spinner-border text-primary mb-3" role="status"></div>
             <div>กำลังโหลด...</div>
         </div>
     </div>
 
+    <div id="content" style="display: none;">
     <div class="header-section">
         <div class="d-flex justify-content-between align-items-center">
             <h5 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>จัดการออเดอร์</h5>
@@ -373,7 +382,15 @@
         <div id="deliveryOrdersList"></div>
     </div>
 
+    </div><!-- End #content -->
+
     <script>
+        const MY_LIFF_ID = "2008689090-CnrdxM5k";
+        const ADMIN_IDS = [
+            "U4dc8fa32570dca3dfb4093b48a5c2093", // แชมป์
+            "U4cc74cb6346dece926adf6b2a3b7cb77", // บี
+            "Ufab5bb133c511730b583f47104965370", // ก้อย
+        ];
         const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
         let allOrders = [];
         let allCustomers = [];
@@ -381,12 +398,49 @@
         let autoRefreshInterval = null;
         const AUTO_REFRESH_SECONDS = 10;
 
-        document.addEventListener('DOMContentLoaded', function() {
-            initDate();
-            loadCustomers();
-            loadOrders();
-            startAutoRefresh();
-        });
+        // ==================== AUTH ====================
+        async function main() {
+            try {
+                await liff.init({ liffId: MY_LIFF_ID });
+                if (!liff.isLoggedIn()) { 
+                    liff.login(); 
+                    return; 
+                }
+                
+                const profile = await liff.getProfile();
+                if (!ADMIN_IDS.includes(profile.userId)) {
+                    document.getElementById('auth-check').innerHTML = `
+                        <div class="text-center">
+                            <h3 class="text-danger">⛔ Access Denied</h3>
+                            <p class="text-muted">คุณไม่มีสิทธิ์เข้าถึงหน้านี้</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Auth passed - show content
+                document.getElementById('auth-check').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+                
+                // Initialize page
+                initDate();
+                loadCustomers();
+                loadOrders();
+                startAutoRefresh();
+                
+            } catch (err) {
+                console.error('Auth error:', err);
+                document.getElementById('auth-check').innerHTML = `
+                    <div class="text-center">
+                        <h3 class="text-danger">❌ Error</h3>
+                        <p class="text-muted">${err.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Start
+        main();
         
         function startAutoRefresh() {
             if (autoRefreshInterval) clearInterval(autoRefreshInterval);
