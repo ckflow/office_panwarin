@@ -919,8 +919,15 @@
                 return;
             }
             
-            // โหลดราคาของลูกค้าเจ้าของออเดอร์ก่อน (ถ้ายังไม่มี)
-            if (editingOrder.customer_id && Object.keys(customerPrices).length === 0) {
+            // แสดง loading
+            const btn = event?.target;
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '⏳ กำลังโหลด...';
+            }
+            
+            // โหลดราคาของลูกค้าเจ้าของออเดอร์ (ทุกครั้ง)
+            if (editingOrder.customer_id) {
                 try {
                     const res = await fetch(`${BASE_URL}/get-prices-by-customer`, {
                         method: 'POST',
@@ -928,6 +935,7 @@
                         body: JSON.stringify({ customerId: editingOrder.customer_id })
                     });
                     const data = await res.json();
+                    // เก็บราคาสำหรับการแก้ไขนี้
                     customerPrices = {};
                     data.forEach(item => {
                         if (item.product_code) {
@@ -942,6 +950,12 @@
                 } catch (e) {
                     console.error('Error loading prices for edit:', e);
                 }
+            }
+            
+            // คืนค่าปุ่ม
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '✏️ แก้ไขออเดอร์';
             }
             
             // ตั้งค่า Invoice No
