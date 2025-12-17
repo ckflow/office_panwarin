@@ -593,9 +593,58 @@
         let selectedRound = null;
         let customerRounds = [];
         let myOrders = [];
+        let myOrdersRefreshInterval = null;
+        const MY_ORDERS_REFRESH_SECONDS = 10;
 
         const QUOTA_BAG_PRODUCTS = ['tube_l', 'tube_s', 'pack_l', 'pack_s', 'crush_sack', 'crush_sachet', 'crush_white', 'sack'];
         const QUOTA_CUBE_PRODUCTS = ['cube_sachet', 'cube_kak', 'cube_hand'];
+        
+        // Auto-refresh for My Orders tab
+        function startMyOrdersRefresh() {
+            if (myOrdersRefreshInterval) clearInterval(myOrdersRefreshInterval);
+            myOrdersRefreshInterval = setInterval(() => {
+                if (document.visibilityState === 'visible') {
+                    silentRefreshMyOrders();
+                }
+            }, MY_ORDERS_REFRESH_SECONDS * 1000);
+        }
+        
+        function stopMyOrdersRefresh() {
+            if (myOrdersRefreshInterval) {
+                clearInterval(myOrdersRefreshInterval);
+                myOrdersRefreshInterval = null;
+            }
+        }
+        
+        async function silentRefreshMyOrders() {
+            const dateFrom = document.getElementById('myOrderDateFrom').value;
+            const dateTo = document.getElementById('myOrderDateTo').value;
+            
+            if (!dateFrom || !dateTo) return;
+            
+            try {
+                const res = await fetch(`${BASE_URL}/get-my-orders`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        lineId: currentUserId,
+                        dateFrom: dateFrom,
+                        dateTo: dateTo
+                    })
+                });
+                const newOrders = await res.json();
+                if (!Array.isArray(newOrders)) return;
+                
+                // เช็คว่ามีการเปลี่ยนแปลงหรือไม่
+                if (JSON.stringify(myOrders) !== JSON.stringify(newOrders)) {
+                    myOrders = newOrders;
+                    renderMyOrders();
+                    console.log('🔄 My orders refreshed:', new Date().toLocaleTimeString());
+                }
+            } catch (e) {
+                console.error('Silent refresh error:', e);
+            }
+        }
 
         function switchTab(tab) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -604,11 +653,13 @@
             if (tab === 'order') {
                 document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
                 document.getElementById('tabOrder').classList.add('active');
+                stopMyOrdersRefresh(); // หยุด refresh เมื่อออกจาก tab
             } else {
                 document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
                 document.getElementById('tabMyOrders').classList.add('active');
                 initMyOrdersDateFilter();
                 loadMyOrders();
+                startMyOrdersRefresh(); // เริ่ม refresh เมื่อเข้า tab
             }
         }
 
@@ -1109,9 +1160,16 @@
         main();
 
         document.addEventListener('visibilitychange', async function() {
-            if (document.visibilityState === 'visible' && currentCustomerId) {
-                await loadPendingDeposits(currentCustomerId);
-                updateTotals();
+            if (document.visibilityState === 'visible') {
+                // Refresh deposits
+                if (currentCustomerId) {
+                    await loadPendingDeposits(currentCustomerId);
+                    updateTotals();
+                }
+                // Refresh my orders ถ้าอยู่ใน tab นั้น
+                if (document.getElementById('tabMyOrders').classList.contains('active')) {
+                    silentRefreshMyOrders();
+                }
             }
         });
 
