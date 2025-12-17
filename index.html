@@ -910,15 +910,58 @@
             
             let originalData;
             try {
-                originalData = typeof order.original_data === 'string' 
-                    ? JSON.parse(order.original_data) 
-                    : order.original_data;
+                // ลอง parse ปกติก่อน
+                if (typeof order.original_data === 'object') {
+                    originalData = order.original_data;
+                } else {
+                    // แก้ไข escaped quotes ที่ซ้อนกัน
+                    let jsonStr = order.original_data;
+                    // Replace \" ที่อยู่ใน string value ด้วย placeholder
+                    jsonStr = jsonStr.replace(/\\"/g, '##QUOTE##');
+                    originalData = JSON.parse(jsonStr);
+                    // แปลง order_items กลับถ้าเป็น string
+                    if (typeof originalData.order_items === 'string') {
+                        originalData.order_items = originalData.order_items.replace(/##QUOTE##/g, '"');
+                    }
+                }
             } catch (e) {
-                alert('ไม่สามารถอ่านข้อมูลก่อนแก้ไขได้');
+                console.error('Parse error:', e);
+                // ถ้า parse ไม่ได้ ลองแสดงข้อมูลดิบ
+                const editedAt = order.edited_at ? new Date(order.edited_at).toLocaleString('th-TH') : '-';
+                document.getElementById('originalOrderContent').innerHTML = `
+                    <div style="font-size: 13px; color: #666;">
+                        <div style="margin-bottom: 10px;">⚠️ ไม่สามารถแปลงข้อมูลได้</div>
+                        <div style="background: #f8f9fa; padding: 10px; border-radius: 8px; word-break: break-all; font-family: monospace; font-size: 11px;">
+                            ${order.original_data}
+                        </div>
+                        <div style="margin-top: 10px; font-size: 11px; color: #888;">
+                            <i class="fas fa-clock"></i> แก้ไขเมื่อ: ${editedAt}
+                        </div>
+                    </div>
+                `;
+                document.getElementById('originalOrderModal').style.display = 'block';
+                document.body.style.overflow = 'hidden';
                 return;
             }
             
             const editedAt = order.edited_at ? new Date(order.edited_at).toLocaleString('th-TH') : '-';
+            
+            // Format order items
+            let itemsHtml = '';
+            if (originalData.order_items) {
+                let itemsStr = originalData.order_items;
+                // ถ้าเป็น string ที่เป็น JSON array
+                if (typeof itemsStr === 'string' && itemsStr.startsWith('[')) {
+                    try {
+                        const itemsArr = JSON.parse(itemsStr.replace(/##QUOTE##/g, '"'));
+                        itemsHtml = itemsArr.map(item => `<div>• ${item.replace(/^-\s*/, '')}</div>`).join('');
+                    } catch (e) {
+                        itemsHtml = formatOrderItems(itemsStr);
+                    }
+                } else {
+                    itemsHtml = formatOrderItems(itemsStr);
+                }
+            }
             
             let html = `
                 <div style="margin-bottom: 15px;">
@@ -928,7 +971,7 @@
                 
                 <div style="margin-bottom: 15px;">
                     <div style="font-size: 12px; color: #666; margin-bottom: 5px;">📦 รายการสินค้า (เดิม):</div>
-                    <div>${formatOrderItems(originalData.order_items)}</div>
+                    <div>${itemsHtml || '<span class="text-muted">ไม่มีรายการ</span>'}</div>
                 </div>
                 
                 <div style="margin-bottom: 15px;">
