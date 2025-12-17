@@ -8,8 +8,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body { background-color: #f4f6f9; padding-bottom: 30px; font-family: 'Sarabun', sans-serif; }
-        .header-section { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; text-align: center; margin-bottom: 15px; }
-        .header-section h4 { margin: 0; }
+        .header-section { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; 
+            padding: 15px 20px; 
+            position: sticky; 
+            top: 0; 
+            z-index: 999;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
         
         .card { border-radius: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
         .card-header { border-radius: 15px 15px 0 0 !important; font-weight: bold; }
@@ -63,6 +70,38 @@
         .shift-required.show { display: block; }
         
         .view-only-badge { background: #6c757d; color: white; padding: 3px 10px; border-radius: 15px; font-size: 11px; }
+        
+        /* Page Navigation */
+        .page-nav {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            padding: 4px;
+            margin: 15px 15px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .page-nav-btn {
+            flex: 1;
+            padding: 8px 5px;
+            border: none;
+            background: transparent;
+            font-size: 11px;
+            font-weight: bold;
+            color: #666;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            text-align: center;
+        }
+        .page-nav-btn:hover {
+            background: #f8f9fa;
+            color: #667eea;
+        }
+        .page-nav-btn.active {
+            background: #667eea;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -79,7 +118,28 @@
 
     <div id="mainContent" style="display: none;">
         <div class="header-section">
-            <h4>🧊 จัดการฝาก-เหลือ</h4>
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-box me-2"></i>จัดการฝาก-เหลือ</h5>
+                <button onclick="location.reload()" class="btn btn-light btn-sm">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Page Navigation (Admin only) -->
+        <div class="page-nav" id="pageNav" style="display: none;">
+            <a href="orders.html" class="page-nav-btn">
+                <i class="fas fa-clipboard-list"></i> ออเดอร์
+            </a>
+            <a href="index.html" class="page-nav-btn">
+                <i class="fas fa-shopping-cart"></i> สั่งซื้อ
+            </a>
+            <a href="bags-summary.html" class="page-nav-btn">
+                <i class="fas fa-shopping-bag"></i> ยอดถุง
+            </a>
+            <a href="deposit.html" class="page-nav-btn active">
+                <i class="fas fa-box"></i> ฝาก-เหลือ
+            </a>
         </div>
 
         <div class="container">
@@ -342,6 +402,7 @@
                     document.getElementById('adminSelectSection').style.display = 'block';
                     document.getElementById('addDepositSection').style.display = 'block';
                     document.getElementById('addLeftoverSection').style.display = 'block';
+                    document.getElementById('pageNav').style.display = 'flex';
                     
                     document.getElementById('loadingScreen').style.display = 'none';
                     document.getElementById('mainContent').style.display = 'block';
@@ -357,7 +418,7 @@
         }
         main();
 
-        // โหลดร้านของลูกค้า (ใช้ API เดียวกับหน้า index)
+        // โหลดร้านของลูกค้า
         async function loadMyShops() {
             try {
                 const res = await fetch(`${BASE_URL}/get-my-shops`, {
@@ -368,17 +429,13 @@
                 myShops = await res.json();
                 
                 if (myShops.length === 0) {
-                    // ไม่พบร้านค้า
                     document.getElementById('loadingScreen').style.display = 'none';
                     document.getElementById('noPermissionScreen').style.display = 'block';
                 } else if (myShops.length === 1) {
-                    // มีร้านเดียว - โหลดเลย
                     currentCustomerId = myShops[0].id;
                     currentCustomerName = myShops[0].name;
-                    
                     await showCustomerData();
                 } else {
-                    // มีหลายร้าน - ให้เลือก
                     const select = document.getElementById('myShopSelect');
                     select.innerHTML = '<option value="">-- เลือกร้าน --</option>';
                     myShops.forEach(s => {
@@ -397,7 +454,6 @@
             }
         }
 
-        // เมื่อลูกค้าเลือกร้าน
         async function onMyShopSelect() {
             const select = document.getElementById('myShopSelect');
             const shopId = select.value;
@@ -414,11 +470,9 @@
             
             currentCustomerId = parseInt(shopId);
             currentCustomerName = select.options[select.selectedIndex].dataset.name;
-            
             await showCustomerData();
         }
 
-        // แสดงข้อมูลลูกค้า
         async function showCustomerData() {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('filterDate').value = today;
@@ -438,7 +492,6 @@
             document.getElementById('mainContent').style.display = 'block';
         }
 
-        // เลือกรอบ
         function selectShift(btn, type) {
             const container = btn.parentElement;
             container.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
@@ -446,8 +499,6 @@
             
             const shift = btn.dataset.shift;
             document.getElementById(type + 'Shift').value = shift;
-            
-            // ซ่อนข้อความแจ้งเตือน
             document.getElementById(type + 'ShiftRequired').classList.remove('show');
         }
 
@@ -502,7 +553,6 @@
             }
         }
 
-        // โหลดข้อมูลฝาก
         async function loadDepositData(customerId, filterDate = null) {
             try {
                 const res = await fetch(`${BASE_URL}/get-deposits`, {
@@ -538,7 +588,6 @@
                             ? `<span class="shift-badge shift-${d.shift}">${shiftNames[d.shift] || d.shift}</span>`
                             : '';
                         
-                        // แสดงปุ่มลบเฉพาะ Admin และยังไม่ถูกใช้
                         const deleteBtn = (isAdmin && !isUsed) 
                             ? `<button class="delete-btn" onclick="deleteDeposit(${d.id})"><i class="fas fa-trash"></i></button>` 
                             : '';
@@ -564,7 +613,6 @@
             }
         }
 
-        // โหลดข้อมูลเหลือ
         async function loadLeftoverData(customerId, filterDate = null) {
             try {
                 const res = await fetch(`${BASE_URL}/get-leftovers`, {
@@ -591,7 +639,6 @@
                             ? `<span class="shift-badge shift-${l.shift}">${shiftNames[l.shift] || l.shift}</span>`
                             : '';
                         
-                        // แสดงปุ่มลบเฉพาะ Admin
                         const deleteBtn = isAdmin 
                             ? `<button class="delete-btn" onclick="deleteLeftover(${l.id})"><i class="fas fa-trash"></i></button>` 
                             : '';
@@ -616,7 +663,6 @@
             }
         }
 
-        // บันทึกฝาก - บังคับเลือกรอบ
         async function saveDeposit() {
             if (!currentCustomerId) {
                 alert('กรุณาเลือกลูกค้าก่อน');
@@ -662,13 +708,10 @@
 
                 alert('บันทึกฝากสำเร็จ!');
                 
-                // Clear form
                 DEPOSIT_PRODUCTS.forEach(code => {
                     document.getElementById(`deposit_${code}`).value = '';
                 });
                 document.getElementById('depositNote').value = '';
-                
-                // Reset shift selection
                 document.getElementById('depositShift').value = '';
                 document.getElementById('depositShiftSelector').querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
 
@@ -679,7 +722,6 @@
             }
         }
 
-        // บันทึกเหลือ - บังคับเลือกรอบ
         async function saveLeftover() {
             if (!currentCustomerId) {
                 alert('กรุณาเลือกลูกค้าก่อน');
@@ -731,14 +773,11 @@
 
                 alert('บันทึกเหลือสำเร็จ!');
                 
-                // Clear form
                 LEFTOVER_PRODUCTS.forEach(code => {
                     document.getElementById(`leftover_${code}`).value = '';
                 });
                 document.getElementById('leftover_cube').value = '';
                 document.getElementById('leftoverNote').value = '';
-                
-                // Reset shift selection
                 document.getElementById('leftoverShift').value = '';
                 document.getElementById('leftoverShiftSelector').querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
 
