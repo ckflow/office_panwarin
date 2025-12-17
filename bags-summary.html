@@ -298,6 +298,70 @@
         .tab-content.active {
             display: block;
         }
+        
+        /* Page Navigation */
+        .page-nav {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            padding: 4px;
+            margin: 15px 15px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .page-nav-btn {
+            flex: 1;
+            padding: 8px 5px;
+            border: none;
+            background: transparent;
+            font-size: 11px;
+            font-weight: bold;
+            color: #666;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            text-align: center;
+        }
+        .page-nav-btn:hover {
+            background: #f8f9fa;
+            color: #667eea;
+        }
+        .page-nav-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        /* Page Navigation */
+        .page-nav {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            padding: 4px;
+            margin: 15px 15px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .page-nav-btn {
+            flex: 1;
+            padding: 8px 5px;
+            border: none;
+            background: transparent;
+            font-size: 11px;
+            font-weight: bold;
+            color: #666;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            text-align: center;
+        }
+        .page-nav-btn:hover {
+            background: #f8f9fa;
+            color: #667eea;
+        }
+        .page-nav-btn.active {
+            background: #667eea;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -326,6 +390,22 @@
                     </button>
                 </div>
             </div>
+        </div>
+
+        <!-- Page Navigation (Admin only) -->
+        <div class="page-nav" id="pageNav" style="display: none;">
+            <a href="orders.html" class="page-nav-btn">
+                <i class="fas fa-clipboard-list"></i> ออเดอร์
+            </a>
+            <a href="index.html" class="page-nav-btn">
+                <i class="fas fa-shopping-cart"></i> สั่งซื้อ
+            </a>
+            <a href="bags-summary.html" class="page-nav-btn active">
+                <i class="fas fa-shopping-bag"></i> ยอดถุง
+            </a>
+            <a href="deposit.html" class="page-nav-btn">
+                <i class="fas fa-box"></i> ฝาก-เหลือ
+            </a>
         </div>
 
         <!-- Admin: Tab Navigation -->
@@ -512,6 +592,7 @@
                     // Admin mode
                     document.getElementById('adminTabs').style.display = 'flex';
                     document.getElementById('btnAddReturn').style.display = 'inline-block';
+                    document.getElementById('pageNav').style.display = 'flex';
                     
                     await loadAllCustomers();
                     await loadAllSummary();
