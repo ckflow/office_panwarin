@@ -455,10 +455,15 @@
             container.innerHTML = allOrders.map(o => {
                 const isConfirmed = o.status === 'confirmed';
                 let itemsHtml = '';
-                try {
-                    const items = typeof o.order_items === 'string' ? JSON.parse(o.order_items) : o.order_items;
-                    itemsHtml = items.map(i => `<div class="order-item"><span>${escapeHtml(i.name)}</span><span style="font-weight:bold;color:#667eea;">${i.quantity} ${i.unit||''}</span></div>`).join('');
-                } catch (e) { itemsHtml = '-'; }
+                    try {
+                        const items = typeof o.order_items === 'string' ? JSON.parse(o.order_items) : o.order_items;
+                        if (Array.isArray(items)) {
+                            itemsHtml = items
+                                .filter(i => typeof i === 'string' && !i.includes('---') && !i.includes('ยืมถุง'))
+                                .map(i => i.replace(/^- /, '').split('(')[0].trim())
+                                .join(', ');
+                        }
+                    } catch (e) { itemsHtml = '-'; }
                 
                 return `
                     <div class="order-card ${isConfirmed ? 'confirmed' : 'pending'}">
@@ -690,5 +695,6 @@
     </script>
 </body>
 </html>
+
 
 
