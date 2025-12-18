@@ -1250,20 +1250,20 @@
         }
 
         async function cancelOrder(orderId, invoiceNo) {
-            if (!confirm(`❌ ยกเลิกออเดอร์ ${invoiceNo}?\n\nเมื่อยกเลิกแล้วจะไม่สามารถกู้คืนได้`)) return;
+            if (!confirm(`🗑️ ขอยกเลิกออเดอร์ ${invoiceNo}?\n\nระบบจะส่งคำขอไปให้ Admin อนุมัติ`)) return;
             
             const profile = await liff.getProfile();
             
             try {
-                const res = await fetch(`${BASE_URL}/cancel-order`, {
+                const res = await fetch(`${BASE_URL}/request-delete-order`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ orderId, lineId: profile.userId })
+                    body: JSON.stringify({ orderId, requestedBy: profile.displayName || 'Staff' })
                 });
                 const result = await res.json();
                 
                 if (result.success) {
-                    alert('✅ ยกเลิกออเดอร์แล้ว');
+                    alert('✅ ส่งคำขอยกเลิกแล้ว\n\nรอ Admin อนุมัติทาง LINE');
                     loadOrders();
                 } else {
                     alert('❌ ' + (result.message || 'เกิดข้อผิดพลาด'));
