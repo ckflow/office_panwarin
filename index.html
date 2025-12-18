@@ -903,6 +903,17 @@
                 const roundText = getRoundDisplayText(order.delivery_round, order.pickup_time);
                 const isEdited = order.is_edited == 1;
                 
+                // Payment status badge
+                let paymentBadge = '';
+                if (order.status === 'confirmed') {
+                    if (order.is_paid == 1 || order.is_paid === true) {
+                        const methodText = order.payment_method === 'cash' ? 'เงินสด' : (order.payment_method === 'transfer' ? 'โอน' : '');
+                        paymentBadge = `<span class="status-badge" style="background:#d1e7dd;color:#0f5132;font-size:10px;">💵 จ่ายแล้ว${methodText ? ' (' + methodText + ')' : ''}</span>`;
+                    } else {
+                        paymentBadge = `<span class="status-badge" style="background:#fff3cd;color:#856404;font-size:10px;">⏳ ยังไม่จ่าย</span>`;
+                    }
+                }
+                
                 html += `
                     <div class="my-order-card">
                         <div class="my-order-header">
@@ -913,6 +924,7 @@
                             <div class="text-end">
                                 <div class="my-order-total">${parseFloat(order.total || 0).toLocaleString()} บาท</div>
                                 <span class="status-badge ${statusClass}">${statusText}</span>
+                                ${paymentBadge}
                                 ${isEdited ? `<span class="status-badge status-edited" onclick="showOriginalOrder(${order.id})" title="คลิกดูข้อมูลก่อนแก้ไข">✏️ แก้ไขแล้ว</span>` : ''}
                             </div>
                         </div>
