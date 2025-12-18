@@ -40,11 +40,7 @@
             min-width: 70px;
         }
         .tab-btn.active { background: #00B900; color: white; }
-        .tab-btn .badge {
-            font-size: 10px;
-            padding: 2px 6px;
-            margin-left: 3px;
-        }
+        .tab-btn .badge { font-size: 10px; padding: 2px 6px; margin-left: 3px; }
         
         .tab-content { display: none; }
         .tab-content.active { display: block; }
@@ -104,7 +100,6 @@
         .line-name { font-weight: bold; font-size: 15px; color: #333; }
         .line-name .badge { font-size: 10px; margin-left: 5px; }
         .line-id { font-family: monospace; font-size: 10px; color: #888; word-break: break-all; }
-        .line-time { font-size: 11px; color: #aaa; }
         
         .line-message {
             background: #f8f9fa;
@@ -149,7 +144,6 @@
             white-space: nowrap;
         }
         .link-btn:hover { background: #009900; }
-        .link-btn:disabled { background: #ccc; }
         
         .linked-info {
             display: flex;
@@ -164,9 +158,6 @@
         .linked-name { font-weight: bold; color: #0f5132; font-size: 16px; }
         .linked-info.admin-info .linked-name { color: #59359a; }
         .linked-info.driver-info .linked-name { color: #4338ca; }
-        .linked-type { font-size: 12px; color: #198754; }
-        .linked-info.admin-info .linked-type { color: #6f42c1; }
-        .linked-info.driver-info .linked-type { color: #667eea; }
         
         .unlink-btn {
             background: none;
@@ -273,11 +264,7 @@
         .modal-header.driver-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
-        .modal-body { 
-            padding: 20px; 
-            overflow-y: auto;
-            flex: 1;
-        }
+        .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
         .modal-footer {
             padding: 15px 20px;
             border-top: 1px solid #f0f0f0;
@@ -287,85 +274,138 @@
         }
         .modal-footer button { flex: 1; padding: 12px; border-radius: 10px; font-weight: bold; }
         
-        /* Driver Assigned Customers */
-        .driver-customers {
+        /* Driver Rounds Section */
+        .driver-rounds-section {
             margin-top: 12px;
             padding-top: 12px;
             border-top: 1px dashed #ddd;
         }
-        .driver-customers-title {
+        .driver-rounds-title {
             font-size: 12px;
             color: #666;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             font-weight: bold;
-        }
-        .customer-round-badge {
-            display: inline-flex;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
+        }
+        .add-round-btn {
+            background: #667eea;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 10px;
+            color: white;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .add-round-btn:hover { background: #5a67d8; }
+        
+        .driver-round-card {
+            background: #f8f9ff;
+            border: 1px solid #e0e7ff;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        .driver-round-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .driver-round-name {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 14px;
+        }
+        .driver-round-actions {
+            display: flex;
+            gap: 5px;
+        }
+        .driver-round-actions button {
+            background: none;
+            border: none;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 2px 6px;
+        }
+        .driver-round-actions .edit-btn { color: #667eea; }
+        .driver-round-actions .delete-btn { color: #dc3545; }
+        
+        .customer-badges {
+            display: flex;
+            flex-wrap: wrap;
             gap: 4px;
+            margin-bottom: 8px;
+        }
+        .customer-badge {
             background: #667eea;
             color: white;
-            padding: 4px 10px;
-            border-radius: 15px;
+            padding: 3px 8px;
+            border-radius: 12px;
             font-size: 11px;
-            font-weight: bold;
-            margin: 2px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
-        .customer-round-badge .customer-name {
-            max-width: 100px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+        .customer-badge .remove-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 0;
+            font-size: 10px;
+            opacity: 0.7;
         }
+        .customer-badge .remove-btn:hover { opacity: 1; }
+        
         .no-customers {
             color: #999;
             font-size: 12px;
             font-style: italic;
         }
-        .manage-customers-btn {
-            background: #667eea;
-            border: none;
-            border-radius: 8px;
-            padding: 6px 12px;
-            color: white;
-            font-size: 12px;
+        
+        .manage-round-btn {
+            background: #e0e7ff;
+            border: 1px solid #667eea;
+            border-radius: 6px;
+            padding: 4px 10px;
+            color: #667eea;
+            font-size: 11px;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 8px;
         }
-        .manage-customers-btn:hover { background: #5a67d8; }
+        .manage-round-btn:hover { background: #c7d2fe; }
         
-        /* Customer Round Selection */
+        /* Customer Round Selection in Modal */
         .customer-round-list {
-            max-height: 400px;
+            max-height: 350px;
             overflow-y: auto;
         }
         .customer-round-item {
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 12px;
+            padding: 10px;
             border: 1px solid #eee;
-            border-radius: 10px;
-            margin-bottom: 8px;
+            border-radius: 8px;
+            margin-bottom: 6px;
             cursor: pointer;
             transition: all 0.2s;
         }
         .customer-round-item:hover { background: #f8f9ff; border-color: #667eea; }
         .customer-round-item.selected { background: #e0e7ff; border-color: #667eea; }
-        .customer-round-item.assigned-other {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+        .customer-round-item.assigned-other { opacity: 0.5; }
         .customer-round-item .cr-checkbox {
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             border: 2px solid #ddd;
             border-radius: 4px;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+            font-size: 10px;
         }
         .customer-round-item.selected .cr-checkbox {
             background: #667eea;
@@ -373,38 +413,21 @@
             color: white;
         }
         .customer-round-item .cr-info { flex: 1; }
-        .customer-round-item .cr-customer { font-weight: bold; color: #333; }
-        .customer-round-item .cr-round { font-size: 12px; color: #667eea; }
-        .customer-round-item .cr-time { font-size: 11px; color: #999; }
+        .customer-round-item .cr-customer { font-weight: bold; color: #333; font-size: 13px; }
+        .customer-round-item .cr-round { font-size: 11px; color: #667eea; }
         .customer-round-item .cr-assigned {
             font-size: 10px;
             color: #999;
             background: #f0f0f0;
-            padding: 2px 8px;
-            border-radius: 10px;
+            padding: 2px 6px;
+            border-radius: 8px;
         }
         
-        /* Summary stats */
-        .driver-stats {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .driver-stat {
-            flex: 1;
+        .no-rounds-msg {
             text-align: center;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 10px;
-        }
-        .driver-stat-number {
-            font-size: 24px;
-            font-weight: bold;
-            color: #667eea;
-        }
-        .driver-stat-label {
-            font-size: 11px;
-            color: #666;
+            padding: 20px;
+            color: #999;
+            font-style: italic;
         }
     </style>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -457,40 +480,51 @@
         </div>
     </div>
 
-    <!-- Modal: จัดการรอบลูกค้าของกลุ่มคนขับ -->
-    <div class="modal-overlay" id="assignModal">
+    <!-- Modal: เพิ่มรอบคนขับ -->
+    <div class="modal-overlay" id="addRoundModal">
         <div class="modal-box">
             <div class="modal-header driver-header">
-                <h5 class="mb-0">🚗 จัดการรอบลูกค้า</h5>
+                <h5 class="mb-0">➕ เพิ่มรอบคนขับ</h5>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
                     <label class="form-label small text-muted">กลุ่มคนขับ</label>
-                    <div id="assignDriverName" style="font-weight: bold; font-size: 18px; color: #667eea;">-</div>
+                    <div id="addRoundDriverName" style="font-weight: bold; font-size: 16px; color: #667eea;">-</div>
                 </div>
-                
-                <div class="driver-stats">
-                    <div class="driver-stat">
-                        <div class="driver-stat-number" id="statAssigned">0</div>
-                        <div class="driver-stat-label">ผูกแล้ว</div>
-                    </div>
-                    <div class="driver-stat">
-                        <div class="driver-stat-number" id="statAvailable">0</div>
-                        <div class="driver-stat-label">ยังว่าง</div>
-                    </div>
-                </div>
-                
-                <div class="mb-2">
-                    <label class="form-label small text-muted">เลือกรอบลูกค้าที่ต้องการผูก</label>
-                    <input type="text" class="form-control form-control-sm" id="searchCustomerRound" placeholder="🔍 ค้นหาลูกค้า..." oninput="renderCustomerRoundList()">
-                </div>
-                
-                <div class="customer-round-list" id="customerRoundList">
-                    <!-- จะแสดงรายการรอบลูกค้า -->
+                <div class="mb-3">
+                    <label class="form-label small text-muted">ชื่อรอบ</label>
+                    <input type="text" id="newRoundName" class="form-control" placeholder="เช่น รอบ 1, รอบเช้า">
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-light" onclick="closeAssignModal()">ปิด</button>
+                <button class="btn btn-light" onclick="closeAddRoundModal()">ยกเลิก</button>
+                <button class="btn btn-primary" onclick="saveDriverRound()">บันทึก</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: จัดการรอบลูกค้าในรอบคนขับ -->
+    <div class="modal-overlay" id="manageCustomersModal">
+        <div class="modal-box">
+            <div class="modal-header driver-header">
+                <h5 class="mb-0">📦 จัดการรอบลูกค้า</h5>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <div style="font-size: 12px; color: #666;">กลุ่มคนขับ</div>
+                    <div id="manageDriverName" style="font-weight: bold; color: #667eea;">-</div>
+                    <div id="manageRoundName" style="font-size: 14px; color: #333; margin-top: 4px;">-</div>
+                </div>
+                
+                <div class="mb-2">
+                    <input type="text" class="form-control form-control-sm" id="searchCustomerRound" 
+                           placeholder="🔍 ค้นหาลูกค้า..." oninput="renderCustomerRoundList()">
+                </div>
+                
+                <div class="customer-round-list" id="customerRoundList"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-light" onclick="closeManageCustomersModal()">ปิด</button>
             </div>
         </div>
     </div>
@@ -499,9 +533,7 @@
         <div class="header-section">
             <div class="d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fab fa-line me-2"></i>ผูก LINE ID</h5>
-                <button onclick="loadData()" class="btn btn-light btn-sm">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
+                <button onclick="loadData()" class="btn btn-light btn-sm"><i class="fas fa-sync-alt"></i></button>
             </div>
         </div>
 
@@ -557,7 +589,7 @@
         <div id="tabDriver" class="tab-content">
             <div class="info-box" style="background: #e0e7ff; border-color: #a5b4fc; color: #4338ca;">
                 <i class="fas fa-truck me-1"></i>
-                <strong>กลุ่มคนขับ:</strong> เพิ่มกลุ่ม LINE แล้วผูกรอบลูกค้าที่รับผิดชอบ
+                <strong>กลุ่มคนขับ:</strong> สร้างรอบให้คนขับ แล้วเลือกรอบลูกค้าเข้าไปในแต่ละรอบ
             </div>
             <div class="add-manual-btn" onclick="openAddModal('driver')" style="border-color: #667eea; color: #667eea;">
                 <i class="fas fa-plus me-2"></i>เพิ่มกลุ่มคนขับ
@@ -594,9 +626,10 @@
         const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
         
         let allAliases = [];
-        let allCustomerRounds = []; // รอบลูกค้าทั้งหมด
-        let currentTab = 'unlinked';
+        let allDriverRounds = [];      // รอบของคนขับทั้งหมด
+        let allCustomerRounds = [];    // รอบลูกค้าทั้งหมด
         let currentDriverAliasId = null;
+        let currentDriverRoundId = null;
 
         async function main() {
             try {
@@ -614,7 +647,6 @@
                 document.getElementById('auth-check').style.display = 'none';
                 document.getElementById('content').style.display = 'block';
                 loadData();
-                
             } catch (err) {
                 console.error('Auth error:', err);
                 document.getElementById('auth-check').innerHTML = `
@@ -637,50 +669,46 @@
                 if (!Array.isArray(allAliases)) allAliases = [];
                 allAliases = allAliases.filter(a => a && a.id);
                 
-                // Load all customer rounds
-                const res2 = await fetch(`${BASE_URL}/get-all-customer-rounds`, {
+                // Load driver rounds
+                const res2 = await fetch(`${BASE_URL}/get-all-driver-rounds`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({})
                 });
-                let crData = await res2.json();
-                // Handle both array and single object response
-                if (Array.isArray(crData)) {
-                    allCustomerRounds = crData;
-                } else if (crData && crData.id) {
-                    allCustomerRounds = [crData]; // wrap single object as array
-                } else {
-                    allCustomerRounds = [];
-                }
+                let drData = await res2.json();
+                allDriverRounds = Array.isArray(drData) ? drData : (drData && drData.id ? [drData] : []);
+                
+                // Load customer rounds
+                const res3 = await fetch(`${BASE_URL}/get-all-customer-rounds`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                let crData = await res3.json();
+                allCustomerRounds = Array.isArray(crData) ? crData : (crData && crData.id ? [crData] : []);
+                
+                console.log('Aliases:', allAliases);
+                console.log('Driver Rounds:', allDriverRounds);
                 console.log('Customer Rounds:', allCustomerRounds);
                 
                 updateBadges();
                 renderAll();
             } catch (e) {
                 console.error('Error loading:', e);
-                allAliases = [];
-                allCustomerRounds = [];
             }
             showLoading(false);
         }
 
         function updateBadges() {
-            const unlinked = allAliases.filter(a => !a.alias_name).length;
-            const customers = allAliases.filter(a => a.alias_name && a.use_for === 'customer').length;
-            const drivers = allAliases.filter(a => a.alias_name && a.use_for === 'driver').length;
-            const admins = allAliases.filter(a => a.alias_name && a.use_for === 'admin').length;
-            
-            document.getElementById('badgeUnlinked').textContent = unlinked;
-            document.getElementById('badgeCustomer').textContent = customers;
-            document.getElementById('badgeDriver').textContent = drivers;
-            document.getElementById('badgeAdmin').textContent = admins;
+            document.getElementById('badgeUnlinked').textContent = allAliases.filter(a => !a.alias_name).length;
+            document.getElementById('badgeCustomer').textContent = allAliases.filter(a => a.alias_name && a.use_for === 'customer').length;
+            document.getElementById('badgeDriver').textContent = allAliases.filter(a => a.alias_name && a.use_for === 'driver').length;
+            document.getElementById('badgeAdmin').textContent = allAliases.filter(a => a.alias_name && a.use_for === 'admin').length;
         }
 
         function switchTab(tab) {
-            currentTab = tab;
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            
             const tabMap = { 'unlinked': 1, 'customer': 2, 'driver': 3, 'admin': 4 };
             document.querySelector(`.tab-btn:nth-child(${tabMap[tab]})`).classList.add('active');
             document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.add('active');
@@ -696,33 +724,20 @@
         function renderUnlinked() {
             const search = document.getElementById('searchUnlinked').value.toLowerCase();
             let items = allAliases.filter(a => !a.alias_name);
-            
-            if (search) {
-                items = items.filter(a => 
-                    (a.line_id || '').toLowerCase().includes(search) ||
-                    (a.last_message || '').toLowerCase().includes(search)
-                );
-            }
+            if (search) items = items.filter(a => (a.line_id || '').toLowerCase().includes(search) || (a.last_message || '').toLowerCase().includes(search));
             
             const container = document.getElementById('unlinkedList');
             if (items.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fab fa-line"></i>
-                        <h5>ไม่มี LINE ID ที่รอผูก</h5>
-                        <p>เมื่อมีคนทักมาจะแสดงที่นี่</p>
-                    </div>
-                `;
+                container.innerHTML = `<div class="empty-state"><i class="fab fa-line"></i><h5>ไม่มี LINE ID ที่รอผูก</h5></div>`;
                 return;
             }
-            
             container.innerHTML = items.map(a => `
                 <div class="line-card unlinked">
                     <div class="line-header">
                         <div class="line-avatar ${a.id_type === 'group' ? 'group' : ''}">${a.id_type === 'group' ? '👥' : '👤'}</div>
                         <div class="line-info">
                             <div class="line-id">${a.line_id}</div>
-                            <div class="line-time">🕐 ${formatDateTime(a.last_seen || a.first_seen)}</div>
+                            <div style="font-size: 11px; color: #aaa;">🕐 ${formatDateTime(a.last_seen || a.first_seen)}</div>
                         </div>
                     </div>
                     ${a.last_message ? `<div class="line-message">💬 ${escapeHtml(a.last_message)}</div>` : ''}
@@ -742,84 +757,44 @@
         function renderCustomers() {
             const search = document.getElementById('searchCustomer').value.toLowerCase();
             let items = allAliases.filter(a => a.alias_name && a.use_for === 'customer');
-            
-            if (search) {
-                items = items.filter(a => 
-                    (a.alias_name || '').toLowerCase().includes(search) ||
-                    (a.line_id || '').toLowerCase().includes(search)
-                );
-            }
+            if (search) items = items.filter(a => (a.alias_name || '').toLowerCase().includes(search));
             
             const container = document.getElementById('customerList');
             if (items.length === 0) {
-                container.innerHTML = `<div class="empty-state"><i class="fas fa-users"></i><h5>ยังไม่มีลูกค้าที่ผูก LINE</h5></div>`;
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-users"></i><h5>ยังไม่มีลูกค้า</h5></div>`;
                 return;
             }
-            
             container.innerHTML = items.map(a => renderLinkedCard(a)).join('');
-        }
-
-        function renderDrivers() {
-            const search = document.getElementById('searchDriver').value.toLowerCase();
-            let items = allAliases.filter(a => a.alias_name && a.use_for === 'driver');
-            
-            if (search) {
-                items = items.filter(a => 
-                    (a.alias_name || '').toLowerCase().includes(search) ||
-                    (a.line_id || '').toLowerCase().includes(search)
-                );
-            }
-            
-            const container = document.getElementById('driverList');
-            if (items.length === 0) {
-                container.innerHTML = `<div class="empty-state"><i class="fas fa-truck"></i><h5>ยังไม่มีกลุ่มคนขับ</h5></div>`;
-                return;
-            }
-            
-            container.innerHTML = items.map(a => renderDriverCard(a)).join('');
         }
 
         function renderAdmins() {
             const search = document.getElementById('searchAdmin').value.toLowerCase();
             let items = allAliases.filter(a => a.alias_name && a.use_for === 'admin');
-            
-            if (search) {
-                items = items.filter(a => 
-                    (a.alias_name || '').toLowerCase().includes(search) ||
-                    (a.line_id || '').toLowerCase().includes(search)
-                );
-            }
+            if (search) items = items.filter(a => (a.alias_name || '').toLowerCase().includes(search));
             
             const container = document.getElementById('adminList');
             if (items.length === 0) {
                 container.innerHTML = `<div class="empty-state"><i class="fas fa-crown" style="color: #6f42c1;"></i><h5>ยังไม่มีแอดมิน</h5></div>`;
                 return;
             }
-            
             container.innerHTML = items.map(a => renderLinkedCard(a, true)).join('');
         }
 
         function renderLinkedCard(a, isAdmin = false) {
-            const icon = a.use_for === 'driver' ? '🚗' : (a.use_for === 'admin' ? '👑' : '👤');
-            const typeText = a.use_for === 'driver' ? 'คนขับ/กลุ่ม' : (a.use_for === 'admin' ? 'แอดมิน' : 'ลูกค้า');
+            const icon = isAdmin ? '👑' : '👤';
             const cardClass = isAdmin ? 'admin' : 'linked';
             const infoClass = isAdmin ? 'admin-info' : '';
-            const avatarClass = isAdmin ? 'admin' : 'linked';
-            
             return `
                 <div class="line-card ${cardClass}">
                     <div class="line-header">
-                        <div class="line-avatar ${avatarClass}">${icon}</div>
+                        <div class="line-avatar ${isAdmin ? 'admin' : 'linked'}">${icon}</div>
                         <div class="line-info">
-                            <div class="line-name">${escapeHtml(a.alias_name)} <span class="badge" style="background: ${isAdmin ? '#6f42c1' : '#6c757d'};">${typeText}</span></div>
+                            <div class="line-name">${escapeHtml(a.alias_name)}</div>
                             <div class="line-id">${a.line_id}</div>
                         </div>
                     </div>
                     <div class="linked-info ${infoClass}">
-                        <div>
-                            <div class="linked-name">✅ ผูกแล้ว</div>
-                            <div class="linked-type">${a.id_type === 'group' ? 'กลุ่ม LINE' : 'ผู้ใช้ LINE'}</div>
-                        </div>
+                        <div><div class="linked-name">✅ ผูกแล้ว</div></div>
                         <div>
                             <button class="unlink-btn" onclick="editAlias(${a.id}, '${escapeHtml(a.alias_name)}', '${a.use_for}')"><i class="fas fa-edit"></i> แก้ไข</button>
                             <button class="unlink-btn" onclick="unlinkAlias(${a.id}, '${escapeHtml(a.alias_name)}')"><i class="fas fa-unlink"></i> ยกเลิก</button>
@@ -829,23 +804,52 @@
             `;
         }
 
-        function renderDriverCard(a) {
-            // หารอบลูกค้าที่ผูกกับคนขับนี้
-            const assignedRounds = allCustomerRounds.filter(cr => cr.driver_alias_id === a.id);
+        function renderDrivers() {
+            const search = document.getElementById('searchDriver').value.toLowerCase();
+            let items = allAliases.filter(a => a.alias_name && a.use_for === 'driver');
+            if (search) items = items.filter(a => (a.alias_name || '').toLowerCase().includes(search));
             
-            let badgesHtml = '';
-            if (assignedRounds.length > 0) {
-                badgesHtml = assignedRounds.slice(0, 5).map(cr => `
-                    <span class="customer-round-badge">
-                        <span class="customer-name">${escapeHtml(cr.customer_name)}</span>
-                        <span style="opacity: 0.8;">รอบ${cr.round_number}</span>
-                    </span>
-                `).join('');
-                if (assignedRounds.length > 5) {
-                    badgesHtml += `<span class="customer-round-badge" style="background: #999;">+${assignedRounds.length - 5} อื่นๆ</span>`;
-                }
+            const container = document.getElementById('driverList');
+            if (items.length === 0) {
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-truck"></i><h5>ยังไม่มีกลุ่มคนขับ</h5></div>`;
+                return;
+            }
+            container.innerHTML = items.map(a => renderDriverCard(a)).join('');
+        }
+
+        function renderDriverCard(a) {
+            const driverRounds = allDriverRounds.filter(dr => dr.driver_alias_id === a.id);
+            
+            let roundsHtml = '';
+            if (driverRounds.length > 0) {
+                roundsHtml = driverRounds.map(dr => {
+                    const customers = allCustomerRounds.filter(cr => cr.driver_round_id === dr.id);
+                    const customersHtml = customers.length > 0 
+                        ? customers.map(c => `
+                            <span class="customer-badge">
+                                ${escapeHtml(c.customer_name)} (รอบ${c.round_number})
+                                <button class="remove-btn" onclick="event.stopPropagation(); removeCustomerFromRound(${c.id})">✕</button>
+                            </span>
+                        `).join('')
+                        : '<span class="no-customers">ยังไม่มีลูกค้า</span>';
+                    
+                    return `
+                        <div class="driver-round-card">
+                            <div class="driver-round-header">
+                                <div class="driver-round-name">🚚 ${escapeHtml(dr.round_name)}</div>
+                                <div class="driver-round-actions">
+                                    <button class="delete-btn" onclick="deleteDriverRound(${dr.id}, '${escapeHtml(dr.round_name)}')"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <div class="customer-badges">${customersHtml}</div>
+                            <button class="manage-round-btn" onclick="openManageCustomersModal(${a.id}, '${escapeHtml(a.alias_name)}', ${dr.id}, '${escapeHtml(dr.round_name)}')">
+                                <i class="fas fa-plus me-1"></i>เพิ่ม/จัดการลูกค้า
+                            </button>
+                        </div>
+                    `;
+                }).join('');
             } else {
-                badgesHtml = '<span class="no-customers">ยังไม่ได้ผูกรอบลูกค้า</span>';
+                roundsHtml = '<div class="no-rounds-msg">ยังไม่มีรอบ กดปุ่ม "+ เพิ่มรอบ" ด้านบน</div>';
             }
             
             return `
@@ -858,52 +862,92 @@
                         </div>
                     </div>
                     <div class="linked-info driver-info">
+                        <div><div class="linked-name">✅ ผูกแล้ว</div></div>
                         <div>
-                            <div class="linked-name">✅ ผูกแล้ว</div>
-                            <div class="linked-type">${a.id_type === 'group' ? 'กลุ่ม LINE' : 'ผู้ใช้ LINE'}</div>
-                        </div>
-                        <div>
-                            <button class="unlink-btn" onclick="editAlias(${a.id}, '${escapeHtml(a.alias_name)}', '${a.use_for}')" style="color: #667eea;"><i class="fas fa-edit"></i> แก้ไข</button>
-                            <button class="unlink-btn" onclick="unlinkAlias(${a.id}, '${escapeHtml(a.alias_name)}')"><i class="fas fa-unlink"></i> ยกเลิก</button>
+                            <button class="unlink-btn" onclick="editAlias(${a.id}, '${escapeHtml(a.alias_name)}', '${a.use_for}')" style="color: #667eea;"><i class="fas fa-edit"></i></button>
+                            <button class="unlink-btn" onclick="unlinkAlias(${a.id}, '${escapeHtml(a.alias_name)}')"><i class="fas fa-unlink"></i></button>
                         </div>
                     </div>
-                    <div class="driver-customers">
-                        <div class="driver-customers-title">🚚 รอบลูกค้าที่รับผิดชอบ (${assignedRounds.length}):</div>
-                        <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                            ${badgesHtml}
+                    <div class="driver-rounds-section">
+                        <div class="driver-rounds-title">
+                            <span>🚚 รอบจัดส่ง (${driverRounds.length})</span>
+                            <button class="add-round-btn" onclick="openAddRoundModal(${a.id}, '${escapeHtml(a.alias_name)}')">+ เพิ่มรอบ</button>
                         </div>
-                        <button class="manage-customers-btn" onclick="openAssignModal(${a.id}, '${escapeHtml(a.alias_name)}')">
-                            <i class="fas fa-cog me-1"></i>จัดการรอบลูกค้า
-                        </button>
+                        ${roundsHtml}
                     </div>
                 </div>
             `;
         }
 
-        // ========== Assign Modal Functions ==========
+        // ========== Driver Round Functions ==========
         
-        function openAssignModal(driverAliasId, driverName) {
+        function openAddRoundModal(driverAliasId, driverName) {
             currentDriverAliasId = driverAliasId;
-            document.getElementById('assignDriverName').textContent = driverName;
-            document.getElementById('searchCustomerRound').value = '';
-            
-            updateAssignStats();
-            renderCustomerRoundList();
-            
-            document.getElementById('assignModal').classList.add('show');
+            document.getElementById('addRoundDriverName').textContent = driverName;
+            document.getElementById('newRoundName').value = '';
+            document.getElementById('addRoundModal').classList.add('show');
         }
 
-        function closeAssignModal() {
-            document.getElementById('assignModal').classList.remove('show');
+        function closeAddRoundModal() {
+            document.getElementById('addRoundModal').classList.remove('show');
             currentDriverAliasId = null;
         }
 
-        function updateAssignStats() {
-            const assigned = allCustomerRounds.filter(cr => cr.driver_alias_id === currentDriverAliasId).length;
-            const available = allCustomerRounds.filter(cr => !cr.driver_alias_id).length;
+        async function saveDriverRound() {
+            const roundName = document.getElementById('newRoundName').value.trim();
+            if (!roundName) { alert('กรุณาใส่ชื่อรอบ'); return; }
             
-            document.getElementById('statAssigned').textContent = assigned;
-            document.getElementById('statAvailable').textContent = available;
+            showLoading(true);
+            closeAddRoundModal();
+            
+            try {
+                await fetch(`${BASE_URL}/add-driver-round`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ driverAliasId: currentDriverAliasId, roundName })
+                });
+                await loadData();
+            } catch (e) {
+                alert('เกิดข้อผิดพลาด');
+                console.error(e);
+            }
+            showLoading(false);
+        }
+
+        async function deleteDriverRound(roundId, roundName) {
+            if (!confirm(`ลบ "${roundName}"? ลูกค้าที่ผูกไว้จะถูกยกเลิกด้วย`)) return;
+            
+            showLoading(true);
+            try {
+                await fetch(`${BASE_URL}/delete-driver-round`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ roundId })
+                });
+                await loadData();
+            } catch (e) {
+                alert('เกิดข้อผิดพลาด');
+                console.error(e);
+            }
+            showLoading(false);
+        }
+
+        // ========== Manage Customers Modal ==========
+
+        function openManageCustomersModal(driverAliasId, driverName, driverRoundId, roundName) {
+            currentDriverAliasId = driverAliasId;
+            currentDriverRoundId = driverRoundId;
+            document.getElementById('manageDriverName').textContent = driverName;
+            document.getElementById('manageRoundName').textContent = '📦 ' + roundName;
+            document.getElementById('searchCustomerRound').value = '';
+            renderCustomerRoundList();
+            document.getElementById('manageCustomersModal').classList.add('show');
+        }
+
+        function closeManageCustomersModal() {
+            document.getElementById('manageCustomersModal').classList.remove('show');
+            currentDriverAliasId = null;
+            currentDriverRoundId = null;
         }
 
         function renderCustomerRoundList() {
@@ -911,24 +955,21 @@
             const container = document.getElementById('customerRoundList');
             
             let items = allCustomerRounds.filter(cr => {
-                if (search) {
-                    return (cr.customer_name || '').toLowerCase().includes(search);
-                }
+                if (search) return (cr.customer_name || '').toLowerCase().includes(search);
                 return true;
             });
             
-            // Sort: assigned to current driver first, then available, then assigned to others
+            // Sort: assigned to current round first, then available, then assigned to others
             items.sort((a, b) => {
-                const aIsCurrentDriver = a.driver_alias_id === currentDriverAliasId;
-                const bIsCurrentDriver = b.driver_alias_id === currentDriverAliasId;
-                const aIsAvailable = !a.driver_alias_id;
-                const bIsAvailable = !b.driver_alias_id;
+                const aIsCurrent = a.driver_round_id === currentDriverRoundId;
+                const bIsCurrent = b.driver_round_id === currentDriverRoundId;
+                const aIsAvailable = !a.driver_round_id;
+                const bIsAvailable = !b.driver_round_id;
                 
-                if (aIsCurrentDriver && !bIsCurrentDriver) return -1;
-                if (!aIsCurrentDriver && bIsCurrentDriver) return 1;
+                if (aIsCurrent && !bIsCurrent) return -1;
+                if (!aIsCurrent && bIsCurrent) return 1;
                 if (aIsAvailable && !bIsAvailable) return -1;
                 if (!aIsAvailable && bIsAvailable) return 1;
-                
                 return (a.customer_name || '').localeCompare(b.customer_name || '');
             });
             
@@ -938,74 +979,85 @@
             }
             
             container.innerHTML = items.map(cr => {
-                const isSelected = cr.driver_alias_id === currentDriverAliasId;
-                const isAssignedOther = cr.driver_alias_id && cr.driver_alias_id !== currentDriverAliasId;
-                const otherDriverName = isAssignedOther ? getDriverName(cr.driver_alias_id) : '';
+                const isSelected = cr.driver_round_id === currentDriverRoundId;
+                const isAssignedOther = cr.driver_round_id && cr.driver_round_id !== currentDriverRoundId;
+                const otherRoundName = isAssignedOther ? getDriverRoundInfo(cr.driver_round_id) : '';
                 
-                let extraClass = '';
-                if (isSelected) extraClass = 'selected';
-                else if (isAssignedOther) extraClass = 'assigned-other';
-                
-                const timeStr = cr.time_start && cr.time_end ? `${cr.time_start} - ${cr.time_end}` : '';
+                let extraClass = isSelected ? 'selected' : (isAssignedOther ? 'assigned-other' : '');
                 
                 return `
-                    <div class="customer-round-item ${extraClass}" 
-                         onclick="${isAssignedOther ? '' : `toggleCustomerRound(${cr.id}, ${isSelected})`}">
-                        <div class="cr-checkbox">
-                            ${isSelected ? '<i class="fas fa-check"></i>' : ''}
-                        </div>
+                    <div class="customer-round-item ${extraClass}" onclick="toggleCustomerRound(${cr.id}, ${isSelected}, ${isAssignedOther})">
+                        <div class="cr-checkbox">${isSelected ? '<i class="fas fa-check"></i>' : ''}</div>
                         <div class="cr-info">
                             <div class="cr-customer">${escapeHtml(cr.customer_name)}</div>
-                            <div class="cr-round">🚚 รอบ ${cr.round_number} ${timeStr ? `<span class="cr-time">(${timeStr})</span>` : ''}</div>
+                            <div class="cr-round">🚚 รอบ ${cr.round_number} ${cr.time_start ? `(${cr.time_start}-${cr.time_end})` : ''}</div>
                         </div>
-                        ${isAssignedOther ? `<div class="cr-assigned">ผูกกับ ${escapeHtml(otherDriverName)}</div>` : ''}
+                        ${isAssignedOther ? `<div class="cr-assigned">${escapeHtml(otherRoundName)}</div>` : ''}
                     </div>
                 `;
             }).join('');
         }
 
-        function getDriverName(driverAliasId) {
-            const driver = allAliases.find(a => a.id === driverAliasId && a.use_for === 'driver');
-            return driver ? driver.alias_name : 'คนขับอื่น';
+        function getDriverRoundInfo(driverRoundId) {
+            const dr = allDriverRounds.find(r => r.id === driverRoundId);
+            if (!dr) return 'รอบอื่น';
+            const driver = allAliases.find(a => a.id === dr.driver_alias_id);
+            return (driver ? driver.alias_name : '?') + ' - ' + dr.round_name;
         }
 
-        async function toggleCustomerRound(customerRoundId, isCurrentlySelected) {
-            showLoading(true);
+        async function toggleCustomerRound(customerRoundId, isCurrentlySelected, isAssignedOther) {
+            // Allow reassignment from other rounds
+            if (isAssignedOther) {
+                if (!confirm('รอบลูกค้านี้ผูกกับคนขับอื่นอยู่ ต้องการย้ายมาที่นี่?')) return;
+            }
             
+            showLoading(true);
             try {
-                const newDriverAliasId = isCurrentlySelected ? null : currentDriverAliasId;
+                const newDriverRoundId = isCurrentlySelected ? null : currentDriverRoundId;
                 
                 await fetch(`${BASE_URL}/update-customer-round-driver`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        customerRoundId: customerRoundId,
-                        driverAliasId: newDriverAliasId
-                    })
+                    body: JSON.stringify({ customerRoundId, driverRoundId: newDriverRoundId })
                 });
                 
                 // Update local data
                 const cr = allCustomerRounds.find(c => c.id === customerRoundId);
-                if (cr) cr.driver_alias_id = newDriverAliasId;
+                if (cr) cr.driver_round_id = newDriverRoundId;
                 
-                updateAssignStats();
                 renderCustomerRoundList();
                 renderDrivers();
-                
             } catch (e) {
                 alert('เกิดข้อผิดพลาด');
                 console.error(e);
             }
-            
             showLoading(false);
         }
 
-        // ========== Existing Functions ==========
+        async function removeCustomerFromRound(customerRoundId) {
+            showLoading(true);
+            try {
+                await fetch(`${BASE_URL}/update-customer-round-driver`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customerRoundId, driverRoundId: null })
+                });
+                
+                const cr = allCustomerRounds.find(c => c.id === customerRoundId);
+                if (cr) cr.driver_round_id = null;
+                
+                renderDrivers();
+            } catch (e) {
+                alert('เกิดข้อผิดพลาด');
+            }
+            showLoading(false);
+        }
+
+        // ========== Alias Functions ==========
 
         async function linkAlias(id) {
             const name = document.getElementById(`name_${id}`).value.trim();
             const useFor = document.getElementById(`type_${id}`).value;
-            
             if (!name) { alert('กรุณาใส่ชื่อ'); return; }
             
             showLoading(true);
@@ -1017,15 +1069,12 @@
                 });
                 await loadData();
                 alert('✅ ผูกสำเร็จ!');
-            } catch (e) {
-                alert('เกิดข้อผิดพลาด');
-            }
+            } catch (e) { alert('เกิดข้อผิดพลาด'); }
             showLoading(false);
         }
 
         async function unlinkAlias(id, name) {
             if (!confirm(`ยกเลิกผูก "${name}"?`)) return;
-            
             showLoading(true);
             try {
                 await fetch(`${BASE_URL}/update-line-alias`, {
@@ -1034,24 +1083,19 @@
                     body: JSON.stringify({ id, aliasName: null, useFor: null })
                 });
                 await loadData();
-                alert('✅ ยกเลิกผูกแล้ว');
-            } catch (e) {
-                alert('เกิดข้อผิดพลาด');
-            }
+            } catch (e) { alert('เกิดข้อผิดพลาด'); }
             showLoading(false);
         }
 
         function editAlias(id, name, useFor) {
             const newName = prompt('แก้ไขชื่อ:', name);
-            if (newName === null) return;
-            if (!newName.trim()) { alert('กรุณาใส่ชื่อ'); return; }
-            
+            if (newName === null || !newName.trim()) return;
             showLoading(true);
             fetch(`${BASE_URL}/update-line-alias`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id, aliasName: newName.trim(), useFor })
-            }).then(() => { loadData(); alert('✅ แก้ไขแล้ว'); }).catch(e => alert('เกิดข้อผิดพลาด'));
+            }).then(() => loadData()).catch(() => alert('เกิดข้อผิดพลาด'));
         }
 
         function openAddModal(defaultType = 'customer') {
@@ -1069,36 +1113,30 @@
             const lineId = document.getElementById('manualLineId').value.trim();
             const aliasName = document.getElementById('manualAliasName').value.trim();
             const useFor = document.getElementById('manualUseFor').value;
-            
-            if (!lineId) { alert('กรุณาใส่ LINE ID'); return; }
-            if (!aliasName) { alert('กรุณาใส่ชื่อ'); return; }
-            
-            const idType = lineId.startsWith('C') ? 'group' : 'user';
+            if (!lineId || !aliasName) { alert('กรุณากรอกข้อมูลให้ครบ'); return; }
             
             showLoading(true);
             closeAddModal();
-            
             try {
                 await fetch(`${BASE_URL}/add-line-alias`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lineId, aliasName, idType, useFor })
+                    body: JSON.stringify({ lineId, aliasName, idType: lineId.startsWith('C') ? 'group' : 'user', useFor })
                 });
                 await loadData();
                 alert('✅ เพิ่มสำเร็จ!');
-            } catch (e) {
-                alert('เกิดข้อผิดพลาด');
-            }
+            } catch (e) { alert('เกิดข้อผิดพลาด'); }
             showLoading(false);
         }
+
+        // ========== Utilities ==========
 
         function formatDateTime(dateTimeStr) {
             if (!dateTimeStr) return '-';
             try {
                 const date = new Date(dateTimeStr);
-                const day = date.getDate();
                 const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-                return `${day} ${months[date.getMonth()]} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+                return `${date.getDate()} ${months[date.getMonth()]} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
             } catch (e) { return dateTimeStr; }
         }
 
