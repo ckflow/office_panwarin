@@ -643,8 +643,16 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({})
                 });
-                allCustomerRounds = await res2.json();
-                if (!Array.isArray(allCustomerRounds)) allCustomerRounds = [];
+                let crData = await res2.json();
+                // Handle both array and single object response
+                if (Array.isArray(crData)) {
+                    allCustomerRounds = crData;
+                } else if (crData && crData.id) {
+                    allCustomerRounds = [crData]; // wrap single object as array
+                } else {
+                    allCustomerRounds = [];
+                }
+                console.log('Customer Rounds:', allCustomerRounds);
                 
                 updateBadges();
                 renderAll();
