@@ -619,11 +619,12 @@
 
     <script>
         const MY_LIFF_ID = "2008689090-CnrdxM5k";
-        const ADMIN_IDS = [
-            "U4dc8fa32570dca3dfb4093b48a5c2093", //แชมป์
-            "U4cc74cb6346dece926adf6b2a3b7cb77", //บี
-            "Ufab5bb133c511730b583f47104965370", //ก้อย
-            "U5a9979d87d7f62faa2917c0253269be0", //เฮียเก่ง
+        const ADMINS = {
+            "U4dc8fa32570dca3dfb4093b48a5c2093": "แชมป์",
+            "U4cc74cb6346dece926adf6b2a3b7cb77": "บี",
+            "Ufab5bb133c511730b583f47104965370": "ก้อย",
+            "U5a9979d87d7f62faa2917c0253269be0": "เฮียเก่ง"
+        };
         ];
         const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
         let allOrders = [];
@@ -645,7 +646,7 @@
                 if (!liff.isLoggedIn()) { liff.login(); return; }
                 
                 const profile = await liff.getProfile();
-                if (!ADMIN_IDS.includes(profile.userId)) {
+                if (!(profile.userId in ADMINS)) {
                     document.getElementById('auth-check').innerHTML = `
                         <div class="text-center">
                             <h3 class="text-danger">⛔ Access Denied</h3>
@@ -1269,7 +1270,7 @@
                 const res = await fetch(`${BASE_URL}/request-delete-order`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ orderId, requestedBy: profile.displayName || 'Staff' })
+                    body: JSON.stringify({ orderId, requestedBy: ADMINS[profile.userId] || profile.displayName || 'Staff' })
                 });
                 const result = await res.json();
                 
@@ -1290,6 +1291,7 @@
     </script>
 </body>
 </html>
+
 
 
 
