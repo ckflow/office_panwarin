@@ -1239,7 +1239,7 @@
                         orderId: pendingOrderId,
                         isPaid: selectedPaymentStatus === 'paid' ? 1 : 0,
                         paymentMethod: selectedPaymentMethod || null,
-                        confirmedBy: profile.displayName
+                        confirmedByUserId: profile.userId
                     })
                 });
                 const result = await res.json();
@@ -1290,6 +1290,7 @@
     </script>
 </body>
 </html>
+
 
 
 
