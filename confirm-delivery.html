@@ -412,7 +412,7 @@
             if (!currentRoundId) return;
             showLoading(true);
             try {
-                const today = new Date().toISOString().split('T')[0];
+                const today = new Date().toLocaleDateString('en-CA');
                 const res = await fetch(`${BASE_URL}/get-driver-orders-by-round`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -690,3 +690,4 @@
     </script>
 </body>
 </html>
+
