@@ -598,7 +598,12 @@
                         let itemsHtml = '';
                         try {
                             const items = typeof o.order_items === 'string' ? JSON.parse(o.order_items) : o.order_items;
-                            itemsHtml = items.map(i => `${i.name} x${i.quantity}`).join(', ');
+                            if (Array.isArray(items)) {
+                                itemsHtml = items
+                                    .filter(i => typeof i === 'string' && !i.includes('---') && !i.includes('ยืมถุง'))
+                                    .map(i => i.replace(/^- /, '').split('(')[0].trim())
+                                    .join(', ');
+                            }
                         } catch (e) { itemsHtml = '-'; }
                         return `
                             <div class="order-card ${o.status === 'confirmed' ? 'confirmed' : 'pending'}">
@@ -695,6 +700,7 @@
     </script>
 </body>
 </html>
+
 
 
 
