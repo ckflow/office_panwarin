@@ -25,23 +25,25 @@
             border-radius: 12px;
             padding: 4px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            flex-wrap: wrap;
         }
         .tab-btn {
             flex: 1;
-            padding: 12px;
+            padding: 10px 8px;
             border: none;
             background: transparent;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
             color: #666;
             border-radius: 8px;
             cursor: pointer;
+            min-width: 70px;
         }
         .tab-btn.active { background: #00B900; color: white; }
         .tab-btn .badge {
             font-size: 10px;
             padding: 2px 6px;
-            margin-left: 5px;
+            margin-left: 3px;
         }
         
         .tab-content { display: none; }
@@ -77,6 +79,9 @@
         .line-card.unlinked {
             border-left: 4px solid #ffc107;
         }
+        .line-card.admin {
+            border-left: 4px solid #6f42c1;
+        }
         
         .line-header {
             display: flex;
@@ -98,6 +103,7 @@
         }
         .line-avatar.group { background: #667eea; }
         .line-avatar.linked { background: #198754; }
+        .line-avatar.admin { background: #6f42c1; }
         
         .line-info { flex: 1; min-width: 0; }
         .line-name { font-weight: bold; font-size: 15px; color: #333; }
@@ -163,14 +169,23 @@
             border-radius: 8px;
             padding: 10px 12px;
         }
+        .linked-info.admin-info {
+            background: #e2d9f3;
+        }
         .linked-name {
             font-weight: bold;
             color: #0f5132;
             font-size: 16px;
         }
+        .linked-info.admin-info .linked-name {
+            color: #59359a;
+        }
         .linked-type {
             font-size: 12px;
             color: #198754;
+        }
+        .linked-info.admin-info .linked-type {
+            color: #6f42c1;
         }
         .unlink-btn {
             background: none;
@@ -349,7 +364,7 @@
             <a href="admin.html" class="page-nav-btn">
                 <i class="fas fa-cog"></i> จัดการ
             </a>
-            <a href="line-link.html" class="page-nav-btn active">
+            <a href="drivers.html" class="page-nav-btn active">
                 <i class="fab fa-line"></i> ผูก LINE
             </a>
         </div>
@@ -366,6 +381,10 @@
             <button class="tab-btn" onclick="switchTab('driver')">
                 🚗 คนขับ
                 <span class="badge bg-primary" id="badgeDriver">0</span>
+            </button>
+            <button class="tab-btn" onclick="switchTab('admin')">
+                👑 แอดมิน
+                <span class="badge bg-purple" id="badgeAdmin" style="background: #6f42c1;">0</span>
             </button>
         </div>
 
@@ -408,6 +427,21 @@
                 <input type="text" class="search-input" id="searchDriver" placeholder="🔍 ค้นหาชื่อกลุ่ม..." oninput="renderDrivers()">
             </div>
             <div id="driverList"></div>
+        </div>
+
+        <!-- Tab: แอดมิน -->
+        <div id="tabAdmin" class="tab-content">
+            <div class="info-box" style="background: #f3e8ff; border-color: #d4b5f7; color: #59359a;">
+                <i class="fas fa-crown me-1"></i>
+                รายชื่อแอดมินที่มีสิทธิ์เข้าถึงระบบ
+            </div>
+            <div class="add-manual-btn" onclick="openAddModal('admin')" style="border-color: #6f42c1; color: #6f42c1;">
+                <i class="fas fa-plus me-2"></i>เพิ่มแอดมินใหม่
+            </div>
+            <div class="filter-bar">
+                <input type="text" class="search-input" id="searchAdmin" placeholder="🔍 ค้นหาชื่อแอดมิน..." oninput="renderAdmins()">
+            </div>
+            <div id="adminList"></div>
         </div>
     </div>
 
@@ -465,6 +499,11 @@
                 allAliases = await res.json();
                 if (!Array.isArray(allAliases)) allAliases = [];
                 
+                // Filter out empty objects
+                allAliases = allAliases.filter(a => a && a.id);
+                
+                console.log('allAliases:', allAliases);
+                
                 updateBadges();
                 renderAll();
             } catch (e) {
@@ -478,10 +517,12 @@
             const unlinked = allAliases.filter(a => !a.alias_name).length;
             const customers = allAliases.filter(a => a.alias_name && a.use_for === 'customer').length;
             const drivers = allAliases.filter(a => a.alias_name && a.use_for === 'driver').length;
+            const admins = allAliases.filter(a => a.alias_name && a.use_for === 'admin').length;
             
             document.getElementById('badgeUnlinked').textContent = unlinked;
             document.getElementById('badgeCustomer').textContent = customers;
             document.getElementById('badgeDriver').textContent = drivers;
+            document.getElementById('badgeAdmin').textContent = admins;
         }
 
         function switchTab(tab) {
@@ -495,9 +536,12 @@
             } else if (tab === 'customer') {
                 document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
                 document.getElementById('tabCustomer').classList.add('active');
-            } else {
+            } else if (tab === 'driver') {
                 document.querySelector('.tab-btn:nth-child(3)').classList.add('active');
                 document.getElementById('tabDriver').classList.add('active');
+            } else if (tab === 'admin') {
+                document.querySelector('.tab-btn:nth-child(4)').classList.add('active');
+                document.getElementById('tabAdmin').classList.add('active');
             }
         }
 
@@ -505,6 +549,7 @@
             renderUnlinked();
             renderCustomers();
             renderDrivers();
+            renderAdmins();
         }
 
         function renderUnlinked() {
@@ -605,23 +650,52 @@
             container.innerHTML = items.map(a => renderLinkedCard(a)).join('');
         }
 
-        function renderLinkedCard(a) {
+        function renderAdmins() {
+            const search = document.getElementById('searchAdmin').value.toLowerCase();
+            let items = allAliases.filter(a => a.alias_name && a.use_for === 'admin');
+            
+            if (search) {
+                items = items.filter(a => 
+                    (a.alias_name || '').toLowerCase().includes(search) ||
+                    (a.line_id || '').toLowerCase().includes(search)
+                );
+            }
+            
+            const container = document.getElementById('adminList');
+            if (items.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-crown" style="color: #6f42c1;"></i>
+                        <h5>ยังไม่มีแอดมิน</h5>
+                        <p>เพิ่มแอดมินเพื่อให้สิทธิ์เข้าถึงระบบ</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = items.map(a => renderLinkedCard(a, true)).join('');
+        }
+
+        function renderLinkedCard(a, isAdmin = false) {
             const icon = a.use_for === 'driver' ? '🚗' : (a.use_for === 'admin' ? '👑' : '👤');
             const typeText = a.use_for === 'driver' ? 'คนขับ/กลุ่ม' : (a.use_for === 'admin' ? 'แอดมิน' : 'ลูกค้า');
+            const cardClass = isAdmin ? 'admin' : 'linked';
+            const infoClass = isAdmin ? 'admin-info' : '';
+            const avatarClass = isAdmin ? 'admin' : 'linked';
             
             return `
-                <div class="line-card linked">
+                <div class="line-card ${cardClass}">
                     <div class="line-header">
-                        <div class="line-avatar linked">${icon}</div>
+                        <div class="line-avatar ${avatarClass}">${icon}</div>
                         <div class="line-info">
                             <div class="line-name">
                                 ${escapeHtml(a.alias_name)}
-                                <span class="badge bg-secondary">${typeText}</span>
+                                <span class="badge" style="background: ${isAdmin ? '#6f42c1' : '#6c757d'};">${typeText}</span>
                             </div>
                             <div class="line-id">${a.line_id}</div>
                         </div>
                     </div>
-                    <div class="linked-info">
+                    <div class="linked-info ${infoClass}">
                         <div>
                             <div class="linked-name">✅ ผูกแล้ว</div>
                             <div class="linked-type">${a.id_type === 'group' ? 'กลุ่ม LINE' : 'ผู้ใช้ LINE'}</div>
