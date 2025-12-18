@@ -36,6 +36,7 @@
         .multiplier-warning { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 8px 10px; margin-bottom: 4px; font-size: 12px; color: #856404; }
         
         .line-id-tag { background: #e7f1ff; padding: 5px 10px; border-radius: 8px; font-size: 12px; color: #0d6efd; margin: 3px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .line-id-tag .alias-name { font-weight: bold; color: #198754; }
         
         .promo-section { background: #fff9e6; border: 1px solid #ffe69c; border-radius: 10px; padding: 10px; margin-top: 10px; }
         .promo-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
@@ -72,6 +73,12 @@
         
         .round-locked { color: #dc3545; font-size: 11px; }
         .round-unlocked { color: #198754; font-size: 11px; }
+        
+        /* LINE Alias Dropdown */
+        .alias-select-group { margin-bottom: 15px; }
+        .alias-select-group label { font-size: 13px; color: #666; margin-bottom: 5px; display: block; }
+        .alias-select-group select { width: 100%; }
+        .or-divider { text-align: center; color: #999; font-size: 12px; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -82,7 +89,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div><h4 class="text-primary fw-bold mb-0">📋 จัดการลูกค้า</h4></div>
             <div>
-                <a href="drivers.html" class="btn btn-outline-info btn-sm"><i class="fas fa-truck"></i> คนขับ</a>
+                <a href="drivers.html" class="btn btn-outline-info btn-sm"><i class="fab fa-line"></i> ผูก LINE</a>
                 <button class="btn btn-success btn-sm shadow-sm ms-1" onclick="openCreateCustomerModal()"><i class="fas fa-user-plus"></i> ลูกค้าใหม่</button>
                 <button class="btn btn-sm btn-outline-secondary ms-1" onclick="window.location.reload()"><i class="fas fa-sync"></i></button>
             </div>
@@ -103,11 +110,23 @@
                 </div>
             </div>
 
+            <div class="alias-select-group">
+                <label>🔗 เลือกจากรายชื่อที่ผูกไว้:</label>
+                <select id="lineAliasSelect" class="form-select">
+                    <option value="">-- เลือก LINE ID --</option>
+                </select>
+                <button class="btn btn-primary btn-sm w-100 mt-2" onclick="addLineIdFromDropdown()">
+                    <i class="fas fa-plus"></i> เพิ่มจากรายชื่อที่เลือก
+                </button>
+            </div>
+
+            <div class="or-divider">— หรือ —</div>
+
             <div class="mb-3">
-                <label class="small text-muted">เพิ่ม ID ใหม่ (ลูกน้อง/สาขา):</label>
+                <label class="small text-muted">พิมพ์ ID เอง (กรณียังไม่ได้ผูก):</label>
                 <div class="input-group">
                     <input type="text" id="newLineIdInput" class="form-control" placeholder="Uxxxxxxxx..." style="font-size: 14px;">
-                    <button class="btn btn-primary" onclick="addLineId()">เพิ่ม</button>
+                    <button class="btn btn-outline-primary" onclick="addLineId()">เพิ่ม</button>
                 </div>
             </div>
 
@@ -225,9 +244,21 @@
             <div class="mb-3">
                 <input type="text" id="newCustomerName" class="form-control form-control-lg" placeholder="ชื่อร้านค้า">
             </div>
-            <div class="mb-4">
-                <input type="text" id="newCustomerLineId" class="form-control" placeholder="LINE User ID (ถ้ามี)">
+            
+            <div class="alias-select-group">
+                <label>🔗 เลือก LINE ID จากที่ผูกไว้:</label>
+                <select id="newCustomerLineSelect" class="form-select">
+                    <option value="">-- ไม่เลือก / เลือกทีหลัง --</option>
+                </select>
             </div>
+            
+            <div class="or-divider">— หรือ —</div>
+            
+            <div class="mb-4">
+                <label class="small text-muted">พิมพ์ LINE ID เอง:</label>
+                <input type="text" id="newCustomerLineId" class="form-control" placeholder="Uxxxxxxxx... (ถ้ามี)">
+            </div>
+            
             <div class="d-flex gap-2">
                 <button class="btn btn-light flex-grow-1" onclick="closeModal('createCustomerModal')">ยกเลิก</button>
                 <button class="btn btn-success flex-grow-1" onclick="submitNewCustomer()">สร้าง</button>
@@ -306,6 +337,7 @@
             GET_PROMOS: `${BASE_URL}/get-promos`,
             GET_MULTIPLIERS: `${BASE_URL}/get-multipliers`,
             GET_ROUNDS: `${BASE_URL}/get-customer-rounds`,
+            GET_LINE_ALIASES: `${BASE_URL}/get-line-aliases`,
             ADD_CUSTOMER: `${BASE_URL}/add-customer`,
             DELETE_CUSTOMER: `${BASE_URL}/delete-customer`,
             ADD_LINE: `${BASE_URL}/add-line`,
@@ -329,6 +361,7 @@
         let multipliersCache = {};
         let roundsCache = {};
         let deliveryGroupsCache = [];
+        let lineAliasesCache = [];
 
         const MULTIPLIER_PRODUCTS = {
             'crush_sachet': { name: 'บด(ซอง)', options: [6, 7, 8] },
@@ -351,6 +384,7 @@
                 
                 await loadProducts();
                 await loadDeliveryGroups();
+                await loadLineAliases();
                 await loadCustomers();
             } catch (err) {
                 alert("Error: " + err);
@@ -403,6 +437,50 @@
                     opt.value = g.id;
                     opt.textContent = '🚗 ' + g.name;
                     select.appendChild(opt);
+                });
+            }
+        }
+
+        async function loadLineAliases() {
+            try {
+                const res = await fetch(API.GET_LINE_ALIASES, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                const data = await res.json();
+                // Filter only linked customers (has alias_name and use_for = customer)
+                lineAliasesCache = (data || []).filter(a => a && a.id && a.alias_name && a.use_for === 'customer');
+                console.log('Loaded line aliases:', lineAliasesCache);
+                initLineAliasDropdowns();
+            } catch (e) {
+                console.error('Error loading line aliases:', e);
+                lineAliasesCache = [];
+            }
+        }
+
+        function initLineAliasDropdowns() {
+            // For manage LINE modal
+            const lineSelect = document.getElementById('lineAliasSelect');
+            if (lineSelect) {
+                lineSelect.innerHTML = '<option value="">-- เลือก LINE ID --</option>';
+                lineAliasesCache.forEach(a => {
+                    const opt = document.createElement('option');
+                    opt.value = a.line_id;
+                    opt.textContent = `${a.alias_name} (${a.line_id.substring(0, 10)}...)`;
+                    lineSelect.appendChild(opt);
+                });
+            }
+            
+            // For create customer modal
+            const newCustSelect = document.getElementById('newCustomerLineSelect');
+            if (newCustSelect) {
+                newCustSelect.innerHTML = '<option value="">-- ไม่เลือก / เลือกทีหลัง --</option>';
+                lineAliasesCache.forEach(a => {
+                    const opt = document.createElement('option');
+                    opt.value = a.line_id;
+                    opt.textContent = `${a.alias_name} (${a.line_id.substring(0, 10)}...)`;
+                    newCustSelect.appendChild(opt);
                 });
             }
         }
@@ -931,6 +1009,10 @@
             document.getElementById('manageLineModal').style.display = 'flex';
             document.getElementById('lineIdList').innerHTML = 'กำลังโหลด...';
             document.getElementById('newLineIdInput').value = '';
+            document.getElementById('lineAliasSelect').value = '';
+            
+            // Reload line aliases to get latest data
+            await loadLineAliases();
             
             try {
                 const res = await fetch(API.GET_LINES, {
@@ -945,12 +1027,19 @@
                 if (validLines.length === 0) {
                     document.getElementById('lineIdList').innerHTML = '<div class="text-center text-muted small">- ยังไม่ได้เพิ่ม LINE ID -</div>';
                 } else {
-                    document.getElementById('lineIdList').innerHTML = validLines.map(l => 
-                        `<div class="line-id-tag">
-                            <span style="font-size:10px; word-break:break-all;">${l.line_user_id}</span>
+                    document.getElementById('lineIdList').innerHTML = validLines.map(l => {
+                        // Find alias name if exists
+                        const alias = lineAliasesCache.find(a => a.line_id === l.line_user_id);
+                        const aliasText = alias ? `<span class="alias-name">${alias.alias_name}</span>` : '';
+                        
+                        return `<div class="line-id-tag">
+                            <div>
+                                ${aliasText}
+                                <div style="font-size:10px; word-break:break-all; color: #666;">${l.line_user_id}</div>
+                            </div>
                             <button onclick="deleteLineId(${l.id}, '${l.line_user_id}')" style="background:none;border:none;color:#dc3545;cursor:pointer;padding:0 2px;font-size:12px;" title="ลบ">✕</button>
-                        </div>`
-                    ).join('');
+                        </div>`;
+                    }).join('');
                 }
             } catch (e) {
                 document.getElementById('lineIdList').innerHTML = '<div class="text-danger small">Error</div>';
@@ -967,6 +1056,29 @@
                     body: JSON.stringify({ lineId })
                 });
                 alert("✅ ลบแล้ว");
+                openManageLineModal(currentCustomer.id, currentCustomer.name);
+            } catch (e) {
+                alert("Error: " + e);
+            }
+        }
+
+        async function addLineIdFromDropdown() {
+            const lineId = document.getElementById('lineAliasSelect').value;
+            if (!lineId) return alert("กรุณาเลือก LINE ID จากรายการ");
+            
+            const alias = lineAliasesCache.find(a => a.line_id === lineId);
+            const aliasName = alias ? alias.alias_name : lineId;
+            
+            if (!confirm(`เพิ่ม "${aliasName}" ให้ ${currentCustomer.name}?`)) return;
+            
+            try {
+                await fetch(API.ADD_LINE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lineId, customerId: currentCustomer.id })
+                });
+                alert("✅ เพิ่มแล้ว");
+                document.getElementById('lineAliasSelect').value = '';
                 openManageLineModal(currentCustomer.id, currentCustomer.name);
             } catch (e) {
                 alert("Error: " + e);
@@ -1144,12 +1256,18 @@
         function openCreateCustomerModal() {
             document.getElementById('newCustomerName').value = '';
             document.getElementById('newCustomerLineId').value = '';
+            document.getElementById('newCustomerLineSelect').value = '';
             document.getElementById('createCustomerModal').style.display = 'flex';
         }
 
         async function submitNewCustomer() {
             const name = document.getElementById('newCustomerName').value.trim();
-            const lineId = document.getElementById('newCustomerLineId').value.trim();
+            const lineIdFromDropdown = document.getElementById('newCustomerLineSelect').value;
+            const lineIdFromInput = document.getElementById('newCustomerLineId').value.trim();
+            
+            // Prefer dropdown, fallback to input
+            const lineId = lineIdFromDropdown || lineIdFromInput;
+            
             if (!name) return alert("กรุณาใส่ชื่อ");
             if (!confirm("สร้างลูกค้าใหม่?")) return;
             
