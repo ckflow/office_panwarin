@@ -935,14 +935,13 @@
                         <div class="order-items">${formatOrderItems(order.order_items)}</div>
                         
                         ${order.total_bags > 0 ? `<div class="order-bags">👜 ยืมถุง: ${order.total_bags} ใบ</div>` : ''}
-                        
-                        ${order.created_by || order.confirmed_by ? `
+
                         <div style="font-size: 11px; color: #888; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #eee;">
-                            ${order.created_by ? `<span>📝 คีย์โดย: <b>${order.created_by}</b></span>` : ''}
-                            ${order.created_by && order.confirmed_by ? ' | ' : ''}
-                            ${order.confirmed_by ? `<span>✅ ยืนยันโดย: <b>${order.confirmed_by}</b></span>` : ''}
+                            ${order.created_by 
+                                ? `<span>📝 คีย์โดย: <b>${order.created_by}</b></span>` 
+                                : `<span>📝 สั่งโดย: <b>${order.ordered_by_alias || order.customer_name}</b></span>`}
+                            ${order.confirmed_by ? ` | <span>✅ ยืนยันโดย: <b>${order.confirmed_by}</b></span>` : ''}
                         </div>
-                        ` : ''}
                         
                         ${canConfirm ? `
                             <div class="order-actions">
@@ -1291,5 +1290,6 @@
     </script>
 </body>
 </html>
+
 
 
