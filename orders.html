@@ -936,6 +936,14 @@
                         
                         ${order.total_bags > 0 ? `<div class="order-bags">👜 ยืมถุง: ${order.total_bags} ใบ</div>` : ''}
                         
+                        ${order.created_by || order.confirmed_by ? `
+                        <div style="font-size: 11px; color: #888; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #eee;">
+                            ${order.created_by ? `<span>📝 คีย์โดย: <b>${order.created_by}</b></span>` : ''}
+                            ${order.created_by && order.confirmed_by ? ' | ' : ''}
+                            ${order.confirmed_by ? `<span>✅ ยืนยันโดย: <b>${order.confirmed_by}</b></span>` : ''}
+                        </div>
+                        ` : ''}
+                        
                         ${canConfirm ? `
                             <div class="order-actions">
                                 <button class="btn btn-success" onclick="openPaymentModal(${order.id}, '${order.invoice_no}')">
@@ -1216,20 +1224,23 @@
         
         async function submitConfirmOrder() {
             if (!pendingOrderId || !selectedPaymentStatus) return;
-            
+    
             const btn = document.getElementById('confirmPaymentBtn');
             const oldText = btn.textContent;
             btn.textContent = 'กำลังบันทึก...';
             btn.disabled = true;
-            
+    
             try {
+                const profile = await liff.getProfile();
+        
                 const res = await fetch(`${BASE_URL}/confirm-order`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         orderId: pendingOrderId,
                         isPaid: selectedPaymentStatus === 'paid' ? 1 : 0,
-                        paymentMethod: selectedPaymentMethod || null
+                        paymentMethod: selectedPaymentMethod || null,
+                        confirmedBy: profile.displayName
                     })
                 });
                 const result = await res.json();
@@ -1280,4 +1291,5 @@
     </script>
 </body>
 </html>
+
 
