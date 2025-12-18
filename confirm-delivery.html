@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ยืนยันการส่ง</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Sarabun', sans-serif; padding-bottom: 100px; }
+        
+        .header-section { 
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white; 
+            padding: 15px 20px; 
+            position: sticky; 
+            top: 0; 
+            z-index: 999;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .round-selector {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .round-selector label {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .round-select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        .round-select:focus {
+            border-color: #28a745;
+            outline: none;
+        }
+        
+        .admin-actions {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 0 15px 15px;
+        }
+        .admin-actions .btn {
+            width: 100%;
+            padding: 12px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .summary-bar {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 0 15px 15px;
+            display: flex;
+            justify-content: space-around;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .summary-item {
+            text-align: center;
+        }
+        .summary-number {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .summary-label {
+            font-size: 12px;
+            color: #888;
+        }
+        .summary-pending .summary-number { color: #ffc107; }
+        .summary-confirmed .summary-number { color: #28a745; }
+        .summary-total .summary-number { color: #667eea; }
+        
+        .order-card {
+            background: white;
+            border-radius: 12px;
+            margin: 0 15px 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            overflow: hidden;
+            border-left: 4px solid #ffc107;
+        }
+        .order-card.confirmed {
+            border-left-color: #28a745;
+        }
+        
+        .order-header {
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .order-customer {
+            font-weight: bold;
+            font-size: 16px;
+            color: #333;
+        }
+        .order-invoice {
+            font-size: 12px;
+            color: #667eea;
+            font-family: monospace;
+        }
+        
+        .order-body {
+            padding: 12px 15px;
+        }
+        
+        .order-items {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        .order-items div {
+            margin-bottom: 4px;
+        }
+        
+        .order-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .status-badge {
+            font-size: 12px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-confirmed { background: #d1e7dd; color: #0f5132; }
+        
+        .confirm-btn {
+            background: #28a745;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 20px;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .confirm-btn:hover { background: #218838; }
+        .confirm-btn:disabled { background: #ccc; }
+        
+        .confirm-all-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 15px 20px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .confirm-all-bar.show { display: block; }
+        .confirm-all-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 12px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #999;
+        }
+        .empty-state i {
+            font-size: 60px;
+            margin-bottom: 15px;
+            color: #ddd;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .driver-info {
+            background: #e7f1ff;
+            border: 1px solid #b6d4fe;
+            border-radius: 10px;
+            padding: 12px 15px;
+            margin: 0 15px 15px;
+            font-size: 13px;
+            color: #084298;
+        }
+        
+        .date-display {
+            background: white;
+            border-radius: 12px;
+            padding: 10px 15px;
+            margin: 0 15px 15px;
+            text-align: center;
+            font-weight: bold;
+            color: #333;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+    </style>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="text-center">
+            <div class="spinner-border text-success mb-3" role="status"></div>
+            <div>กำลังโหลด...</div>
+        </div>
+    </div>
+
+    <div id="content" style="display: none;">
+        <div class="header-section">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-truck me-2"></i>ยืนยันการส่ง</h5>
+                <button onclick="loadOrders()" class="btn btn-light btn-sm">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Driver Info (แสดงเมื่อเป็นคนขับ) -->
+        <div class="driver-info" id="driverInfo" style="display: none;">
+            <i class="fas fa-info-circle me-1"></i>
+            <span id="driverGroupName">กลุ่มคนขับ</span> - รอบ <span id="driverRounds">-</span>
+        </div>
+
+        <!-- Round Selector (แสดงเมื่อเป็น Admin) -->
+        <div class="round-selector" id="roundSelector" style="display: none;">
+            <label><i class="fas fa-truck me-2"></i>เลือกรอบจัดส่ง</label>
+            <select class="round-select" id="roundSelect" onchange="loadOrders()">
+                <option value="">-- เลือกรอบ --</option>
+                <option value="1">รอบ 1</option>
+                <option value="2">รอบ 2</option>
+                <option value="3">รอบ 3</option>
+            </select>
+        </div>
+
+        <!-- Admin Actions (แสดงเมื่อเป็น Admin) -->
+        <div class="admin-actions" id="adminActions" style="display: none;">
+            <button class="btn btn-warning" onclick="sendToDriver()" id="sendBtn">
+                <i class="fas fa-paper-plane me-2"></i>ส่งให้คนขับ
+            </button>
+            <div class="form-text text-center mt-2">ส่ง Flex Message ไปกลุ่มคนขับที่ผูกกับรอบนี้</div>
+        </div>
+
+        <!-- Date Display -->
+        <div class="date-display">
+            📅 <span id="displayDate">-</span>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary-bar">
+            <div class="summary-item summary-pending">
+                <div class="summary-number" id="countPending">0</div>
+                <div class="summary-label">รอยืนยัน</div>
+            </div>
+            <div class="summary-item summary-confirmed">
+                <div class="summary-number" id="countConfirmed">0</div>
+                <div class="summary-label">ยืนยันแล้ว</div>
+            </div>
+            <div class="summary-item summary-total">
+                <div class="summary-number" id="countTotal">0</div>
+                <div class="summary-label">ทั้งหมด</div>
+            </div>
+        </div>
+
+        <!-- Orders List -->
+        <div id="ordersList"></div>
+
+        <!-- Confirm All Bar (แสดงเมื่อมีออเดอร์ pending) -->
+        <div class="confirm-all-bar" id="confirmAllBar">
+            <button class="btn btn-success confirm-all-btn" onclick="confirmAllOrders()">
+                <i class="fas fa-check-double me-2"></i>ยืนยันทั้งหมด (<span id="pendingCount">0</span> ออเดอร์)
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const LIFF_ID = "2008689090-qpzFeqNR";
+        const ADMIN_IDS = [
+            "U4dc8fa32570dca3dfb4093b48a5c2093", // แชมป์
+            "U4cc74cb6346dece926adf6b2a3b7cb77", // บี
+            "Ufab5bb133c511730b583f47104965370", // ก้อย
+            "U5a9979d87d7f62faa2917c0253269be0", // เฮียเก่ง
+        ];
+        const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
+        
+        let isAdmin = false;
+        let currentUserId = null;
+        let currentGroupId = null;
+        let driverRounds = [];
+        let allOrders = [];
+        let driverAliasName = '';
+
+        async function main() {
+            try {
+                await liff.init({ liffId: LIFF_ID });
+                
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                    return;
+                }
+                
+                const profile = await liff.getProfile();
+                currentUserId = profile.userId;
+                isAdmin = ADMIN_IDS.includes(currentUserId);
+                
+                // Get context (group or personal)
+                const context = liff.getContext();
+                console.log('LIFF Context:', context);
+                
+                if (context && context.type === 'group') {
+                    currentGroupId = context.groupId;
+                }
+                
+                // Setup UI based on role
+                if (isAdmin) {
+                    setupAdminView();
+                } else if (currentGroupId) {
+                    await setupDriverView();
+                } else {
+                    showError('กรุณาเปิดจากกลุ่ม LINE');
+                    return;
+                }
+                
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+                
+                // Set today's date
+                setDisplayDate();
+                
+            } catch (err) {
+                console.error('Init error:', err);
+                showError(err.message);
+            }
+        }
+        
+        main();
+
+        function setupAdminView() {
+            document.getElementById('roundSelector').style.display = 'block';
+            document.getElementById('adminActions').style.display = 'block';
+            document.getElementById('driverInfo').style.display = 'none';
+        }
+
+        async function setupDriverView() {
+            document.getElementById('roundSelector').style.display = 'none';
+            document.getElementById('adminActions').style.display = 'none';
+            document.getElementById('driverInfo').style.display = 'block';
+            
+            // Get driver group info and rounds
+            try {
+                const res = await fetch(`${BASE_URL}/get-driver-group-info`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ groupId: currentGroupId })
+                });
+                const data = await res.json();
+                
+                if (data && data.aliasName) {
+                    driverAliasName = data.aliasName;
+                    driverRounds = data.rounds || [];
+                    
+                    document.getElementById('driverGroupName').textContent = driverAliasName;
+                    document.getElementById('driverRounds').textContent = driverRounds.join(', ') || '-';
+                    
+                    loadOrders();
+                } else {
+                    showError('กลุ่มนี้ยังไม่ได้ผูกกับรอบจัดส่ง');
+                }
+            } catch (e) {
+                console.error('Error getting driver info:', e);
+                showError('ไม่สามารถดึงข้อมูลกลุ่มได้');
+            }
+        }
+
+        function setDisplayDate() {
+            const today = new Date();
+            const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+            const days = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+            document.getElementById('displayDate').textContent = 
+                `วัน${days[today.getDay()]}ที่ ${today.getDate()} ${months[today.getMonth()]} ${today.getFullYear() + 543}`;
+        }
+
+        async function loadOrders() {
+            showLoading(true);
+            
+            const today = new Date();
+            const dateStr = today.toISOString().split('T')[0];
+            
+            let rounds = [];
+            
+            if (isAdmin) {
+                const selectedRound = document.getElementById('roundSelect').value;
+                if (!selectedRound) {
+                    document.getElementById('ordersList').innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-hand-pointer"></i>
+                            <h5>เลือกรอบจัดส่ง</h5>
+                        </div>
+                    `;
+                    showLoading(false);
+                    updateSummary([]);
+                    return;
+                }
+                rounds = [selectedRound];
+            } else {
+                rounds = driverRounds;
+            }
+            
+            try {
+                const res = await fetch(`${BASE_URL}/get-driver-orders`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        date: dateStr,
+                        rounds: rounds
+                    })
+                });
+                allOrders = await res.json();
+                if (!Array.isArray(allOrders)) allOrders = [];
+                
+                updateSummary(allOrders);
+                renderOrders();
+                
+            } catch (e) {
+                console.error('Error loading orders:', e);
+                allOrders = [];
+                renderOrders();
+            }
+            
+            showLoading(false);
+        }
+
+        function updateSummary(orders) {
+            const pending = orders.filter(o => o.status === 'pending').length;
+            const confirmed = orders.filter(o => o.status === 'confirmed').length;
+            const total = orders.length;
+            
+            document.getElementById('countPending').textContent = pending;
+            document.getElementById('countConfirmed').textContent = confirmed;
+            document.getElementById('countTotal').textContent = total;
+            document.getElementById('pendingCount').textContent = pending;
+            
+            // Show/hide confirm all bar
+            const confirmAllBar = document.getElementById('confirmAllBar');
+            if (pending > 0) {
+                confirmAllBar.classList.add('show');
+            } else {
+                confirmAllBar.classList.remove('show');
+            }
+        }
+
+        function renderOrders() {
+            const container = document.getElementById('ordersList');
+            
+            if (allOrders.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-box-open"></i>
+                        <h5>ไม่มีออเดอร์</h5>
+                        <p>ยังไม่มีออเดอร์ในรอบนี้</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = allOrders.map(order => renderOrderCard(order)).join('');
+        }
+
+        function renderOrderCard(order) {
+            const isPending = order.status === 'pending';
+            const statusClass = isPending ? 'pending' : 'confirmed';
+            const statusBadge = isPending 
+                ? '<span class="status-badge status-pending">⏳ รอยืนยัน</span>'
+                : '<span class="status-badge status-confirmed">✅ ส่งแล้ว</span>';
+            
+            return `
+                <div class="order-card ${isPending ? '' : 'confirmed'}" id="card_${order.id}">
+                    <div class="order-header">
+                        <div>
+                            <div class="order-customer">👤 ${order.customer_name || 'ไม่ระบุ'}</div>
+                            <div class="order-invoice">${order.invoice_no || ''}</div>
+                        </div>
+                        ${statusBadge}
+                    </div>
+                    <div class="order-body">
+                        <div class="order-items">
+                            ${formatOrderItems(order.order_items)}
+                        </div>
+                        <div class="order-status">
+                            <div></div>
+                            ${isPending ? `
+                                <button class="confirm-btn" onclick="confirmOrder(${order.id})" id="btn_${order.id}">
+                                    <i class="fas fa-check me-1"></i>ยืนยัน
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatOrderItems(items) {
+            if (!items) return '<span style="color:#999;">ไม่มีรายการ</span>';
+            
+            let itemsStr = typeof items === 'object' ? JSON.stringify(items) : String(items);
+            const matches = itemsStr.match(/"([^"]+)"/g);
+            
+            if (matches && matches.length > 0) {
+                const result = matches
+                    .map(m => m.replace(/^"|"$/g, ''))
+                    .filter(item => item && !item.startsWith('---'))
+                    .filter(item => !item.includes('ยืมถุง'))
+                    .map(item => `<div>• ${item.replace(/^-\s*/, '')}</div>`);
+                
+                return result.length > 0 ? result.join('') : '<span style="color:#999;">ไม่มีรายการ</span>';
+            }
+            
+            return '<span style="color:#999;">ไม่มีรายการ</span>';
+        }
+
+        async function confirmOrder(orderId) {
+            const btn = document.getElementById(`btn_${orderId}`);
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            }
+            
+            try {
+                const profile = await liff.getProfile();
+                
+                const res = await fetch(`${BASE_URL}/confirm-order`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        orderId: orderId,
+                        isPaid: 0,
+                        paymentMethod: null,
+                        confirmedBy: driverAliasName || profile.displayName
+                    })
+                });
+                const result = await res.json();
+                
+                if (result.success) {
+                    // Update UI
+                    const card = document.getElementById(`card_${orderId}`);
+                    if (card) {
+                        card.classList.add('confirmed');
+                        card.querySelector('.order-header').innerHTML = card.querySelector('.order-header').innerHTML
+                            .replace('status-pending', 'status-confirmed')
+                            .replace('⏳ รอยืนยัน', '✅ ส่งแล้ว');
+                        const statusDiv = card.querySelector('.order-status');
+                        if (statusDiv) statusDiv.innerHTML = '<div></div>';
+                    }
+                    
+                    // Update local data and summary
+                    const order = allOrders.find(o => o.id === orderId);
+                    if (order) order.status = 'confirmed';
+                    updateSummary(allOrders);
+                    
+                } else {
+                    alert('❌ ' + (result.message || 'เกิดข้อผิดพลาด'));
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-check me-1"></i>ยืนยัน';
+                    }
+                }
+            } catch (e) {
+                alert('เกิดข้อผิดพลาด: ' + e.message);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-check me-1"></i>ยืนยัน';
+                }
+            }
+        }
+
+        async function confirmAllOrders() {
+            const pendingOrders = allOrders.filter(o => o.status === 'pending');
+            if (pendingOrders.length === 0) return;
+            
+            if (!confirm(`ยืนยันส่งทั้งหมด ${pendingOrders.length} ออเดอร์?`)) return;
+            
+            showLoading(true);
+            
+            try {
+                const profile = await liff.getProfile();
+                const confirmedBy = driverAliasName || profile.displayName;
+                
+                for (const order of pendingOrders) {
+                    await fetch(`${BASE_URL}/confirm-order`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            orderId: order.id,
+                            isPaid: 0,
+                            paymentMethod: null,
+                            confirmedBy: confirmedBy
+                        })
+                    });
+                }
+                
+                alert(`✅ ยืนยันทั้งหมด ${pendingOrders.length} ออเดอร์แล้ว`);
+                loadOrders();
+                
+            } catch (e) {
+                alert('เกิดข้อผิดพลาด: ' + e.message);
+            }
+            
+            showLoading(false);
+        }
+
+        async function sendToDriver() {
+            const selectedRound = document.getElementById('roundSelect').value;
+            if (!selectedRound) {
+                alert('กรุณาเลือกรอบจัดส่งก่อน');
+                return;
+            }
+            
+            const pendingCount = allOrders.filter(o => o.status === 'pending').length;
+            if (pendingCount === 0) {
+                alert('ไม่มีออเดอร์ที่รอส่ง');
+                return;
+            }
+            
+            if (!confirm(`ส่งออเดอร์รอบ ${selectedRound} ไปยังกลุ่มคนขับ?\n\n(${pendingCount} ออเดอร์)`)) return;
+            
+            const btn = document.getElementById('sendBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>กำลังส่ง...';
+            
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                
+                const res = await fetch(`${BASE_URL}/send-to-driver`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        round: selectedRound,
+                        date: today
+                    })
+                });
+                const result = await res.json();
+                
+                if (result.success) {
+                    alert(`✅ ส่งไปกลุ่มคนขับแล้ว!\n\nรอบ ${selectedRound}: ${pendingCount} ออเดอร์`);
+                } else {
+                    alert('❌ ' + (result.message || 'เกิดข้อผิดพลาด'));
+                }
+            } catch (e) {
+                alert('เกิดข้อผิดพลาด: ' + e.message);
+            }
+            
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>ส่งให้คนขับ';
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+        }
+
+        function showError(message) {
+            document.getElementById('loadingOverlay').innerHTML = `
+                <div class="text-center">
+                    <h3 class="text-danger">❌ Error</h3>
+                    <p class="text-muted">${message}</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
