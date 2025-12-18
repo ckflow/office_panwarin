@@ -155,6 +155,15 @@
         .status-pending { background: #fff3cd; color: #856404; }
         .status-confirmed { background: #d1e7dd; color: #0f5132; }
         .status-cancelled { background: #f8d7da; color: #842029; }
+        .status-edited { 
+            background: #e0cffc; 
+            color: #6f42c1; 
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        .status-edited:hover {
+            background: #d4b9fa;
+        }
         
         /* Payment Status Badge */
         .payment-badge {
@@ -770,6 +779,10 @@
             
             let statusText = { 'pending': '⏳ รอยืนยัน', 'confirmed': '✅ ยืนยันแล้ว', 'cancelled': '❌ ยกเลิก' }[order.status] || 'รอดำเนินการ';
             
+            // Edited badge
+            const isEdited = order.is_edited == 1;
+            const editedBadge = isEdited ? `<span class="status-badge status-edited" title="ลูกค้าแก้ไขออเดอร์">✏️ แก้ไขแล้ว</span>` : '';
+            
             // Payment status for confirmed orders
             let paymentBadge = '';
             if (order.status === 'confirmed') {
@@ -800,6 +813,7 @@
                             <div class="order-total">${parseFloat(order.total || 0).toLocaleString()} ฿</div>
                             <span class="status-badge ${statusBadgeClass}">${statusText}</span>
                             ${paymentBadge}
+                            ${editedBadge}
                         </div>
                     </div>
                     <div class="order-body">
