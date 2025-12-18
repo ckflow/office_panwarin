@@ -2142,12 +2142,15 @@
                 const safeDepositTotal = depositTotal && !isNaN(depositTotal) ? depositTotal : 0;
                 const grandTotal = Math.max(0, cachedSubtotal - cachedDiscount - safeDepositTotal);
 
+                const profile = await liff.getProfile();
+
                 let payload = {
                     lineId: currentUserId, customerId: currentCustomerId, customerName: finalCustomerName,
                     items: orderLines, totalBags: borrowQty, subtotal: cachedSubtotal, discount: cachedDiscount,
                     depositDeduction: safeDepositTotal, total: grandTotal,
                     orderDate: document.getElementById('orderDate').value, orderTime: document.getElementById('orderTime').value,
-                    deliveryRound: selectedRound, pickupTime: selectedRound === 'pickup' ? getPickupTime() : null
+                    deliveryRound: selectedRound, pickupTime: selectedRound === 'pickup' ? getPickupTime() : null,
+                    createdBy: isAdmin ? profile.displayName : null
                 };
 
                 const response = await fetch(`${BASE_URL}/order-id`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -2180,5 +2183,6 @@
     </script>
 </body>
 </html>
+
 
 
