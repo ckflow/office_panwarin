@@ -463,11 +463,11 @@
             // For manage LINE modal
             const lineSelect = document.getElementById('lineAliasSelect');
             if (lineSelect) {
-                lineSelect.innerHTML = '<option value="">-- เลือก LINE ID --</option>';
+                lineSelect.innerHTML = '<option value="">-- เลือก LINE ลูกค้า --</option>';
                 lineAliasesCache.forEach(a => {
                     const opt = document.createElement('option');
                     opt.value = a.line_id;
-                    opt.textContent = `${a.alias_name} (${a.line_id.substring(0, 10)}...)`;
+                    opt.textContent = a.alias_name;
                     lineSelect.appendChild(opt);
                 });
             }
@@ -1304,4 +1304,5 @@
     </script>
 </body>
 </html>
+
 
