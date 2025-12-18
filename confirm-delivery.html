@@ -311,15 +311,28 @@
         // Helper function to parse order items
         function parseOrderItems(orderItems) {
             try {
-                const items = typeof orderItems === 'string' ? JSON.parse(orderItems) : orderItems;
-                if (Array.isArray(items)) {
-                    return items
+                // ถ้าเป็น array อยู่แล้ว ใช้เลย
+                if (Array.isArray(orderItems)) {
+                    return orderItems
                         .filter(i => typeof i === 'string' && !i.includes('---') && !i.includes('ยืมถุง'))
                         .map(i => i.replace(/^- /, '').split('(')[0].trim())
-                        .join(', ');
+                        .join(', ') || '-';
+                }
+        
+                // ถ้าเป็น string ให้ replace newline ก่อน parse
+                if (typeof orderItems === 'string') {
+                    const cleaned = orderItems.replace(/\n/g, '\\n');
+                    const items = JSON.parse(cleaned);
+                    if (Array.isArray(items)) {
+                        return items
+                            .filter(i => typeof i === 'string' && !i.includes('---') && !i.includes('ยืมถุง'))
+                            .map(i => i.replace(/^- /, '').split('(')[0].trim())
+                            .join(', ') || '-';
+                    }
                 }
                 return '-';
             } catch (e) {
+                console.error('parseOrderItems error:', e);
                 return '-';
             }
         }
@@ -698,3 +711,4 @@
     </script>
 </body>
 </html>
+
