@@ -1252,11 +1252,13 @@
         async function cancelOrder(orderId, invoiceNo) {
             if (!confirm(`❌ ยกเลิกออเดอร์ ${invoiceNo}?\n\nเมื่อยกเลิกแล้วจะไม่สามารถกู้คืนได้`)) return;
             
+            const profile = await liff.getProfile();
+            
             try {
                 const res = await fetch(`${BASE_URL}/cancel-order`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ orderId, lineId: 'STAFF' })
+                    body: JSON.stringify({ orderId, lineId: profile.userId })
                 });
                 const result = await res.json();
                 
