@@ -495,6 +495,11 @@
                     <label class="form-label small text-muted">ชื่อรอบ</label>
                     <input type="text" id="newRoundName" class="form-control" placeholder="เช่น รอบ 1, รอบเช้า">
                 </div>
+                <div class="mb-3">
+                    <label class="form-label small text-muted">⏰ เวลา Deadline (ถ้าไม่ครบจะแจ้งเตือน)</label>
+                    <input type="time" id="newDeadlineTime" class="form-control">
+                    <div class="form-text">เช่น 03:30 = ถ้าถึงเวลานี้แล้วออเดอร์ยังไม่ครบ จะแจ้งแอดมิน</div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-light" onclick="closeAddRoundModal()">ยกเลิก</button>
@@ -853,11 +858,14 @@
                         `).join('')
                         : '<span class="no-customers">ยังไม่มีลูกค้า</span>';
                     
+                    const deadlineStr = dr.deadline_time ? `⏰ ${dr.deadline_time.substring(0,5)}` : '';
+                    
                     return `
                         <div class="driver-round-card">
                             <div class="driver-round-header">
-                                <div class="driver-round-name">🚚 ${escapeHtml(dr.round_name)}</div>
+                                <div class="driver-round-name">🚚 ${escapeHtml(dr.round_name)} ${deadlineStr ? `<span style="font-size:11px;color:#f59e0b;margin-left:8px;">${deadlineStr}</span>` : ''}</div>
                                 <div class="driver-round-actions">
+                                    <button class="edit-btn" onclick="editDriverRound(${dr.id}, '${escapeHtml(dr.round_name)}', '${dr.deadline_time || ''}')"><i class="fas fa-clock"></i></button>
                                     <button class="delete-btn" onclick="deleteDriverRound(${dr.id}, '${escapeHtml(dr.round_name)}')"><i class="fas fa-trash"></i></button>
                                 </div>
                             </div>
@@ -905,6 +913,7 @@
             currentDriverAliasId = driverAliasId;
             document.getElementById('addRoundDriverName').textContent = driverName;
             document.getElementById('newRoundName').value = '';
+            document.getElementById('newDeadlineTime').value = '';
             document.getElementById('addRoundModal').classList.add('show');
         }
 
@@ -918,6 +927,7 @@
             if (!roundName) { alert('กรุณาใส่ชื่อรอบ'); return; }
             
             const driverAliasId = currentDriverAliasId;  // เก็บค่าไว้ก่อน
+            const deadlineTime = document.getElementById('newDeadlineTime').value || null;
             
             showLoading(true);
             closeAddRoundModal();
@@ -926,7 +936,7 @@
                 await fetch(`${BASE_URL}/add-driver-round`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ driverAliasId: driverAliasId, roundName: roundName })
+                    body: JSON.stringify({ driverAliasId: driverAliasId, roundName: roundName, deadlineTime: deadlineTime })
                 });
                 await loadData();
             } catch (e) {
@@ -945,6 +955,25 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ roundId })
+                });
+                await loadData();
+            } catch (e) {
+                alert('เกิดข้อผิดพลาด');
+                console.error(e);
+            }
+            showLoading(false);
+        }
+
+        async function editDriverRound(roundId, roundName, currentDeadline) {
+            const newDeadline = prompt(`ตั้งเวลา Deadline สำหรับ "${roundName}"\n(รูปแบบ HH:MM เช่น 03:30)`, currentDeadline ? currentDeadline.substring(0,5) : '');
+            if (newDeadline === null) return;
+            
+            showLoading(true);
+            try {
+                await fetch(`${BASE_URL}/update-driver-round-deadline`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ roundId, deadlineTime: newDeadline || null })
                 });
                 await loadData();
             } catch (e) {
