@@ -669,23 +669,43 @@
                 if (!Array.isArray(allAliases)) allAliases = [];
                 allAliases = allAliases.filter(a => a && a.id);
                 
-                // Load driver rounds
-                const res2 = await fetch(`${BASE_URL}/get-all-driver-rounds`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({})
-                });
-                let drData = await res2.json();
-                allDriverRounds = Array.isArray(drData) ? drData : (drData && drData.id ? [drData] : []);
+                // Load driver rounds (with error handling)
+                try {
+                    const res2 = await fetch(`${BASE_URL}/get-all-driver-rounds`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({})
+                    });
+                    const text2 = await res2.text();
+                    if (text2) {
+                        let drData = JSON.parse(text2);
+                        allDriverRounds = Array.isArray(drData) ? drData : (drData && drData.id ? [drData] : []);
+                    } else {
+                        allDriverRounds = [];
+                    }
+                } catch (e2) {
+                    console.warn('Driver rounds API not ready:', e2);
+                    allDriverRounds = [];
+                }
                 
-                // Load customer rounds
-                const res3 = await fetch(`${BASE_URL}/get-all-customer-rounds`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({})
-                });
-                let crData = await res3.json();
-                allCustomerRounds = Array.isArray(crData) ? crData : (crData && crData.id ? [crData] : []);
+                // Load customer rounds (with error handling)
+                try {
+                    const res3 = await fetch(`${BASE_URL}/get-all-customer-rounds`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({})
+                    });
+                    const text3 = await res3.text();
+                    if (text3) {
+                        let crData = JSON.parse(text3);
+                        allCustomerRounds = Array.isArray(crData) ? crData : (crData && crData.id ? [crData] : []);
+                    } else {
+                        allCustomerRounds = [];
+                    }
+                } catch (e3) {
+                    console.warn('Customer rounds API not ready:', e3);
+                    allCustomerRounds = [];
+                }
                 
                 console.log('Aliases:', allAliases);
                 console.log('Driver Rounds:', allDriverRounds);
