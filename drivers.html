@@ -917,6 +917,8 @@
             const roundName = document.getElementById('newRoundName').value.trim();
             if (!roundName) { alert('กรุณาใส่ชื่อรอบ'); return; }
             
+            const driverAliasId = currentDriverAliasId;  // เก็บค่าไว้ก่อน
+            
             showLoading(true);
             closeAddRoundModal();
             
@@ -924,7 +926,7 @@
                 await fetch(`${BASE_URL}/add-driver-round`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ driverAliasId: currentDriverAliasId, roundName })
+                    body: JSON.stringify({ driverAliasId: driverAliasId, roundName: roundName })
                 });
                 await loadData();
             } catch (e) {
