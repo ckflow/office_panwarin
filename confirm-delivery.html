@@ -308,6 +308,22 @@
         let allDrivers = [];
         let allDriverRounds = [];
 
+        // Helper function to parse order items
+        function parseOrderItems(orderItems) {
+            try {
+                const items = typeof orderItems === 'string' ? JSON.parse(orderItems) : orderItems;
+                if (Array.isArray(items)) {
+                    return items
+                        .filter(i => typeof i === 'string' && !i.includes('---') && !i.includes('ยืมถุง'))
+                        .map(i => i.replace(/^- /, '').split('(')[0].trim())
+                        .join(', ');
+                }
+                return '-';
+            } catch (e) {
+                return '-';
+            }
+        }
+
         async function main() {
             try {
                 await liff.init({ liffId: MY_LIFF_ID });
@@ -454,16 +470,7 @@
             }
             container.innerHTML = allOrders.map(o => {
                 const isConfirmed = o.status === 'confirmed';
-                let itemsHtml = '';
-                    try {
-                        const items = typeof o.order_items === 'string' ? JSON.parse(o.order_items) : o.order_items;
-                        if (Array.isArray(items)) {
-                            itemsHtml = items
-                                .filter(i => typeof i === 'string' && !i.includes('---') && !i.includes('ยืมถุง'))
-                                .map(i => i.replace(/^- /, '').split('(')[0].trim())
-                                .join(', ');
-                        }
-                    } catch (e) { itemsHtml = '-'; }
+                const itemsHtml = parseOrderItems(o.order_items);
                 
                 return `
                     <div class="order-card ${isConfirmed ? 'confirmed' : 'pending'}">
@@ -595,16 +602,7 @@
                     btn.disabled = true;
                 } else {
                     container.innerHTML = orders.map(o => {
-                        let itemsHtml = '';
-                        try {
-                            const items = typeof o.order_items === 'string' ? JSON.parse(o.order_items) : o.order_items;
-                            if (Array.isArray(items)) {
-                                itemsHtml = items
-                                    .filter(i => typeof i === 'string' && !i.includes('---') && !i.includes('ยืมถุง'))
-                                    .map(i => i.replace(/^- /, '').split('(')[0].trim())
-                                    .join(', ');
-                            }
-                        } catch (e) { itemsHtml = '-'; }
+                        const itemsHtml = parseOrderItems(o.order_items);
                         return `
                             <div class="order-card ${o.status === 'confirmed' ? 'confirmed' : 'pending'}">
                                 <div class="order-header">
@@ -700,7 +698,3 @@
     </script>
 </body>
 </html>
-
-
-
-
