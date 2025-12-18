@@ -73,15 +73,10 @@
             padding: 15px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
-        .line-card.linked {
-            border-left: 4px solid #00B900;
-        }
-        .line-card.unlinked {
-            border-left: 4px solid #ffc107;
-        }
-        .line-card.admin {
-            border-left: 4px solid #6f42c1;
-        }
+        .line-card.linked { border-left: 4px solid #00B900; }
+        .line-card.unlinked { border-left: 4px solid #ffc107; }
+        .line-card.admin { border-left: 4px solid #6f42c1; }
+        .line-card.driver { border-left: 4px solid #667eea; }
         
         .line-header {
             display: flex;
@@ -108,12 +103,7 @@
         .line-info { flex: 1; min-width: 0; }
         .line-name { font-weight: bold; font-size: 15px; color: #333; }
         .line-name .badge { font-size: 10px; margin-left: 5px; }
-        .line-id { 
-            font-family: monospace; 
-            font-size: 10px; 
-            color: #888;
-            word-break: break-all;
-        }
+        .line-id { font-family: monospace; font-size: 10px; color: #888; word-break: break-all; }
         .line-time { font-size: 11px; color: #aaa; }
         
         .line-message {
@@ -169,24 +159,15 @@
             border-radius: 8px;
             padding: 10px 12px;
         }
-        .linked-info.admin-info {
-            background: #e2d9f3;
-        }
-        .linked-name {
-            font-weight: bold;
-            color: #0f5132;
-            font-size: 16px;
-        }
-        .linked-info.admin-info .linked-name {
-            color: #59359a;
-        }
-        .linked-type {
-            font-size: 12px;
-            color: #198754;
-        }
-        .linked-info.admin-info .linked-type {
-            color: #6f42c1;
-        }
+        .linked-info.admin-info { background: #e2d9f3; }
+        .linked-info.driver-info { background: #e0e7ff; }
+        .linked-name { font-weight: bold; color: #0f5132; font-size: 16px; }
+        .linked-info.admin-info .linked-name { color: #59359a; }
+        .linked-info.driver-info .linked-name { color: #4338ca; }
+        .linked-type { font-size: 12px; color: #198754; }
+        .linked-info.admin-info .linked-type { color: #6f42c1; }
+        .linked-info.driver-info .linked-type { color: #667eea; }
+        
         .unlink-btn {
             background: none;
             border: none;
@@ -275,24 +256,156 @@
         .modal-box {
             background: white;
             width: 100%;
-            max-width: 400px;
+            max-width: 500px;
+            max-height: 90vh;
             border-radius: 16px;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
         .modal-header {
             background: linear-gradient(135deg, #00B900 0%, #00C300 100%);
             color: white;
             padding: 15px 20px;
             text-align: center;
+            flex-shrink: 0;
         }
-        .modal-body { padding: 20px; }
+        .modal-header.driver-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .modal-body { 
+            padding: 20px; 
+            overflow-y: auto;
+            flex: 1;
+        }
         .modal-footer {
             padding: 15px 20px;
             border-top: 1px solid #f0f0f0;
             display: flex;
             gap: 10px;
+            flex-shrink: 0;
         }
         .modal-footer button { flex: 1; padding: 12px; border-radius: 10px; font-weight: bold; }
+        
+        /* Driver Assigned Customers */
+        .driver-customers {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed #ddd;
+        }
+        .driver-customers-title {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .customer-round-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #667eea;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: bold;
+            margin: 2px;
+        }
+        .customer-round-badge .customer-name {
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .no-customers {
+            color: #999;
+            font-size: 12px;
+            font-style: italic;
+        }
+        .manage-customers-btn {
+            background: #667eea;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 12px;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .manage-customers-btn:hover { background: #5a67d8; }
+        
+        /* Customer Round Selection */
+        .customer-round-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .customer-round-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .customer-round-item:hover { background: #f8f9ff; border-color: #667eea; }
+        .customer-round-item.selected { background: #e0e7ff; border-color: #667eea; }
+        .customer-round-item.assigned-other {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .customer-round-item .cr-checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .customer-round-item.selected .cr-checkbox {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+        .customer-round-item .cr-info { flex: 1; }
+        .customer-round-item .cr-customer { font-weight: bold; color: #333; }
+        .customer-round-item .cr-round { font-size: 12px; color: #667eea; }
+        .customer-round-item .cr-time { font-size: 11px; color: #999; }
+        .customer-round-item .cr-assigned {
+            font-size: 10px;
+            color: #999;
+            background: #f0f0f0;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        
+        /* Summary stats */
+        .driver-stats {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .driver-stat {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .driver-stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .driver-stat-label {
+            font-size: 11px;
+            color: #666;
+        }
     </style>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
@@ -312,7 +425,7 @@
         </div>
     </div>
 
-    <!-- Modal: เพิ่ม LINE ID ด้วยตัวเอง -->
+    <!-- Modal: เพิ่ม LINE ID -->
     <div class="modal-overlay" id="addModal">
         <div class="modal-box">
             <div class="modal-header">
@@ -344,6 +457,44 @@
         </div>
     </div>
 
+    <!-- Modal: จัดการรอบลูกค้าของกลุ่มคนขับ -->
+    <div class="modal-overlay" id="assignModal">
+        <div class="modal-box">
+            <div class="modal-header driver-header">
+                <h5 class="mb-0">🚗 จัดการรอบลูกค้า</h5>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label small text-muted">กลุ่มคนขับ</label>
+                    <div id="assignDriverName" style="font-weight: bold; font-size: 18px; color: #667eea;">-</div>
+                </div>
+                
+                <div class="driver-stats">
+                    <div class="driver-stat">
+                        <div class="driver-stat-number" id="statAssigned">0</div>
+                        <div class="driver-stat-label">ผูกแล้ว</div>
+                    </div>
+                    <div class="driver-stat">
+                        <div class="driver-stat-number" id="statAvailable">0</div>
+                        <div class="driver-stat-label">ยังว่าง</div>
+                    </div>
+                </div>
+                
+                <div class="mb-2">
+                    <label class="form-label small text-muted">เลือกรอบลูกค้าที่ต้องการผูก</label>
+                    <input type="text" class="form-control form-control-sm" id="searchCustomerRound" placeholder="🔍 ค้นหาลูกค้า..." oninput="renderCustomerRoundList()">
+                </div>
+                
+                <div class="customer-round-list" id="customerRoundList">
+                    <!-- จะแสดงรายการรอบลูกค้า -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-light" onclick="closeAssignModal()">ปิด</button>
+            </div>
+        </div>
+    </div>
+
     <div id="content" style="display: none;">
         <div class="header-section">
             <div class="d-flex justify-content-between align-items-center">
@@ -355,36 +506,24 @@
         </div>
 
         <div class="page-nav">
-            <a href="index.html" class="page-nav-btn">
-                <i class="fas fa-shopping-cart"></i> สั่งซื้อ
-            </a>
-            <a href="orders.html" class="page-nav-btn">
-                <i class="fas fa-clipboard-list"></i> ออเดอร์
-            </a>
-            <a href="admin.html" class="page-nav-btn">
-                <i class="fas fa-cog"></i> จัดการ
-            </a>
-            <a href="drivers.html" class="page-nav-btn active">
-                <i class="fab fa-line"></i> ผูก LINE
-            </a>
+            <a href="index.html" class="page-nav-btn"><i class="fas fa-shopping-cart"></i> สั่งซื้อ</a>
+            <a href="orders.html" class="page-nav-btn"><i class="fas fa-clipboard-list"></i> ออเดอร์</a>
+            <a href="admin.html" class="page-nav-btn"><i class="fas fa-cog"></i> จัดการ</a>
+            <a href="drivers.html" class="page-nav-btn active"><i class="fab fa-line"></i> ผูก LINE</a>
         </div>
 
         <div class="tab-nav">
             <button class="tab-btn active" onclick="switchTab('unlinked')">
-                ⏳ รอผูก
-                <span class="badge bg-warning text-dark" id="badgeUnlinked">0</span>
+                ⏳ รอผูก <span class="badge bg-warning text-dark" id="badgeUnlinked">0</span>
             </button>
             <button class="tab-btn" onclick="switchTab('customer')">
-                👤 ลูกค้า
-                <span class="badge bg-success" id="badgeCustomer">0</span>
+                👤 ลูกค้า <span class="badge bg-success" id="badgeCustomer">0</span>
             </button>
             <button class="tab-btn" onclick="switchTab('driver')">
-                🚗 คนขับ
-                <span class="badge bg-primary" id="badgeDriver">0</span>
+                🚗 คนขับ <span class="badge bg-primary" id="badgeDriver">0</span>
             </button>
             <button class="tab-btn" onclick="switchTab('admin')">
-                👑 แอดมิน
-                <span class="badge bg-purple" id="badgeAdmin" style="background: #6f42c1;">0</span>
+                👑 แอดมิน <span class="badge" id="badgeAdmin" style="background: #6f42c1;">0</span>
             </button>
         </div>
 
@@ -416,11 +555,11 @@
 
         <!-- Tab: คนขับ -->
         <div id="tabDriver" class="tab-content">
-            <div class="info-box">
-                <i class="fas fa-info-circle me-1"></i>
-                <strong>วิธีหา Group Chat ID:</strong> เชิญ Bot เข้ากลุ่ม LINE แล้วดู ID ที่ขึ้นต้นด้วย C
+            <div class="info-box" style="background: #e0e7ff; border-color: #a5b4fc; color: #4338ca;">
+                <i class="fas fa-truck me-1"></i>
+                <strong>กลุ่มคนขับ:</strong> เพิ่มกลุ่ม LINE แล้วผูกรอบลูกค้าที่รับผิดชอบ
             </div>
-            <div class="add-manual-btn" onclick="openAddModal('driver')">
+            <div class="add-manual-btn" onclick="openAddModal('driver')" style="border-color: #667eea; color: #667eea;">
                 <i class="fas fa-plus me-2"></i>เพิ่มกลุ่มคนขับ
             </div>
             <div class="filter-bar">
@@ -455,7 +594,9 @@
         const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
         
         let allAliases = [];
+        let allCustomerRounds = []; // รอบลูกค้าทั้งหมด
         let currentTab = 'unlinked';
+        let currentDriverAliasId = null;
 
         async function main() {
             try {
@@ -465,9 +606,7 @@
                 const profile = await liff.getProfile();
                 if (!ADMIN_IDS.includes(profile.userId)) {
                     document.getElementById('auth-check').innerHTML = `
-                        <div class="text-center">
-                            <h3 class="text-danger">⛔ Access Denied</h3>
-                        </div>
+                        <div class="text-center"><h3 class="text-danger">⛔ Access Denied</h3></div>
                     `;
                     return;
                 }
@@ -479,10 +618,7 @@
             } catch (err) {
                 console.error('Auth error:', err);
                 document.getElementById('auth-check').innerHTML = `
-                    <div class="text-center">
-                        <h3 class="text-danger">❌ Error</h3>
-                        <p>${err.message}</p>
-                    </div>
+                    <div class="text-center"><h3 class="text-danger">❌ Error</h3><p>${err.message}</p></div>
                 `;
             }
         }
@@ -491,24 +627,31 @@
         async function loadData() {
             showLoading(true);
             try {
-                const res = await fetch(`${BASE_URL}/get-line-aliases`, {
+                // Load LINE aliases
+                const res1 = await fetch(`${BASE_URL}/get-line-aliases`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({})
                 });
-                allAliases = await res.json();
+                allAliases = await res1.json();
                 if (!Array.isArray(allAliases)) allAliases = [];
-                
-                // Filter out empty objects
                 allAliases = allAliases.filter(a => a && a.id);
                 
-                console.log('allAliases:', allAliases);
+                // Load all customer rounds
+                const res2 = await fetch(`${BASE_URL}/get-all-customer-rounds`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                allCustomerRounds = await res2.json();
+                if (!Array.isArray(allCustomerRounds)) allCustomerRounds = [];
                 
                 updateBadges();
                 renderAll();
             } catch (e) {
                 console.error('Error loading:', e);
                 allAliases = [];
+                allCustomerRounds = [];
             }
             showLoading(false);
         }
@@ -530,19 +673,9 @@
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             
-            if (tab === 'unlinked') {
-                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
-                document.getElementById('tabUnlinked').classList.add('active');
-            } else if (tab === 'customer') {
-                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
-                document.getElementById('tabCustomer').classList.add('active');
-            } else if (tab === 'driver') {
-                document.querySelector('.tab-btn:nth-child(3)').classList.add('active');
-                document.getElementById('tabDriver').classList.add('active');
-            } else if (tab === 'admin') {
-                document.querySelector('.tab-btn:nth-child(4)').classList.add('active');
-                document.getElementById('tabAdmin').classList.add('active');
-            }
+            const tabMap = { 'unlinked': 1, 'customer': 2, 'driver': 3, 'admin': 4 };
+            document.querySelector(`.tab-btn:nth-child(${tabMap[tab]})`).classList.add('active');
+            document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.add('active');
         }
 
         function renderAll() {
@@ -578,9 +711,7 @@
             container.innerHTML = items.map(a => `
                 <div class="line-card unlinked">
                     <div class="line-header">
-                        <div class="line-avatar ${a.id_type === 'group' ? 'group' : ''}">
-                            ${a.id_type === 'group' ? '👥' : '👤'}
-                        </div>
+                        <div class="line-avatar ${a.id_type === 'group' ? 'group' : ''}">${a.id_type === 'group' ? '👥' : '👤'}</div>
                         <div class="line-info">
                             <div class="line-id">${a.line_id}</div>
                             <div class="line-time">🕐 ${formatDateTime(a.last_seen || a.first_seen)}</div>
@@ -588,7 +719,7 @@
                     </div>
                     ${a.last_message ? `<div class="line-message">💬 ${escapeHtml(a.last_message)}</div>` : ''}
                     <div class="link-form">
-                        <input type="text" class="link-input" id="name_${a.id}" placeholder="ใส่ชื่อ (เช่น ร้านสมศรี)">
+                        <input type="text" class="link-input" id="name_${a.id}" placeholder="ใส่ชื่อ">
                         <select class="link-select" id="type_${a.id}">
                             <option value="customer">👤 ลูกค้า</option>
                             <option value="driver">🚗 คนขับ</option>
@@ -613,12 +744,7 @@
             
             const container = document.getElementById('customerList');
             if (items.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-users"></i>
-                        <h5>ยังไม่มีลูกค้าที่ผูก LINE</h5>
-                    </div>
-                `;
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-users"></i><h5>ยังไม่มีลูกค้าที่ผูก LINE</h5></div>`;
                 return;
             }
             
@@ -638,16 +764,11 @@
             
             const container = document.getElementById('driverList');
             if (items.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-truck"></i>
-                        <h5>ยังไม่มีกลุ่มคนขับ</h5>
-                    </div>
-                `;
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-truck"></i><h5>ยังไม่มีกลุ่มคนขับ</h5></div>`;
                 return;
             }
             
-            container.innerHTML = items.map(a => renderLinkedCard(a)).join('');
+            container.innerHTML = items.map(a => renderDriverCard(a)).join('');
         }
 
         function renderAdmins() {
@@ -663,13 +784,7 @@
             
             const container = document.getElementById('adminList');
             if (items.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-crown" style="color: #6f42c1;"></i>
-                        <h5>ยังไม่มีแอดมิน</h5>
-                        <p>เพิ่มแอดมินเพื่อให้สิทธิ์เข้าถึงระบบ</p>
-                    </div>
-                `;
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-crown" style="color: #6f42c1;"></i><h5>ยังไม่มีแอดมิน</h5></div>`;
                 return;
             }
             
@@ -688,10 +803,7 @@
                     <div class="line-header">
                         <div class="line-avatar ${avatarClass}">${icon}</div>
                         <div class="line-info">
-                            <div class="line-name">
-                                ${escapeHtml(a.alias_name)}
-                                <span class="badge" style="background: ${isAdmin ? '#6f42c1' : '#6c757d'};">${typeText}</span>
-                            </div>
+                            <div class="line-name">${escapeHtml(a.alias_name)} <span class="badge" style="background: ${isAdmin ? '#6f42c1' : '#6c757d'};">${typeText}</span></div>
                             <div class="line-id">${a.line_id}</div>
                         </div>
                     </div>
@@ -701,26 +813,192 @@
                             <div class="linked-type">${a.id_type === 'group' ? 'กลุ่ม LINE' : 'ผู้ใช้ LINE'}</div>
                         </div>
                         <div>
-                            <button class="unlink-btn" onclick="editAlias(${a.id}, '${escapeHtml(a.alias_name)}', '${a.use_for}')">
-                                <i class="fas fa-edit"></i> แก้ไข
-                            </button>
-                            <button class="unlink-btn" onclick="unlinkAlias(${a.id}, '${escapeHtml(a.alias_name)}')">
-                                <i class="fas fa-unlink"></i> ยกเลิกผูก
-                            </button>
+                            <button class="unlink-btn" onclick="editAlias(${a.id}, '${escapeHtml(a.alias_name)}', '${a.use_for}')"><i class="fas fa-edit"></i> แก้ไข</button>
+                            <button class="unlink-btn" onclick="unlinkAlias(${a.id}, '${escapeHtml(a.alias_name)}')"><i class="fas fa-unlink"></i> ยกเลิก</button>
                         </div>
                     </div>
                 </div>
             `;
         }
 
+        function renderDriverCard(a) {
+            // หารอบลูกค้าที่ผูกกับคนขับนี้
+            const assignedRounds = allCustomerRounds.filter(cr => cr.driver_alias_id === a.id);
+            
+            let badgesHtml = '';
+            if (assignedRounds.length > 0) {
+                badgesHtml = assignedRounds.slice(0, 5).map(cr => `
+                    <span class="customer-round-badge">
+                        <span class="customer-name">${escapeHtml(cr.customer_name)}</span>
+                        <span style="opacity: 0.8;">รอบ${cr.round_number}</span>
+                    </span>
+                `).join('');
+                if (assignedRounds.length > 5) {
+                    badgesHtml += `<span class="customer-round-badge" style="background: #999;">+${assignedRounds.length - 5} อื่นๆ</span>`;
+                }
+            } else {
+                badgesHtml = '<span class="no-customers">ยังไม่ได้ผูกรอบลูกค้า</span>';
+            }
+            
+            return `
+                <div class="line-card driver">
+                    <div class="line-header">
+                        <div class="line-avatar group">🚗</div>
+                        <div class="line-info">
+                            <div class="line-name">${escapeHtml(a.alias_name)} <span class="badge" style="background: #667eea;">คนขับ</span></div>
+                            <div class="line-id">${a.line_id}</div>
+                        </div>
+                    </div>
+                    <div class="linked-info driver-info">
+                        <div>
+                            <div class="linked-name">✅ ผูกแล้ว</div>
+                            <div class="linked-type">${a.id_type === 'group' ? 'กลุ่ม LINE' : 'ผู้ใช้ LINE'}</div>
+                        </div>
+                        <div>
+                            <button class="unlink-btn" onclick="editAlias(${a.id}, '${escapeHtml(a.alias_name)}', '${a.use_for}')" style="color: #667eea;"><i class="fas fa-edit"></i> แก้ไข</button>
+                            <button class="unlink-btn" onclick="unlinkAlias(${a.id}, '${escapeHtml(a.alias_name)}')"><i class="fas fa-unlink"></i> ยกเลิก</button>
+                        </div>
+                    </div>
+                    <div class="driver-customers">
+                        <div class="driver-customers-title">🚚 รอบลูกค้าที่รับผิดชอบ (${assignedRounds.length}):</div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                            ${badgesHtml}
+                        </div>
+                        <button class="manage-customers-btn" onclick="openAssignModal(${a.id}, '${escapeHtml(a.alias_name)}')">
+                            <i class="fas fa-cog me-1"></i>จัดการรอบลูกค้า
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ========== Assign Modal Functions ==========
+        
+        function openAssignModal(driverAliasId, driverName) {
+            currentDriverAliasId = driverAliasId;
+            document.getElementById('assignDriverName').textContent = driverName;
+            document.getElementById('searchCustomerRound').value = '';
+            
+            updateAssignStats();
+            renderCustomerRoundList();
+            
+            document.getElementById('assignModal').classList.add('show');
+        }
+
+        function closeAssignModal() {
+            document.getElementById('assignModal').classList.remove('show');
+            currentDriverAliasId = null;
+        }
+
+        function updateAssignStats() {
+            const assigned = allCustomerRounds.filter(cr => cr.driver_alias_id === currentDriverAliasId).length;
+            const available = allCustomerRounds.filter(cr => !cr.driver_alias_id).length;
+            
+            document.getElementById('statAssigned').textContent = assigned;
+            document.getElementById('statAvailable').textContent = available;
+        }
+
+        function renderCustomerRoundList() {
+            const search = document.getElementById('searchCustomerRound').value.toLowerCase();
+            const container = document.getElementById('customerRoundList');
+            
+            let items = allCustomerRounds.filter(cr => {
+                if (search) {
+                    return (cr.customer_name || '').toLowerCase().includes(search);
+                }
+                return true;
+            });
+            
+            // Sort: assigned to current driver first, then available, then assigned to others
+            items.sort((a, b) => {
+                const aIsCurrentDriver = a.driver_alias_id === currentDriverAliasId;
+                const bIsCurrentDriver = b.driver_alias_id === currentDriverAliasId;
+                const aIsAvailable = !a.driver_alias_id;
+                const bIsAvailable = !b.driver_alias_id;
+                
+                if (aIsCurrentDriver && !bIsCurrentDriver) return -1;
+                if (!aIsCurrentDriver && bIsCurrentDriver) return 1;
+                if (aIsAvailable && !bIsAvailable) return -1;
+                if (!aIsAvailable && bIsAvailable) return 1;
+                
+                return (a.customer_name || '').localeCompare(b.customer_name || '');
+            });
+            
+            if (items.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted py-4">ไม่พบรอบลูกค้า</div>';
+                return;
+            }
+            
+            container.innerHTML = items.map(cr => {
+                const isSelected = cr.driver_alias_id === currentDriverAliasId;
+                const isAssignedOther = cr.driver_alias_id && cr.driver_alias_id !== currentDriverAliasId;
+                const otherDriverName = isAssignedOther ? getDriverName(cr.driver_alias_id) : '';
+                
+                let extraClass = '';
+                if (isSelected) extraClass = 'selected';
+                else if (isAssignedOther) extraClass = 'assigned-other';
+                
+                const timeStr = cr.time_start && cr.time_end ? `${cr.time_start} - ${cr.time_end}` : '';
+                
+                return `
+                    <div class="customer-round-item ${extraClass}" 
+                         onclick="${isAssignedOther ? '' : `toggleCustomerRound(${cr.id}, ${isSelected})`}">
+                        <div class="cr-checkbox">
+                            ${isSelected ? '<i class="fas fa-check"></i>' : ''}
+                        </div>
+                        <div class="cr-info">
+                            <div class="cr-customer">${escapeHtml(cr.customer_name)}</div>
+                            <div class="cr-round">🚚 รอบ ${cr.round_number} ${timeStr ? `<span class="cr-time">(${timeStr})</span>` : ''}</div>
+                        </div>
+                        ${isAssignedOther ? `<div class="cr-assigned">ผูกกับ ${escapeHtml(otherDriverName)}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getDriverName(driverAliasId) {
+            const driver = allAliases.find(a => a.id === driverAliasId && a.use_for === 'driver');
+            return driver ? driver.alias_name : 'คนขับอื่น';
+        }
+
+        async function toggleCustomerRound(customerRoundId, isCurrentlySelected) {
+            showLoading(true);
+            
+            try {
+                const newDriverAliasId = isCurrentlySelected ? null : currentDriverAliasId;
+                
+                await fetch(`${BASE_URL}/update-customer-round-driver`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        customerRoundId: customerRoundId,
+                        driverAliasId: newDriverAliasId
+                    })
+                });
+                
+                // Update local data
+                const cr = allCustomerRounds.find(c => c.id === customerRoundId);
+                if (cr) cr.driver_alias_id = newDriverAliasId;
+                
+                updateAssignStats();
+                renderCustomerRoundList();
+                renderDrivers();
+                
+            } catch (e) {
+                alert('เกิดข้อผิดพลาด');
+                console.error(e);
+            }
+            
+            showLoading(false);
+        }
+
+        // ========== Existing Functions ==========
+
         async function linkAlias(id) {
             const name = document.getElementById(`name_${id}`).value.trim();
             const useFor = document.getElementById(`type_${id}`).value;
             
-            if (!name) {
-                alert('กรุณาใส่ชื่อ');
-                return;
-            }
+            if (!name) { alert('กรุณาใส่ชื่อ'); return; }
             
             showLoading(true);
             try {
@@ -733,7 +1011,6 @@
                 alert('✅ ผูกสำเร็จ!');
             } catch (e) {
                 alert('เกิดข้อผิดพลาด');
-                console.error(e);
             }
             showLoading(false);
         }
@@ -759,25 +1036,16 @@
         function editAlias(id, name, useFor) {
             const newName = prompt('แก้ไขชื่อ:', name);
             if (newName === null) return;
-            if (!newName.trim()) {
-                alert('กรุณาใส่ชื่อ');
-                return;
-            }
+            if (!newName.trim()) { alert('กรุณาใส่ชื่อ'); return; }
             
             showLoading(true);
             fetch(`${BASE_URL}/update-line-alias`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id, aliasName: newName.trim(), useFor })
-            }).then(() => {
-                loadData();
-                alert('✅ แก้ไขแล้ว');
-            }).catch(e => {
-                alert('เกิดข้อผิดพลาด');
-            });
+            }).then(() => { loadData(); alert('✅ แก้ไขแล้ว'); }).catch(e => alert('เกิดข้อผิดพลาด'));
         }
 
-        // Modal functions
         function openAddModal(defaultType = 'customer') {
             document.getElementById('manualLineId').value = '';
             document.getElementById('manualAliasName').value = '';
@@ -794,14 +1062,8 @@
             const aliasName = document.getElementById('manualAliasName').value.trim();
             const useFor = document.getElementById('manualUseFor').value;
             
-            if (!lineId) {
-                alert('กรุณาใส่ LINE ID');
-                return;
-            }
-            if (!aliasName) {
-                alert('กรุณาใส่ชื่อ');
-                return;
-            }
+            if (!lineId) { alert('กรุณาใส่ LINE ID'); return; }
+            if (!aliasName) { alert('กรุณาใส่ชื่อ'); return; }
             
             const idType = lineId.startsWith('C') ? 'group' : 'user';
             
@@ -818,7 +1080,6 @@
                 alert('✅ เพิ่มสำเร็จ!');
             } catch (e) {
                 alert('เกิดข้อผิดพลาด');
-                console.error(e);
             }
             showLoading(false);
         }
@@ -829,13 +1090,8 @@
                 const date = new Date(dateTimeStr);
                 const day = date.getDate();
                 const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-                const month = months[date.getMonth()];
-                const hours = String(date.getHours()).padStart(2, '0');
-                const minutes = String(date.getMinutes()).padStart(2, '0');
-                return `${day} ${month} ${hours}:${minutes}`;
-            } catch (e) {
-                return dateTimeStr;
-            }
+                return `${day} ${months[date.getMonth()]} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+            } catch (e) { return dateTimeStr; }
         }
 
         function escapeHtml(str) {
