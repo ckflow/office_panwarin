@@ -30,11 +30,6 @@
             font-size: 13px;
             color: #4338ca;
         }
-        .info-box.admin-info {
-            background: #d1fae5;
-            border-color: #6ee7b7;
-            color: #065f46;
-        }
         
         .driver-info-card {
             background: white;
@@ -44,27 +39,34 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             border-left: 4px solid #667eea;
         }
-        .driver-name {
-            font-size: 18px;
-            font-weight: bold;
-            color: #667eea;
+        .driver-name { font-size: 18px; font-weight: bold; color: #667eea; }
+        
+        .round-tabs {
+            display: flex;
+            gap: 8px;
+            margin: 15px;
+            flex-wrap: wrap;
         }
+        .round-tab {
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            border-radius: 20px;
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .round-tab.active { background: #667eea; color: white; }
+        
         .driver-stats {
             display: flex;
             gap: 15px;
             margin-top: 10px;
         }
-        .driver-stat {
-            text-align: center;
-        }
-        .driver-stat-number {
-            font-size: 24px;
-            font-weight: bold;
-        }
-        .driver-stat-label {
-            font-size: 11px;
-            color: #666;
-        }
+        .driver-stat { text-align: center; }
+        .driver-stat-number { font-size: 24px; font-weight: bold; }
+        .driver-stat-label { font-size: 11px; color: #666; }
         
         .order-card {
             background: white;
@@ -73,13 +75,8 @@
             padding: 15px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
-        .order-card.confirmed {
-            border-left: 4px solid #10b981;
-            opacity: 0.8;
-        }
-        .order-card.pending {
-            border-left: 4px solid #f59e0b;
-        }
+        .order-card.confirmed { border-left: 4px solid #10b981; opacity: 0.8; }
+        .order-card.pending { border-left: 4px solid #f59e0b; }
         
         .order-header {
             display: flex;
@@ -87,11 +84,7 @@
             align-items: center;
             margin-bottom: 10px;
         }
-        .order-customer {
-            font-weight: bold;
-            font-size: 16px;
-            color: #333;
-        }
+        .order-customer { font-weight: bold; font-size: 16px; color: #333; }
         .order-round {
             background: #667eea;
             color: white;
@@ -113,8 +106,6 @@
             padding: 4px 0;
             font-size: 14px;
         }
-        .order-item-name { color: #333; }
-        .order-item-qty { font-weight: bold; color: #667eea; }
         
         .order-status {
             display: flex;
@@ -128,14 +119,8 @@
             font-weight: bold;
             font-size: 12px;
         }
-        .status-badge.pending {
-            background: #fef3c7;
-            color: #d97706;
-        }
-        .status-badge.confirmed {
-            background: #d1fae5;
-            color: #059669;
-        }
+        .status-badge.pending { background: #fef3c7; color: #d97706; }
+        .status-badge.confirmed { background: #d1fae5; color: #059669; }
         
         .confirm-btn {
             background: #667eea;
@@ -147,7 +132,6 @@
             font-size: 13px;
         }
         .confirm-btn:hover { background: #5a67d8; }
-        .confirm-btn:disabled { background: #ccc; }
         
         .confirm-all-btn {
             position: fixed;
@@ -164,7 +148,6 @@
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
             z-index: 1000;
         }
-        .confirm-all-btn:hover { opacity: 0.9; }
         .confirm-all-btn:disabled { background: #ccc; box-shadow: none; }
         
         .empty-state {
@@ -184,7 +167,7 @@
             z-index: 9999;
         }
         
-        /* Admin Mode Styles */
+        /* Admin Mode */
         .admin-controls {
             background: white;
             border-radius: 12px;
@@ -200,7 +183,6 @@
             font-size: 14px;
             margin-bottom: 10px;
         }
-        .admin-select:focus { border-color: #00B900; outline: none; }
         .send-to-driver-btn {
             width: 100%;
             background: #00B900;
@@ -210,7 +192,6 @@
             color: white;
             font-weight: bold;
         }
-        .send-to-driver-btn:hover { background: #009900; }
         .send-to-driver-btn:disabled { background: #ccc; }
     </style>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -225,35 +206,23 @@
     </div>
 
     <div id="content" style="display: none;">
-        <!-- Driver Mode Header -->
-        <div id="driverHeader" class="header-section" style="display: none;">
-            <div class="d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-truck me-2"></i>รายการส่งของวันนี้</h5>
-                <button onclick="loadOrders()" class="btn btn-light btn-sm">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
+        <!-- Driver Mode -->
+        <div id="driverMode" style="display: none;">
+            <div class="header-section">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-truck me-2"></i>รายการส่งของวันนี้</h5>
+                    <button onclick="loadDriverOrders()" class="btn btn-light btn-sm"><i class="fas fa-sync-alt"></i></button>
+                </div>
             </div>
-        </div>
-        
-        <!-- Admin Mode Header -->
-        <div id="adminHeader" class="header-section admin-mode" style="display: none;">
-            <div class="d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-cog me-2"></i>จัดการส่งออเดอร์</h5>
-                <button onclick="loadAdminData()" class="btn btn-light btn-sm">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- Driver Mode Content -->
-        <div id="driverContent" style="display: none;">
+            
             <div class="info-box">
                 <i class="fas fa-info-circle me-1"></i>
                 กดยืนยันเมื่อส่งสินค้าให้ลูกค้าเรียบร้อยแล้ว
             </div>
             
-            <div class="driver-info-card" id="driverInfoCard">
+            <div class="driver-info-card">
                 <div class="driver-name" id="driverNameDisplay">-</div>
+                <div id="roundTabsContainer" class="round-tabs"></div>
                 <div class="driver-stats">
                     <div class="driver-stat">
                         <div class="driver-stat-number" id="statTotal" style="color: #667eea;">0</div>
@@ -277,17 +246,29 @@
             </button>
         </div>
 
-        <!-- Admin Mode Content -->
-        <div id="adminContent" style="display: none;">
-            <div class="info-box admin-info">
+        <!-- Admin Mode -->
+        <div id="adminMode" style="display: none;">
+            <div class="header-section admin-mode">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-cog me-2"></i>จัดการส่งออเดอร์</h5>
+                    <button onclick="loadAdminData()" class="btn btn-light btn-sm"><i class="fas fa-sync-alt"></i></button>
+                </div>
+            </div>
+            
+            <div class="info-box" style="background: #d1fae5; border-color: #6ee7b7; color: #065f46;">
                 <i class="fas fa-info-circle me-1"></i>
-                เลือกกลุ่มคนขับแล้วกด "ส่งให้คนขับ" เพื่อแจ้งเตือนผ่าน LINE
+                เลือกกลุ่มคนขับและรอบ แล้วกด "ส่งให้คนขับ" เพื่อแจ้งเตือนผ่าน LINE
             </div>
             
             <div class="admin-controls">
                 <label class="form-label small text-muted">เลือกกลุ่มคนขับ</label>
-                <select class="admin-select" id="driverSelect" onchange="loadAdminOrders()">
+                <select class="admin-select" id="driverSelect" onchange="onDriverSelected()">
                     <option value="">-- เลือกกลุ่มคนขับ --</option>
+                </select>
+                
+                <label class="form-label small text-muted">เลือกรอบ</label>
+                <select class="admin-select" id="roundSelect" onchange="loadAdminOrders()">
+                    <option value="">-- เลือกรอบ --</option>
                 </select>
                 
                 <button class="send-to-driver-btn" id="sendToDriverBtn" onclick="sendToDriver()" disabled>
@@ -319,12 +300,13 @@
         const LINE_TOKEN = "Bearer 5YgjZukH1CffHa9lF9/caVoMlcIZFXZYecUAPkEdUirjKwJtw+zz59eOKOdVQcSvjWSCDJmEdtpxg/3HCr8qi4K1Nr8yrEIXPXzHGnk+ew4PbUt2ejp1uefPkDz3o7QxsnADI3AFw0lTG70zr1e++wdB04t89/1O/w1cDnyilFU=";
         
         let profile = null;
-        let liffContext = null;
         let isAdmin = false;
-        let isDriver = false;
         let driverInfo = null;
+        let driverRounds = [];
+        let currentRoundId = null;
         let allOrders = [];
         let allDrivers = [];
+        let allDriverRounds = [];
 
         async function main() {
             try {
@@ -332,28 +314,18 @@
                 if (!liff.isLoggedIn()) { liff.login(); return; }
                 
                 profile = await liff.getProfile();
-                liffContext = liff.getContext();
+                const context = liff.getContext();
                 
-                console.log('Profile:', profile);
-                console.log('Context:', liffContext);
-                
-                // Check if admin
                 isAdmin = ADMIN_IDS.includes(profile.userId);
-                
-                // Check if opened from LINE group
-                const groupId = liffContext?.groupId || null;
+                const groupId = context?.groupId || null;
                 
                 if (isAdmin && !groupId) {
-                    // Admin mode - opened directly (not from group)
                     showAdminMode();
                 } else if (groupId) {
-                    // Driver mode - opened from LINE group
                     await checkDriverAccess(groupId);
                 } else {
-                    // Not admin and not from group
                     showAccessDenied();
                 }
-                
             } catch (err) {
                 console.error('Init error:', err);
                 showError(err.message);
@@ -368,17 +340,18 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ groupId })
                 });
-                const data = await res.json();
+                let data = await res.json();
+                data = Array.isArray(data) ? data : (data && data.alias_id ? [data] : []);
                 
-                if (data && data.length > 0) {
-                    driverInfo = data[0];
-                    isDriver = true;
+                if (data.length > 0) {
+                    driverInfo = { id: data[0].alias_id, alias_name: data[0].alias_name, line_id: data[0].line_id };
+                    driverRounds = data.filter(d => d.driver_round_id).map(d => ({ id: d.driver_round_id, round_name: d.round_name }));
                     showDriverMode();
                 } else {
                     showAccessDenied();
                 }
             } catch (e) {
-                console.error('Error checking driver:', e);
+                console.error('Error:', e);
                 showAccessDenied();
             }
         }
@@ -386,17 +359,20 @@
         function showDriverMode() {
             document.getElementById('loadingOverlay').style.display = 'none';
             document.getElementById('content').style.display = 'block';
-            document.getElementById('driverHeader').style.display = 'block';
-            document.getElementById('driverContent').style.display = 'block';
+            document.getElementById('driverMode').style.display = 'block';
             document.getElementById('driverNameDisplay').textContent = driverInfo.alias_name;
-            loadOrders();
+            
+            renderRoundTabs();
+            if (driverRounds.length > 0) {
+                currentRoundId = driverRounds[0].id;
+                loadDriverOrders();
+            }
         }
 
         function showAdminMode() {
             document.getElementById('loadingOverlay').style.display = 'none';
             document.getElementById('content').style.display = 'block';
-            document.getElementById('adminHeader').style.display = 'block';
-            document.getElementById('adminContent').style.display = 'block';
+            document.getElementById('adminMode').style.display = 'block';
             loadAdminData();
         }
 
@@ -406,36 +382,48 @@
             document.getElementById('accessDenied').style.display = 'block';
         }
 
-        function showError(message) {
-            document.getElementById('loadingOverlay').innerHTML = `
-                <div class="text-center">
-                    <h3 class="text-danger">❌ Error</h3>
-                    <p>${message}</p>
-                </div>
-            `;
+        function showError(msg) {
+            document.getElementById('loadingOverlay').innerHTML = `<div class="text-center"><h3 class="text-danger">❌ Error</h3><p>${msg}</p></div>`;
         }
 
-        // ========== Driver Mode Functions ==========
+        // ========== Driver Mode ==========
 
-        async function loadOrders() {
+        function renderRoundTabs() {
+            const container = document.getElementById('roundTabsContainer');
+            if (driverRounds.length === 0) {
+                container.innerHTML = '<span style="color: #999; font-size: 12px;">ยังไม่มีรอบที่กำหนด</span>';
+                return;
+            }
+            container.innerHTML = driverRounds.map((r, i) => `
+                <div class="round-tab ${i === 0 ? 'active' : ''}" onclick="selectRound(${r.id})" data-id="${r.id}">
+                    ${escapeHtml(r.round_name)}
+                </div>
+            `).join('');
+        }
+
+        function selectRound(roundId) {
+            currentRoundId = roundId;
+            document.querySelectorAll('.round-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.round-tab[data-id="${roundId}"]`)?.classList.add('active');
+            loadDriverOrders();
+        }
+
+        async function loadDriverOrders() {
+            if (!currentRoundId) return;
             showLoading(true);
             try {
                 const today = new Date().toISOString().split('T')[0];
-                const res = await fetch(`${BASE_URL}/get-driver-orders-by-group`, {
+                const res = await fetch(`${BASE_URL}/get-driver-orders-by-round`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        driverAliasId: driverInfo.id,
-                        date: today
-                    })
+                    body: JSON.stringify({ driverRoundId: currentRoundId, date: today })
                 });
-                allOrders = await res.json();
-                if (!Array.isArray(allOrders)) allOrders = [];
-                
+                let data = await res.json();
+                allOrders = Array.isArray(data) ? data : (data && data.id ? [data] : []);
                 updateStats();
                 renderOrders();
             } catch (e) {
-                console.error('Error loading orders:', e);
+                console.error('Error:', e);
                 allOrders = [];
             }
             showLoading(false);
@@ -444,72 +432,44 @@
         function updateStats() {
             const total = allOrders.length;
             const confirmed = allOrders.filter(o => o.status === 'confirmed').length;
-            const pending = total - confirmed;
-            
             document.getElementById('statTotal').textContent = total;
-            document.getElementById('statPending').textContent = pending;
+            document.getElementById('statPending').textContent = total - confirmed;
             document.getElementById('statConfirmed').textContent = confirmed;
             
-            // Show/hide confirm all button
-            const confirmAllBtn = document.getElementById('confirmAllBtn');
+            const btn = document.getElementById('confirmAllBtn');
+            const pending = total - confirmed;
             if (pending > 0) {
-                confirmAllBtn.style.display = 'block';
+                btn.style.display = 'block';
                 document.getElementById('confirmAllCount').textContent = pending;
             } else {
-                confirmAllBtn.style.display = 'none';
+                btn.style.display = 'none';
             }
         }
 
         function renderOrders() {
             const container = document.getElementById('ordersList');
-            
             if (allOrders.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-box-open"></i>
-                        <h5>ไม่มีออเดอร์วันนี้</h5>
-                        <p>ยังไม่มีออเดอร์ที่ต้องส่ง</p>
-                    </div>
-                `;
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-box-open"></i><h5>ไม่มีออเดอร์</h5></div>`;
                 return;
             }
-            
-            container.innerHTML = allOrders.map(order => {
-                const isConfirmed = order.status === 'confirmed';
-                const cardClass = isConfirmed ? 'confirmed' : 'pending';
-                const statusBadge = isConfirmed 
-                    ? '<span class="status-badge confirmed">✅ ส่งแล้ว</span>'
-                    : '<span class="status-badge pending">⏳ รอส่ง</span>';
-                
+            container.innerHTML = allOrders.map(o => {
+                const isConfirmed = o.status === 'confirmed';
                 let itemsHtml = '';
                 try {
-                    const items = typeof order.order_items === 'string' ? JSON.parse(order.order_items) : order.order_items;
-                    itemsHtml = items.map(item => `
-                        <div class="order-item">
-                            <span class="order-item-name">${escapeHtml(item.name)}</span>
-                            <span class="order-item-qty">${item.quantity} ${item.unit || ''}</span>
-                        </div>
-                    `).join('');
-                } catch (e) {
-                    itemsHtml = '<div class="order-item">ไม่สามารถแสดงรายการได้</div>';
-                }
+                    const items = typeof o.order_items === 'string' ? JSON.parse(o.order_items) : o.order_items;
+                    itemsHtml = items.map(i => `<div class="order-item"><span>${escapeHtml(i.name)}</span><span style="font-weight:bold;color:#667eea;">${i.quantity} ${i.unit||''}</span></div>`).join('');
+                } catch (e) { itemsHtml = '-'; }
                 
                 return `
-                    <div class="order-card ${cardClass}">
+                    <div class="order-card ${isConfirmed ? 'confirmed' : 'pending'}">
                         <div class="order-header">
-                            <div class="order-customer">${escapeHtml(order.customer_name)}</div>
-                            <div class="order-round">รอบ ${order.delivery_round}</div>
+                            <div class="order-customer">${escapeHtml(o.customer_name)}</div>
+                            <div class="order-round">รอบ ${o.delivery_round}</div>
                         </div>
-                        <div class="order-items">
-                            ${itemsHtml}
-                        </div>
+                        <div class="order-items">${itemsHtml}</div>
                         <div class="order-status">
-                            ${statusBadge}
-                            ${!isConfirmed ? `
-                                <button class="confirm-btn" onclick="confirmOrder(${order.id})">
-                                    <i class="fas fa-check me-1"></i>ยืนยัน
-                                </button>
-                            ` : ''}
+                            ${isConfirmed ? '<span class="status-badge confirmed">✅ ส่งแล้ว</span>' : '<span class="status-badge pending">⏳ รอส่ง</span>'}
+                            ${!isConfirmed ? `<button class="confirm-btn" onclick="confirmOrder(${o.id})"><i class="fas fa-check me-1"></i>ยืนยัน</button>` : ''}
                         </div>
                     </div>
                 `;
@@ -522,158 +482,148 @@
                 await fetch(`${BASE_URL}/confirm-order`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        orderId: orderId,
-                        isPaid: 0,
-                        confirmedBy: driverInfo.alias_name
-                    })
+                    body: JSON.stringify({ orderId, isPaid: 0, confirmedBy: driverInfo.alias_name })
                 });
-                
-                // Update local data
-                const order = allOrders.find(o => o.id === orderId);
-                if (order) order.status = 'confirmed';
-                
+                const o = allOrders.find(x => x.id === orderId);
+                if (o) o.status = 'confirmed';
                 updateStats();
                 renderOrders();
-            } catch (e) {
-                alert('เกิดข้อผิดพลาด');
-                console.error(e);
-            }
+            } catch (e) { alert('เกิดข้อผิดพลาด'); }
             showLoading(false);
         }
 
         async function confirmAllOrders() {
-            const pendingOrders = allOrders.filter(o => o.status !== 'confirmed');
-            if (pendingOrders.length === 0) return;
-            
-            if (!confirm(`ยืนยันส่งทั้งหมด ${pendingOrders.length} รายการ?`)) return;
+            const pending = allOrders.filter(o => o.status !== 'confirmed');
+            if (!pending.length || !confirm(`ยืนยันส่งทั้งหมด ${pending.length} รายการ?`)) return;
             
             showLoading(true);
             try {
-                for (const order of pendingOrders) {
+                for (const o of pending) {
                     await fetch(`${BASE_URL}/confirm-order`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            orderId: order.id,
-                            isPaid: 0,
-                            confirmedBy: driverInfo.alias_name
-                        })
+                        body: JSON.stringify({ orderId: o.id, isPaid: 0, confirmedBy: driverInfo.alias_name })
                     });
-                    order.status = 'confirmed';
+                    o.status = 'confirmed';
                 }
-                
                 updateStats();
                 renderOrders();
                 alert('✅ ยืนยันทั้งหมดเรียบร้อย!');
-            } catch (e) {
-                alert('เกิดข้อผิดพลาด');
-                console.error(e);
-            }
+            } catch (e) { alert('เกิดข้อผิดพลาด'); }
             showLoading(false);
         }
 
-        // ========== Admin Mode Functions ==========
+        // ========== Admin Mode ==========
 
         async function loadAdminData() {
             showLoading(true);
             try {
-                // Load all drivers
-                const res = await fetch(`${BASE_URL}/get-line-aliases`, {
+                const res1 = await fetch(`${BASE_URL}/get-line-aliases`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({})
                 });
-                const aliases = await res.json();
-                allDrivers = aliases.filter(a => a.alias_name && a.use_for === 'driver');
+                const aliases = await res1.json();
+                allDrivers = (Array.isArray(aliases) ? aliases : []).filter(a => a.alias_name && a.use_for === 'driver');
+                
+                const res2 = await fetch(`${BASE_URL}/get-all-driver-rounds`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                let dr = await res2.json();
+                allDriverRounds = Array.isArray(dr) ? dr : (dr && dr.id ? [dr] : []);
                 
                 renderDriverSelect();
-            } catch (e) {
-                console.error('Error loading admin data:', e);
-            }
+            } catch (e) { console.error('Error:', e); }
             showLoading(false);
         }
 
         function renderDriverSelect() {
-            const select = document.getElementById('driverSelect');
-            select.innerHTML = '<option value="">-- เลือกกลุ่มคนขับ --</option>' +
+            document.getElementById('driverSelect').innerHTML = '<option value="">-- เลือกกลุ่มคนขับ --</option>' +
                 allDrivers.map(d => `<option value="${d.id}">${escapeHtml(d.alias_name)}</option>`).join('');
         }
 
-        async function loadAdminOrders() {
-            const driverAliasId = document.getElementById('driverSelect').value;
-            const container = document.getElementById('adminOrdersList');
-            const sendBtn = document.getElementById('sendToDriverBtn');
+        function onDriverSelected() {
+            const driverId = parseInt(document.getElementById('driverSelect').value);
+            const roundSelect = document.getElementById('roundSelect');
             
-            if (!driverAliasId) {
+            if (!driverId) {
+                roundSelect.innerHTML = '<option value="">-- เลือกรอบ --</option>';
+                document.getElementById('sendToDriverBtn').disabled = true;
+                document.getElementById('adminOrdersList').innerHTML = '';
+                return;
+            }
+            
+            const rounds = allDriverRounds.filter(r => r.driver_alias_id === driverId);
+            roundSelect.innerHTML = '<option value="">-- เลือกรอบ --</option>' +
+                rounds.map(r => `<option value="${r.id}">${escapeHtml(r.round_name)}</option>`).join('');
+            
+            document.getElementById('adminOrdersList').innerHTML = '';
+            document.getElementById('sendToDriverBtn').disabled = true;
+        }
+
+        async function loadAdminOrders() {
+            const roundId = parseInt(document.getElementById('roundSelect').value);
+            const container = document.getElementById('adminOrdersList');
+            const btn = document.getElementById('sendToDriverBtn');
+            
+            if (!roundId) {
                 container.innerHTML = '';
-                sendBtn.disabled = true;
+                btn.disabled = true;
                 return;
             }
             
             showLoading(true);
             try {
                 const today = new Date().toISOString().split('T')[0];
-                const res = await fetch(`${BASE_URL}/get-driver-orders-by-group`, {
+                const res = await fetch(`${BASE_URL}/get-driver-orders-by-round`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        driverAliasId: parseInt(driverAliasId),
-                        date: today
-                    })
+                    body: JSON.stringify({ driverRoundId: roundId, date: today })
                 });
-                const orders = await res.json();
+                let orders = await res.json();
+                orders = Array.isArray(orders) ? orders : (orders && orders.id ? [orders] : []);
                 
-                if (!Array.isArray(orders) || orders.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-box-open"></i>
-                            <h5>ไม่มีออเดอร์</h5>
-                            <p>ไม่มีออเดอร์สำหรับคนขับนี้วันนี้</p>
-                        </div>
-                    `;
-                    sendBtn.disabled = true;
+                if (orders.length === 0) {
+                    container.innerHTML = `<div class="empty-state"><i class="fas fa-box-open"></i><h5>ไม่มีออเดอร์</h5></div>`;
+                    btn.disabled = true;
                 } else {
-                    container.innerHTML = orders.map(order => {
+                    container.innerHTML = orders.map(o => {
                         let itemsHtml = '';
                         try {
-                            const items = typeof order.order_items === 'string' ? JSON.parse(order.order_items) : order.order_items;
-                            itemsHtml = items.map(item => `${item.name} x${item.quantity}`).join(', ');
-                        } catch (e) {
-                            itemsHtml = '-';
-                        }
-                        
+                            const items = typeof o.order_items === 'string' ? JSON.parse(o.order_items) : o.order_items;
+                            itemsHtml = items.map(i => `${i.name} x${i.quantity}`).join(', ');
+                        } catch (e) { itemsHtml = '-'; }
                         return `
-                            <div class="order-card ${order.status === 'confirmed' ? 'confirmed' : 'pending'}">
+                            <div class="order-card ${o.status === 'confirmed' ? 'confirmed' : 'pending'}">
                                 <div class="order-header">
-                                    <div class="order-customer">${escapeHtml(order.customer_name)}</div>
-                                    <div class="order-round">รอบ ${order.delivery_round}</div>
+                                    <div class="order-customer">${escapeHtml(o.customer_name)}</div>
+                                    <div class="order-round">รอบ ${o.delivery_round}</div>
                                 </div>
                                 <div style="font-size: 13px; color: #666;">${itemsHtml}</div>
                             </div>
                         `;
                     }).join('');
-                    sendBtn.disabled = false;
+                    btn.disabled = false;
                 }
             } catch (e) {
-                console.error('Error loading orders:', e);
                 container.innerHTML = '<div class="text-center text-danger p-4">เกิดข้อผิดพลาด</div>';
-                sendBtn.disabled = true;
+                btn.disabled = true;
             }
             showLoading(false);
         }
 
         async function sendToDriver() {
-            const driverAliasId = document.getElementById('driverSelect').value;
-            if (!driverAliasId) return;
+            const driverId = parseInt(document.getElementById('driverSelect').value);
+            const roundId = parseInt(document.getElementById('roundSelect').value);
+            if (!driverId || !roundId) return;
             
-            const driver = allDrivers.find(d => d.id == driverAliasId);
-            if (!driver || !driver.line_id) {
-                alert('ไม่พบ LINE ID ของกลุ่มคนขับ');
-                return;
-            }
+            const driver = allDrivers.find(d => d.id === driverId);
+            const round = allDriverRounds.find(r => r.id === roundId);
+            if (!driver || !round) return;
             
-            if (!confirm(`ส่งแจ้งเตือนไปยังกลุ่ม "${driver.alias_name}"?`)) return;
+            if (!confirm(`ส่งแจ้งเตือนไปยังกลุ่ม "${driver.alias_name}" - ${round.round_name}?`)) return;
             
             showLoading(true);
             try {
@@ -688,15 +638,7 @@
                         header: {
                             type: "box",
                             layout: "vertical",
-                            contents: [
-                                {
-                                    type: "text",
-                                    text: "📦 ออเดอร์พร้อมแล้ว!",
-                                    weight: "bold",
-                                    size: "lg",
-                                    color: "#ffffff"
-                                }
-                            ],
+                            contents: [{ type: "text", text: "📦 ออเดอร์พร้อมแล้ว!", weight: "bold", size: "lg", color: "#ffffff" }],
                             backgroundColor: "#667eea",
                             paddingAll: "15px"
                         },
@@ -704,45 +646,21 @@
                             type: "box",
                             layout: "vertical",
                             contents: [
-                                {
-                                    type: "text",
-                                    text: `วันที่ ${dateStr}`,
-                                    size: "sm",
-                                    color: "#666666"
-                                },
-                                {
-                                    type: "text",
-                                    text: `กลุ่ม: ${driver.alias_name}`,
-                                    size: "md",
-                                    weight: "bold",
-                                    margin: "md"
-                                },
-                                {
-                                    type: "text",
-                                    text: "กดปุ่มด้านล่างเพื่อดูรายการและยืนยันการส่ง",
-                                    size: "sm",
-                                    color: "#888888",
-                                    margin: "md",
-                                    wrap: true
-                                }
+                                { type: "text", text: `วันที่ ${dateStr}`, size: "sm", color: "#666666" },
+                                { type: "text", text: `${driver.alias_name} - ${round.round_name}`, size: "md", weight: "bold", margin: "md" },
+                                { type: "text", text: "กดปุ่มด้านล่างเพื่อดูรายการและยืนยันการส่ง", size: "sm", color: "#888888", margin: "md", wrap: true }
                             ],
                             paddingAll: "15px"
                         },
                         footer: {
                             type: "box",
                             layout: "vertical",
-                            contents: [
-                                {
-                                    type: "button",
-                                    action: {
-                                        type: "uri",
-                                        label: "ดูรายละเอียด",
-                                        uri: "https://liff.line.me/2008689090-qpzFeqNR"
-                                    },
-                                    style: "primary",
-                                    color: "#667eea"
-                                }
-                            ],
+                            contents: [{
+                                type: "button",
+                                action: { type: "uri", label: "ดูรายละเอียด", uri: "https://liff.line.me/2008689090-qpzFeqNR" },
+                                style: "primary",
+                                color: "#667eea"
+                            }],
                             paddingAll: "15px"
                         }
                     }
@@ -750,25 +668,16 @@
                 
                 await fetch('https://api.line.me/v2/bot/message/push', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': LINE_TOKEN
-                    },
-                    body: JSON.stringify({
-                        to: driver.line_id,
-                        messages: [flexMessage]
-                    })
+                    headers: { 'Content-Type': 'application/json', 'Authorization': LINE_TOKEN },
+                    body: JSON.stringify({ to: driver.line_id, messages: [flexMessage] })
                 });
                 
                 alert('✅ ส่งแจ้งเตือนเรียบร้อย!');
-            } catch (e) {
-                alert('เกิดข้อผิดพลาดในการส่ง');
-                console.error(e);
-            }
+            } catch (e) { alert('เกิดข้อผิดพลาดในการส่ง'); console.error(e); }
             showLoading(false);
         }
 
-        // ========== Utility Functions ==========
+        // ========== Utilities ==========
 
         function escapeHtml(str) {
             if (!str) return '';
