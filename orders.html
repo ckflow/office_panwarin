@@ -346,6 +346,97 @@
             font-size: 14px;
         }
 
+        /* Edit History Modal */
+        .edit-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+        }
+        .edit-modal.show { display: flex; }
+        .edit-modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 450px;
+            max-height: 90vh;
+            overflow: hidden;
+            animation: slideUp 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        .edit-modal-header {
+            background: linear-gradient(135deg, #6f42c1 0%, #9c27b0 100%);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .edit-modal-body {
+            padding: 15px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .edit-modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #f0f0f0;
+            flex-shrink: 0;
+        }
+        .compare-section {
+            margin-bottom: 15px;
+        }
+        .compare-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .compare-title.before { color: #dc3545; }
+        .compare-title.after { color: #198754; }
+        .compare-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 13px;
+        }
+        .compare-box.before {
+            border-left: 3px solid #dc3545;
+            background: #fff5f5;
+        }
+        .compare-box.after {
+            border-left: 3px solid #198754;
+            background: #f0fff4;
+        }
+        .compare-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px dashed #dee2e6;
+        }
+        .compare-item:last-child {
+            border-bottom: none;
+        }
+        .compare-label {
+            color: #666;
+        }
+        .compare-value {
+            font-weight: bold;
+        }
+        .edit-time {
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #f0f0f0;
+        }
+
         @media (max-width: 576px) {
             .filter-row { flex-direction: column; align-items: stretch; }
             .filter-group { width: 100%; }
@@ -417,6 +508,22 @@
                 <button class="btn btn-success" id="confirmPaymentBtn" onclick="submitConfirmOrder()" disabled>
                     ยืนยัน
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit History Modal -->
+    <div class="edit-modal" id="editModal">
+        <div class="edit-modal-content">
+            <div class="edit-modal-header">
+                <h5 class="mb-0">✏️ ประวัติการแก้ไข</h5>
+                <div id="editModalInvoice" style="font-size: 14px; opacity: 0.9;"></div>
+            </div>
+            <div class="edit-modal-body" id="editModalBody">
+                <!-- Content will be inserted here -->
+            </div>
+            <div class="edit-modal-footer">
+                <button class="btn btn-secondary w-100" onclick="closeEditModal()">ปิด</button>
             </div>
         </div>
     </div>
@@ -779,9 +886,11 @@
             
             let statusText = { 'pending': '⏳ รอยืนยัน', 'confirmed': '✅ ยืนยันแล้ว', 'cancelled': '❌ ยกเลิก' }[order.status] || 'รอดำเนินการ';
             
-            // Edited badge
+            // Edited badge - clickable (store order id for lookup)
             const isEdited = order.is_edited == 1;
-            const editedBadge = isEdited ? `<span class="status-badge status-edited" title="ลูกค้าแก้ไขออเดอร์">✏️ แก้ไขแล้ว</span>` : '';
+            const editedBadge = isEdited 
+                ? `<span class="status-badge status-edited" onclick="showEditHistory(${order.id})">✏️ แก้ไขแล้ว</span>` 
+                : '';
             
             // Payment status for confirmed orders
             let paymentBadge = '';
@@ -858,6 +967,172 @@
             }
             
             return '<span style="color:#999;">ไม่มีรายการ</span>';
+        }
+
+        // ==================== EDIT HISTORY MODAL ====================
+        function showEditHistory(orderId) {
+            // Find order from allOrders
+            const order = allOrders.find(o => o.id === orderId);
+            if (!order) {
+                alert('ไม่พบข้อมูลออเดอร์');
+                return;
+            }
+            
+            document.getElementById('editModalInvoice').textContent = order.invoice_no || '';
+            
+            let originalData = {};
+            try {
+                if (order.original_data) {
+                    originalData = typeof order.original_data === 'string' 
+                        ? JSON.parse(order.original_data) 
+                        : order.original_data;
+                }
+            } catch (e) {
+                console.error('Error parsing original_data:', e);
+            }
+            
+            // Current data
+            const currentData = {
+                order_items: order.order_items,
+                total_bags: order.total_bags,
+                subtotal: order.subtotal,
+                discount: order.discount,
+                total: order.total,
+                delivery_round: order.delivery_round,
+                pickup_time: order.pickup_time
+            };
+            
+            let html = '';
+            
+            // Before section
+            html += `
+                <div class="compare-section">
+                    <div class="compare-title before">
+                        <i class="fas fa-times-circle"></i> ก่อนแก้ไข
+                    </div>
+                    <div class="compare-box before">
+                        ${formatCompareItems(originalData)}
+                    </div>
+                </div>
+            `;
+            
+            // After section
+            html += `
+                <div class="compare-section">
+                    <div class="compare-title after">
+                        <i class="fas fa-check-circle"></i> หลังแก้ไข (ปัจจุบัน)
+                    </div>
+                    <div class="compare-box after">
+                        ${formatCompareItems(currentData)}
+                    </div>
+                </div>
+            `;
+            
+            // Edit time
+            if (order.edited_at) {
+                html += `<div class="edit-time">🕐 แก้ไขเมื่อ: ${formatDateTime(order.edited_at)}</div>`;
+            }
+            
+            document.getElementById('editModalBody').innerHTML = html;
+            document.getElementById('editModal').classList.add('show');
+        }
+        
+        function formatCompareItems(data) {
+            if (!data || Object.keys(data).length === 0) {
+                return '<span style="color:#999;">ไม่มีข้อมูล</span>';
+            }
+            
+            let html = '';
+            
+            // Order items
+            if (data.order_items) {
+                html += `<div class="compare-item"><span class="compare-label">รายการ:</span></div>`;
+                html += `<div style="padding-left: 10px; margin-bottom: 8px;">${formatOrderItemsSimple(data.order_items)}</div>`;
+            }
+            
+            // Delivery round
+            if (data.delivery_round) {
+                const roundText = data.delivery_round === 'pickup' 
+                    ? `รับเอง ${data.pickup_time ? '(' + data.pickup_time + ' น.)' : ''}`
+                    : `รอบ ${data.delivery_round === 'extra' ? 'เสริม' : data.delivery_round}`;
+                html += `<div class="compare-item">
+                    <span class="compare-label">การจัดส่ง:</span>
+                    <span class="compare-value">${roundText}</span>
+                </div>`;
+            }
+            
+            // Total bags
+            if (data.total_bags !== undefined) {
+                html += `<div class="compare-item">
+                    <span class="compare-label">ยืมถุง:</span>
+                    <span class="compare-value">${data.total_bags} ใบ</span>
+                </div>`;
+            }
+            
+            // Subtotal
+            if (data.subtotal !== undefined) {
+                html += `<div class="compare-item">
+                    <span class="compare-label">ยอดรวม:</span>
+                    <span class="compare-value">${parseFloat(data.subtotal || 0).toLocaleString()} ฿</span>
+                </div>`;
+            }
+            
+            // Discount
+            if (data.discount !== undefined && data.discount > 0) {
+                html += `<div class="compare-item">
+                    <span class="compare-label">ส่วนลด:</span>
+                    <span class="compare-value">-${parseFloat(data.discount || 0).toLocaleString()} ฿</span>
+                </div>`;
+            }
+            
+            // Total
+            if (data.total !== undefined) {
+                html += `<div class="compare-item">
+                    <span class="compare-label">ยอดสุทธิ:</span>
+                    <span class="compare-value" style="color: #198754; font-size: 16px;">${parseFloat(data.total || 0).toLocaleString()} ฿</span>
+                </div>`;
+            }
+            
+            return html || '<span style="color:#999;">ไม่มีข้อมูล</span>';
+        }
+        
+        function formatOrderItemsSimple(items) {
+            if (!items) return '<span style="color:#999;">ไม่มีรายการ</span>';
+            
+            let itemsStr = typeof items === 'object' ? JSON.stringify(items) : String(items);
+            const matches = itemsStr.match(/"([^"]+)"/g);
+            
+            if (matches && matches.length > 0) {
+                const result = matches
+                    .map(m => m.replace(/^"|"$/g, ''))
+                    .filter(item => item && !item.startsWith('---'))
+                    .filter(item => !item.includes('ยืมถุง'))
+                    .map(item => `<div style="font-size: 12px;">• ${item.replace(/^-\s*/, '')}</div>`);
+                
+                return result.length > 0 ? result.join('') : '<span style="color:#999;">ไม่มีรายการ</span>';
+            }
+            
+            return '<span style="color:#999;">ไม่มีรายการ</span>';
+        }
+        
+        function formatDateTime(dateTimeStr) {
+            if (!dateTimeStr) return '';
+            try {
+                const date = new Date(dateTimeStr);
+                const day = date.getDate();
+                const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+                const month = months[date.getMonth()];
+                const year = date.getFullYear() + 543;
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${day} ${month} ${year} เวลา ${hours}:${minutes} น.`;
+            } catch (e) {
+                return dateTimeStr;
+            }
+        }
+        
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('show');
         }
 
         function updateSummary() {
