@@ -43,16 +43,9 @@
         .filter-group input, .filter-group select {
             font-size: 14px;
         }
-        .date-input {
-            width: 130px;
-        }
-        .time-input {
-            width: 90px;
-        }
-        .customer-select {
-            min-width: 150px;
-            max-width: 200px;
-        }
+        .date-input { width: 130px; }
+        .time-input { width: 90px; }
+        .customer-select { min-width: 150px; max-width: 200px; }
         
         /* Tab Navigation */
         .tab-nav {
@@ -137,11 +130,7 @@
         }
         .order-items div { margin-bottom: 3px; }
         
-        .order-bags {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 10px;
-        }
+        .order-bags { font-size: 12px; color: #666; margin-bottom: 10px; }
         
         .order-actions {
             display: flex;
@@ -166,6 +155,18 @@
         .status-pending { background: #fff3cd; color: #856404; }
         .status-confirmed { background: #d1e7dd; color: #0f5132; }
         .status-cancelled { background: #f8d7da; color: #842029; }
+        
+        /* Payment Status Badge */
+        .payment-badge {
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        .payment-paid { background: #d1e7dd; color: #0f5132; }
+        .payment-unpaid { background: #fff3cd; color: #856404; }
+        .payment-method { font-size: 10px; color: #666; }
         
         .empty-state {
             text-align: center;
@@ -196,21 +197,10 @@
             transition: all 0.2s;
             border: 2px solid transparent;
         }
-        .summary-item:hover {
-            background: #f8f9fa;
-        }
-        .summary-item.active {
-            border-color: currentColor;
-            background: #f8f9fa;
-        }
-        .summary-number {
-            font-size: 22px;
-            font-weight: bold;
-        }
-        .summary-label {
-            font-size: 10px;
-            color: #888;
-        }
+        .summary-item:hover { background: #f8f9fa; }
+        .summary-item.active { border-color: currentColor; background: #f8f9fa; }
+        .summary-number { font-size: 22px; font-weight: bold; }
+        .summary-label { font-size: 10px; color: #888; }
         .summary-pending .summary-number { color: #ffc107; }
         .summary-pending.active { border-color: #ffc107; background: #fff9e6; }
         .summary-confirmed .summary-number { color: #198754; }
@@ -253,34 +243,106 @@
             text-decoration: none;
             text-align: center;
         }
-        .page-nav-btn:hover {
-            background: #f8f9fa;
-            color: #667eea;
+        .page-nav-btn:hover { background: #f8f9fa; color: #667eea; }
+        .page-nav-btn.active { background: #667eea; color: white; }
+
+        /* Payment Modal */
+        .payment-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
-        .page-nav-btn.active {
-            background: #667eea;
+        .payment-modal.show { display: flex; }
+        .payment-modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 350px;
+            overflow: hidden;
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .payment-modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            padding: 15px 20px;
+            text-align: center;
+        }
+        .payment-modal-body { padding: 20px; }
+        .payment-option {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .payment-option:hover { border-color: #667eea; background: #f8f9ff; }
+        .payment-option.selected { border-color: #198754; background: #e8f5e9; }
+        .payment-option-icon {
+            font-size: 28px;
+            margin-right: 15px;
+        }
+        .payment-option-text {
+            flex: 1;
+        }
+        .payment-option-title {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .payment-option-desc {
+            font-size: 12px;
+            color: #888;
+        }
+        .payment-method-options {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #dee2e6;
+        }
+        .payment-method-options.show { display: block; }
+        .method-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            background: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .method-btn:hover { border-color: #667eea; }
+        .method-btn.selected { border-color: #198754; background: #e8f5e9; }
+        .payment-modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            gap: 10px;
+        }
+        .payment-modal-footer button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 14px;
         }
 
         @media (max-width: 576px) {
-            .filter-row {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .filter-group {
-                width: 100%;
-            }
-            .filter-group select, .filter-group input {
-                flex: 1;
-            }
-            .date-input, .time-input {
-                width: auto;
-                flex: 1;
-            }
-            .customer-select {
-                width: 100%;
-                max-width: none;
-            }
+            .filter-row { flex-direction: column; align-items: stretch; }
+            .filter-group { width: 100%; }
+            .filter-group select, .filter-group input { flex: 1; }
+            .date-input, .time-input { width: auto; flex: 1; }
+            .customer-select { width: 100%; max-width: none; }
         }
     </style>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
@@ -298,6 +360,55 @@
         <div class="text-center">
             <div class="spinner-border text-primary mb-3" role="status"></div>
             <div>กำลังโหลด...</div>
+        </div>
+    </div>
+
+    <!-- Payment Confirmation Modal -->
+    <div class="payment-modal" id="paymentModal">
+        <div class="payment-modal-content">
+            <div class="payment-modal-header">
+                <h5 class="mb-0">✅ ยืนยันออเดอร์</h5>
+                <div id="modalInvoice" style="font-size: 14px; opacity: 0.9;"></div>
+            </div>
+            <div class="payment-modal-body">
+                <p style="text-align: center; color: #666; margin-bottom: 15px;">เลือกสถานะการจ่ายเงิน</p>
+                
+                <div class="payment-option" onclick="selectPaymentStatus('paid')">
+                    <div class="payment-option-icon">💵</div>
+                    <div class="payment-option-text">
+                        <div class="payment-option-title">จ่ายแล้ว</div>
+                        <div class="payment-option-desc">ลูกค้าชำระเงินเรียบร้อย</div>
+                    </div>
+                    <i class="fas fa-check-circle" style="color: #198754; display: none;"></i>
+                </div>
+                
+                <div class="payment-option" onclick="selectPaymentStatus('unpaid')">
+                    <div class="payment-option-icon">⏳</div>
+                    <div class="payment-option-text">
+                        <div class="payment-option-title">ยังไม่จ่าย</div>
+                        <div class="payment-option-desc">รอเก็บเงินภายหลัง</div>
+                    </div>
+                    <i class="fas fa-check-circle" style="color: #198754; display: none;"></i>
+                </div>
+                
+                <div class="payment-method-options" id="paymentMethodOptions">
+                    <p style="text-align: center; color: #666; margin-bottom: 10px; font-size: 13px;">เลือกวิธีชำระเงิน</p>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="method-btn" onclick="selectPaymentMethod('cash')">
+                            💵 เงินสด
+                        </button>
+                        <button type="button" class="method-btn" onclick="selectPaymentMethod('transfer')">
+                            📱 โอน
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="payment-modal-footer">
+                <button class="btn btn-outline-secondary" onclick="closePaymentModal()">ยกเลิก</button>
+                <button class="btn btn-success" id="confirmPaymentBtn" onclick="submitConfirmOrder()" disabled>
+                    ยืนยัน
+                </button>
+            </div>
         </div>
     </div>
 
@@ -393,9 +504,9 @@
     <script>
         const MY_LIFF_ID = "2008689090-CnrdxM5k";
         const ADMIN_IDS = [
-            "U4dc8fa32570dca3dfb4093b48a5c2093", // แชมป์
-            "U4cc74cb6346dece926adf6b2a3b7cb77", // บี
-            "Ufab5bb133c511730b583f47104965370", // ก้อย
+            "U4dc8fa32570dca3dfb4093b48a5c2093",
+            "U4cc74cb6346dece926adf6b2a3b7cb77",
+            "Ufab5bb133c511730b583f47104965370",
         ];
         const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
         let allOrders = [];
@@ -403,15 +514,18 @@
         let currentStatusFilter = '';
         let autoRefreshInterval = null;
         const AUTO_REFRESH_SECONDS = 10;
+        
+        // Payment Modal State
+        let pendingOrderId = null;
+        let pendingInvoiceNo = null;
+        let selectedPaymentStatus = null;
+        let selectedPaymentMethod = null;
 
         // ==================== AUTH ====================
         async function main() {
             try {
                 await liff.init({ liffId: MY_LIFF_ID });
-                if (!liff.isLoggedIn()) { 
-                    liff.login(); 
-                    return; 
-                }
+                if (!liff.isLoggedIn()) { liff.login(); return; }
                 
                 const profile = await liff.getProfile();
                 if (!ADMIN_IDS.includes(profile.userId)) {
@@ -424,11 +538,9 @@
                     return;
                 }
                 
-                // Auth passed - show content
                 document.getElementById('auth-check').style.display = 'none';
                 document.getElementById('content').style.display = 'block';
                 
-                // Initialize page
                 initDate();
                 loadCustomers();
                 loadOrders();
@@ -445,7 +557,6 @@
             }
         }
         
-        // Start
         main();
         
         function startAutoRefresh() {
@@ -457,13 +568,6 @@
             }, AUTO_REFRESH_SECONDS * 1000);
         }
         
-        function stopAutoRefresh() {
-            if (autoRefreshInterval) {
-                clearInterval(autoRefreshInterval);
-                autoRefreshInterval = null;
-            }
-        }
-        
         async function silentRefreshOrders() {
             const dateFrom = document.getElementById('dateFrom').value;
             const dateTo = document.getElementById('dateTo').value;
@@ -473,12 +577,7 @@
                 const res = await fetch(`${BASE_URL}/get-pending-orders`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        dateFrom,
-                        dateTo,
-                        customerId: customerId || null,
-                        status: null
-                    })
+                    body: JSON.stringify({ dateFrom, dateTo, customerId: customerId || null, status: null })
                 });
                 const newOrders = await res.json();
                 if (!Array.isArray(newOrders)) return;
@@ -487,33 +586,22 @@
                     allOrders = newOrders;
                     updateSummary();
                     renderOrders();
-                    console.log('🔄 Orders refreshed:', new Date().toLocaleTimeString());
                 }
-            } catch (e) {
-                console.error('Silent refresh error:', e);
-            }
+            } catch (e) { console.error('Silent refresh error:', e); }
         }
         
         document.addEventListener('visibilitychange', function() {
-            if (document.visibilityState === 'visible') {
-                silentRefreshOrders();
-            }
+            if (document.visibilityState === 'visible') silentRefreshOrders();
         });
 
         function filterByStatus(status) {
             currentStatusFilter = status;
-            
             document.querySelectorAll('.summary-item').forEach(item => item.classList.remove('active'));
             
-            if (status === 'pending') {
-                document.querySelector('.summary-pending').classList.add('active');
-            } else if (status === 'confirmed') {
-                document.querySelector('.summary-confirmed').classList.add('active');
-            } else if (status === 'cancelled') {
-                document.querySelector('.summary-cancelled').classList.add('active');
-            } else {
-                document.querySelector('.summary-total').classList.add('active');
-            }
+            if (status === 'pending') document.querySelector('.summary-pending').classList.add('active');
+            else if (status === 'confirmed') document.querySelector('.summary-confirmed').classList.add('active');
+            else if (status === 'cancelled') document.querySelector('.summary-cancelled').classList.add('active');
+            else document.querySelector('.summary-total').classList.add('active');
             
             renderOrders();
         }
@@ -544,9 +632,7 @@
                 allCustomers.forEach(c => {
                     select.innerHTML += `<option value="${c.id}">${c.name}</option>`;
                 });
-            } catch (e) {
-                console.error('Error loading customers:', e);
-            }
+            } catch (e) { console.error('Error loading customers:', e); }
         }
 
         function switchTab(tab) {
@@ -573,12 +659,7 @@
                 const res = await fetch(`${BASE_URL}/get-pending-orders`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        dateFrom,
-                        dateTo,
-                        customerId: customerId || null,
-                        status: null
-                    })
+                    body: JSON.stringify({ dateFrom, dateTo, customerId: customerId || null, status: null })
                 });
                 allOrders = await res.json();
                 if (!Array.isArray(allOrders)) allOrders = [];
@@ -616,14 +697,10 @@
             document.getElementById('badgePickup').textContent = pendingPickup;
             document.getElementById('badgeDelivery').textContent = pendingDelivery;
             
+            // Render Pickup Orders
             const pickupContainer = document.getElementById('pickupOrdersList');
             if (pickupOrders.length === 0) {
-                pickupContainer.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-inbox"></i>
-                        <h5>ไม่มีออเดอร์รับเอง</h5>
-                    </div>
-                `;
+                pickupContainer.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><h5>ไม่มีออเดอร์รับเอง</h5></div>`;
             } else {
                 const grouped = {};
                 pickupOrders.forEach(o => {
@@ -634,28 +711,21 @@
                 
                 let html = '';
                 Object.keys(grouped).sort().reverse().forEach(date => {
-                    html += `<div style="margin: 15px; font-weight: bold; color: #856404;">
-                        📅 ${formatDateThai(date)} (${grouped[date].length} ออเดอร์)
-                    </div>`;
+                    html += `<div style="margin: 15px; font-weight: bold; color: #856404;">📅 ${formatDateThai(date)} (${grouped[date].length} ออเดอร์)</div>`;
                     html += grouped[date].map(o => renderOrderCard(o)).join('');
                 });
                 pickupContainer.innerHTML = html;
             }
             
+            // Render Delivery Orders
             const deliveryContainer = document.getElementById('deliveryOrdersList');
             if (deliveryOrders.length === 0) {
-                deliveryContainer.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-truck"></i>
-                        <h5>ไม่มีออเดอร์จัดส่ง</h5>
-                    </div>
-                `;
+                deliveryContainer.innerHTML = `<div class="empty-state"><i class="fas fa-truck"></i><h5>ไม่มีออเดอร์จัดส่ง</h5></div>`;
             } else {
                 const groupedByDate = {};
                 deliveryOrders.forEach(o => {
                     const date = o.order_date || 'ไม่ระบุ';
                     if (!groupedByDate[date]) groupedByDate[date] = {};
-                    
                     const round = o.delivery_round || 'ไม่ระบุ';
                     if (!groupedByDate[date][round]) groupedByDate[date][round] = [];
                     groupedByDate[date][round].push(o);
@@ -665,26 +735,19 @@
                 const roundOrder = ['1', '2', '3', 'extra'];
                 
                 Object.keys(groupedByDate).sort().reverse().forEach(date => {
-                    html += `<div style="margin: 15px; font-weight: bold; color: #667eea; font-size: 16px; border-bottom: 2px solid #667eea; padding-bottom: 5px;">
-                        📅 ${formatDateThai(date)}
-                    </div>`;
+                    html += `<div style="margin: 15px; font-weight: bold; color: #667eea; font-size: 16px; border-bottom: 2px solid #667eea; padding-bottom: 5px;">📅 ${formatDateThai(date)}</div>`;
                     
                     const grouped = groupedByDate[date];
-                    
                     roundOrder.forEach(round => {
                         if (grouped[round]) {
-                            html += `<div style="margin: 10px 15px; font-weight: bold; color: #084298;">
-                                🚚 รอบ ${round === 'extra' ? 'เสริม' : round} (${grouped[round].length} ออเดอร์)
-                            </div>`;
+                            html += `<div style="margin: 10px 15px; font-weight: bold; color: #084298;">🚚 รอบ ${round === 'extra' ? 'เสริม' : round} (${grouped[round].length} ออเดอร์)</div>`;
                             html += grouped[round].map(o => renderOrderCard(o)).join('');
                         }
                     });
                     
                     Object.keys(grouped).forEach(round => {
                         if (!roundOrder.includes(round)) {
-                            html += `<div style="margin: 10px 15px; font-weight: bold; color: #084298;">
-                                🚚 ${round} (${grouped[round].length} ออเดอร์)
-                            </div>`;
+                            html += `<div style="margin: 10px 15px; font-weight: bold; color: #084298;">🚚 ${round} (${grouped[round].length} ออเดอร์)</div>`;
                             html += grouped[round].map(o => renderOrderCard(o)).join('');
                         }
                     });
@@ -702,23 +765,21 @@
         }
 
         function renderOrderCard(order) {
-            const statusClass = {
-                'pending': 'pending',
-                'confirmed': 'confirmed',
-                'cancelled': 'cancelled'
-            }[order.status] || 'pending';
+            const statusClass = { 'pending': 'pending', 'confirmed': 'confirmed', 'cancelled': 'cancelled' }[order.status] || 'pending';
+            const statusBadgeClass = { 'pending': 'status-pending', 'confirmed': 'status-confirmed', 'cancelled': 'status-cancelled' }[order.status] || 'status-pending';
             
-            const statusBadgeClass = {
-                'pending': 'status-pending',
-                'confirmed': 'status-confirmed',
-                'cancelled': 'status-cancelled'
-            }[order.status] || 'status-pending';
+            let statusText = { 'pending': '⏳ รอยืนยัน', 'confirmed': '✅ ยืนยันแล้ว', 'cancelled': '❌ ยกเลิก' }[order.status] || 'รอดำเนินการ';
             
-            const statusText = {
-                'pending': '⏳ รอยืนยัน',
-                'confirmed': '✅ ยืนยันแล้ว',
-                'cancelled': '❌ ยกเลิก'
-            }[order.status] || 'รอดำเนินการ';
+            // Payment status for confirmed orders
+            let paymentBadge = '';
+            if (order.status === 'confirmed') {
+                if (order.is_paid == 1 || order.is_paid === true) {
+                    const methodText = order.payment_method === 'cash' ? 'เงินสด' : (order.payment_method === 'transfer' ? 'โอน' : '');
+                    paymentBadge = `<span class="payment-badge payment-paid">💵 จ่ายแล้ว${methodText ? ' (' + methodText + ')' : ''}</span>`;
+                } else {
+                    paymentBadge = `<span class="payment-badge payment-unpaid">⏳ ยังไม่จ่าย</span>`;
+                }
+            }
             
             const isPickup = order.delivery_round === 'pickup';
             const roundText = isPickup 
@@ -738,6 +799,7 @@
                         <div class="text-end">
                             <div class="order-total">${parseFloat(order.total || 0).toLocaleString()} ฿</div>
                             <span class="status-badge ${statusBadgeClass}">${statusText}</span>
+                            ${paymentBadge}
                         </div>
                     </div>
                     <div class="order-body">
@@ -752,7 +814,7 @@
                         
                         ${canConfirm ? `
                             <div class="order-actions">
-                                <button class="btn btn-success" onclick="confirmOrder(${order.id}, '${order.invoice_no}')">
+                                <button class="btn btn-success" onclick="openPaymentModal(${order.id}, '${order.invoice_no}')">
                                     ✅ ยืนยันออเดอร์
                                 </button>
                                 <button class="btn btn-outline-danger" onclick="cancelOrder(${order.id}, '${order.invoice_no}')">
@@ -776,10 +838,7 @@
                     .map(m => m.replace(/^"|"$/g, ''))
                     .filter(item => item && !item.startsWith('---'))
                     .filter(item => !item.includes('ยืมถุง'))
-                    .map(item => {
-                        let cleanItem = item.replace(/^-\s*/, '');
-                        return `<div>• ${cleanItem}</div>`;
-                    });
+                    .map(item => `<div>• ${item.replace(/^-\s*/, '')}</div>`);
                 
                 return result.length > 0 ? result.join('') : '<span style="color:#999;">ไม่มีรายการ</span>';
             }
@@ -796,35 +855,108 @@
                 return orderTime >= timeFrom && orderTime <= timeTo;
             });
             
-            const pending = filteredByTime.filter(o => o.status === 'pending').length;
-            const confirmed = filteredByTime.filter(o => o.status === 'confirmed').length;
-            const cancelled = filteredByTime.filter(o => o.status === 'cancelled').length;
-            
-            document.getElementById('countPending').textContent = pending;
-            document.getElementById('countConfirmed').textContent = confirmed;
-            document.getElementById('countCancelled').textContent = cancelled;
+            document.getElementById('countPending').textContent = filteredByTime.filter(o => o.status === 'pending').length;
+            document.getElementById('countConfirmed').textContent = filteredByTime.filter(o => o.status === 'confirmed').length;
+            document.getElementById('countCancelled').textContent = filteredByTime.filter(o => o.status === 'cancelled').length;
             document.getElementById('countTotal').textContent = filteredByTime.length;
         }
 
-        async function confirmOrder(orderId, invoiceNo) {
-            if (!confirm(`✅ ยืนยันออเดอร์ ${invoiceNo}?`)) return;
+        // ==================== PAYMENT MODAL ====================
+        function openPaymentModal(orderId, invoiceNo) {
+            pendingOrderId = orderId;
+            pendingInvoiceNo = invoiceNo;
+            selectedPaymentStatus = null;
+            selectedPaymentMethod = null;
+            
+            document.getElementById('modalInvoice').textContent = invoiceNo;
+            
+            // Reset UI
+            document.querySelectorAll('.payment-option').forEach(opt => {
+                opt.classList.remove('selected');
+                opt.querySelector('.fa-check-circle').style.display = 'none';
+            });
+            document.getElementById('paymentMethodOptions').classList.remove('show');
+            document.querySelectorAll('.method-btn').forEach(btn => btn.classList.remove('selected'));
+            document.getElementById('confirmPaymentBtn').disabled = true;
+            
+            document.getElementById('paymentModal').classList.add('show');
+        }
+        
+        function closePaymentModal() {
+            document.getElementById('paymentModal').classList.remove('show');
+            pendingOrderId = null;
+            pendingInvoiceNo = null;
+        }
+        
+        function selectPaymentStatus(status) {
+            selectedPaymentStatus = status;
+            selectedPaymentMethod = null;
+            
+            // Update UI
+            document.querySelectorAll('.payment-option').forEach(opt => {
+                opt.classList.remove('selected');
+                opt.querySelector('.fa-check-circle').style.display = 'none';
+            });
+            
+            const selectedOption = event.currentTarget;
+            selectedOption.classList.add('selected');
+            selectedOption.querySelector('.fa-check-circle').style.display = 'block';
+            
+            // Show/hide payment method options
+            const methodOptions = document.getElementById('paymentMethodOptions');
+            document.querySelectorAll('.method-btn').forEach(btn => btn.classList.remove('selected'));
+            
+            if (status === 'paid') {
+                methodOptions.classList.add('show');
+                document.getElementById('confirmPaymentBtn').disabled = true; // Need to select method
+            } else {
+                methodOptions.classList.remove('show');
+                document.getElementById('confirmPaymentBtn').disabled = false; // Can confirm now
+            }
+        }
+        
+        function selectPaymentMethod(method) {
+            selectedPaymentMethod = method;
+            
+            document.querySelectorAll('.method-btn').forEach(btn => btn.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            
+            document.getElementById('confirmPaymentBtn').disabled = false;
+        }
+        
+        async function submitConfirmOrder() {
+            if (!pendingOrderId || !selectedPaymentStatus) return;
+            
+            const btn = document.getElementById('confirmPaymentBtn');
+            const oldText = btn.textContent;
+            btn.textContent = 'กำลังบันทึก...';
+            btn.disabled = true;
             
             try {
                 const res = await fetch(`${BASE_URL}/confirm-order`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ orderId })
+                    body: JSON.stringify({
+                        orderId: pendingOrderId,
+                        isPaid: selectedPaymentStatus === 'paid' ? 1 : 0,
+                        paymentMethod: selectedPaymentMethod || null
+                    })
                 });
                 const result = await res.json();
                 
                 if (result.success) {
+                    closePaymentModal();
                     alert('✅ ยืนยันออเดอร์แล้ว');
                     loadOrders();
                 } else {
                     alert('❌ ' + (result.message || 'เกิดข้อผิดพลาด'));
+                    btn.textContent = oldText;
+                    btn.disabled = false;
                 }
             } catch (e) {
                 alert('เกิดข้อผิดพลาด: ' + e.message);
+                btn.textContent = oldText;
+                btn.disabled = false;
             }
         }
 
