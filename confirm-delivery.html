@@ -367,11 +367,12 @@
                 isAdmin = ADMIN_IDS.includes(profile.userId);
                 const groupId = context?.groupId || null;
                 
-                // Admin สามารถเข้า Admin Mode ได้เสมอ (ไม่ว่าจะเปิดจากไหน)
-                if (isAdmin) {
-                    showAdminMode();
-                } else if (groupId) {
+                // ถ้าเปิดจากกลุ่ม LINE → แสดง Driver Mode ของกลุ่มนั้น (ไม่ว่าจะเป็น Admin หรือไม่)
+                if (groupId) {
                     await checkDriverAccess(groupId);
+                } else if (isAdmin) {
+                    // ไม่มี groupId แต่เป็น Admin → แสดง Admin Mode
+                    showAdminMode();
                 } else {
                     // แสดง debug info พร้อม groupId
                     debugInfo.problem = 'ไม่ได้รับ groupId จาก LIFF';
