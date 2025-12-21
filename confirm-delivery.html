@@ -316,7 +316,8 @@
         let driverInfo = null;
         let driverRounds = [];
         let currentRoundId = null;
-        let allOrders = [];
+        let allOrders = [];        // เฉพาะ pending orders
+        let confirmedCount = 0;    // ⭐ จำนวนที่ส่งแล้ว (แยกเก็บ)
         let allDrivers = [];
         let allDriverRounds = [];
 
@@ -526,25 +527,33 @@
                     body: JSON.stringify({ driverRoundId: currentRoundId, date: today })
                 });
                 let data = await res.json();
-                allOrders = Array.isArray(data) ? data : (data && data.id ? [data] : []);
+                let orders = Array.isArray(data) ? data : (data && data.id ? [data] : []);
+                
+                // ⭐ นับจำนวนที่ส่งแล้ว
+                confirmedCount = orders.filter(o => o.status === 'confirmed').length;
+                
+                // ⭐ แสดงเฉพาะออเดอร์ที่ยังไม่ยืนยัน (pending)
+                allOrders = orders.filter(o => o.status !== 'confirmed');
+                
                 updateStats();
                 renderOrders();
             } catch (e) {
                 console.error('Error:', e);
                 allOrders = [];
+                confirmedCount = 0;
             }
             showLoading(false);
         }
 
         function updateStats() {
-            const total = allOrders.length;
-            const confirmed = allOrders.filter(o => o.status === 'confirmed').length;
+            const pending = allOrders.length;  // allOrders มีแค่ pending แล้ว
+            const total = pending + confirmedCount;
+            
             document.getElementById('statTotal').textContent = total;
-            document.getElementById('statPending').textContent = total - confirmed;
-            document.getElementById('statConfirmed').textContent = confirmed;
+            document.getElementById('statPending').textContent = pending;
+            document.getElementById('statConfirmed').textContent = confirmedCount;
             
             const btn = document.getElementById('confirmAllBtn');
-            const pending = total - confirmed;
             if (pending > 0) {
                 btn.style.display = 'block';
                 document.getElementById('confirmAllCount').textContent = pending;
@@ -556,23 +565,22 @@
         function renderOrders() {
             const container = document.getElementById('ordersList');
             if (allOrders.length === 0) {
-                container.innerHTML = `<div class="empty-state"><i class="fas fa-box-open"></i><h5>ไม่มีออเดอร์</h5></div>`;
+                container.innerHTML = `<div class="empty-state"><i class="fas fa-box-open"></i><h5>ไม่มีออเดอร์รอส่ง</h5><p style="color: #888;">ยืนยันครบแล้ว ${confirmedCount} รายการ 🎉</p></div>`;
                 return;
             }
             container.innerHTML = allOrders.map(o => {
-                const isConfirmed = o.status === 'confirmed';
                 const itemsHtml = parseOrderItems(o.order_items);
                 
                 return `
-                    <div class="order-card ${isConfirmed ? 'confirmed' : 'pending'}">
+                    <div class="order-card pending">
                         <div class="order-header">
                             <div class="order-customer">${escapeHtml(o.customer_name)}</div>
                             <div class="order-round">รอบ ${o.delivery_round}</div>
                         </div>
                         <div class="order-items">${itemsHtml}</div>
                         <div class="order-status">
-                            ${isConfirmed ? '<span class="status-badge confirmed">✅ ส่งแล้ว</span>' : '<span class="status-badge pending">⏳ รอส่ง</span>'}
-                            ${!isConfirmed ? `<button class="confirm-btn" onclick="confirmOrder(${o.id})"><i class="fas fa-check me-1"></i>ยืนยัน</button>` : ''}
+                            <span class="status-badge pending">⏳ รอส่ง</span>
+                            <button class="confirm-btn" onclick="confirmOrder(${o.id})"><i class="fas fa-check me-1"></i>ยืนยัน</button>
                         </div>
                     </div>
                 `;
@@ -587,8 +595,11 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ orderId, isPaid: 0, confirmedBy: driverInfo.alias_name })
                 });
-                const o = allOrders.find(x => x.id === orderId);
-                if (o) o.status = 'confirmed';
+                
+                // ⭐ ลบออกจาก list และเพิ่ม confirmedCount
+                allOrders = allOrders.filter(o => o.id !== orderId);
+                confirmedCount++;
+                
                 updateStats();
                 renderOrders();
             } catch (e) { alert('เกิดข้อผิดพลาด'); }
@@ -596,19 +607,23 @@
         }
 
         async function confirmAllOrders() {
-            const pending = allOrders.filter(o => o.status !== 'confirmed');
-            if (!pending.length || !confirm(`ยืนยันส่งทั้งหมด ${pending.length} รายการ?`)) return;
+            const pending = allOrders.length;
+            if (!pending || !confirm(`ยืนยันส่งทั้งหมด ${pending} รายการ?`)) return;
             
             showLoading(true);
             try {
-                for (const o of pending) {
+                for (const o of allOrders) {
                     await fetch(`${BASE_URL}/confirm-order`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ orderId: o.id, isPaid: 0, confirmedBy: driverInfo.alias_name })
                     });
-                    o.status = 'confirmed';
                 }
+                
+                // ⭐ เคลียร์ list และเพิ่ม confirmedCount
+                confirmedCount += pending;
+                allOrders = [];
+                
                 updateStats();
                 renderOrders();
                 alert('✅ ยืนยันทั้งหมดเรียบร้อย!');
