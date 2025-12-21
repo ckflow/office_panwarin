@@ -446,10 +446,9 @@
             <div class="filter-section">
                 <div class="filter-row">
                     <label>📅 จาก:</label>
-                    <input type="date" id="allDateFrom">
+                    <input type="date" id="allDateFrom" onchange="loadAllSummary()">
                     <label>ถึง:</label>
-                    <input type="date" id="allDateTo">
-                    <button class="btn btn-primary btn-sm" onclick="loadAllSummary()">🔍</button>
+                    <input type="date" id="allDateTo" onchange="loadAllSummary()">
                 </div>
             </div>
 
@@ -987,4 +986,5 @@
     </script>
 </body>
 </html>
+
 
