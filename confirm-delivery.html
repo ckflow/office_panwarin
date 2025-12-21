@@ -31,6 +31,18 @@
             color: #4338ca;
         }
         
+        .debug-box {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            border-radius: 10px;
+            padding: 12px 15px;
+            margin: 15px;
+            font-size: 11px;
+            color: #92400e;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        
         .driver-info-card {
             background: white;
             border-radius: 12px;
@@ -167,7 +179,6 @@
             z-index: 9999;
         }
         
-        /* Admin Mode */
         .admin-controls {
             background: white;
             border-radius: 12px;
@@ -286,6 +297,7 @@
                 <h5>ไม่มีสิทธิ์เข้าถึง</h5>
                 <p>กรุณาเปิดจากกลุ่ม LINE ที่ลงทะเบียนไว้</p>
             </div>
+            <div class="debug-box" id="debugInfo"></div>
         </div>
     </div>
 
@@ -308,18 +320,14 @@
         let allDrivers = [];
         let allDriverRounds = [];
 
-        // Helper function to parse order items
         function parseOrderItems(orderItems) {
             try {
-                // ถ้าเป็น array อยู่แล้ว ใช้เลย
                 if (Array.isArray(orderItems)) {
                     return orderItems
                         .filter(i => typeof i === 'string' && !i.includes('---') && !i.includes('ยืมถุง'))
                         .map(i => i.replace(/^- /, '').split('(')[0].trim())
                         .join(', ') || '-';
                 }
-        
-                // ถ้าเป็น string ให้ replace newline ก่อน parse
                 if (typeof orderItems === 'string') {
                     const cleaned = orderItems.replace(/\n/g, '\\n');
                     const items = JSON.parse(cleaned);
@@ -345,6 +353,17 @@
                 profile = await liff.getProfile();
                 const context = liff.getContext();
                 
+                // Debug info
+                const debugInfo = {
+                    isInClient: liff.isInClient(),
+                    contextType: context?.type || 'null',
+                    groupId: context?.groupId || 'null',
+                    roomId: context?.roomId || 'null',
+                    userId: profile?.userId?.substring(0, 10) + '...',
+                    isAdmin: ADMIN_IDS.includes(profile.userId)
+                };
+                console.log('=== LIFF Debug ===', debugInfo);
+                
                 isAdmin = ADMIN_IDS.includes(profile.userId);
                 const groupId = context?.groupId || null;
                 
@@ -353,7 +372,8 @@
                 } else if (groupId) {
                     await checkDriverAccess(groupId);
                 } else {
-                    showAccessDenied();
+                    // แสดง debug info
+                    showAccessDenied(debugInfo);
                 }
             } catch (err) {
                 console.error('Init error:', err);
@@ -364,12 +384,15 @@
 
         async function checkDriverAccess(groupId) {
             try {
+                console.log('Checking driver access for groupId:', groupId);
                 const res = await fetch(`${BASE_URL}/get-driver-info-by-line-group`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ groupId })
                 });
                 let data = await res.json();
+                console.log('Driver info response:', data);
+                
                 data = Array.isArray(data) ? data : (data && data.alias_id ? [data] : []);
                 
                 if (data.length > 0) {
@@ -377,11 +400,16 @@
                     driverRounds = data.filter(d => d.driver_round_id).map(d => ({ id: d.driver_round_id, round_name: d.round_name }));
                     showDriverMode();
                 } else {
-                    showAccessDenied();
+                    // ไม่พบ driver - แสดง debug
+                    showAccessDenied({
+                        groupId: groupId,
+                        message: 'ไม่พบกลุ่มนี้ในระบบ กรุณาตรวจสอบว่า line_id ในตาราง line_aliases ตรงกับ Group ID',
+                        apiResponse: JSON.stringify(data)
+                    });
                 }
             } catch (e) {
                 console.error('Error:', e);
-                showAccessDenied();
+                showAccessDenied({ error: e.message });
             }
         }
 
@@ -405,10 +433,24 @@
             loadAdminData();
         }
 
-        function showAccessDenied() {
+        function showAccessDenied(debugInfo = {}) {
             document.getElementById('loadingOverlay').style.display = 'none';
             document.getElementById('content').style.display = 'block';
             document.getElementById('accessDenied').style.display = 'block';
+            
+            // แสดง debug info
+            const debugBox = document.getElementById('debugInfo');
+            if (debugBox && Object.keys(debugInfo).length > 0) {
+                let html = '<strong>🔍 Debug Info:</strong><br>';
+                for (const [key, value] of Object.entries(debugInfo)) {
+                    html += `${key}: ${value}<br>`;
+                }
+                html += '<br><strong>วิธีแก้ไข:</strong><br>';
+                html += '1. ต้องเปิดจาก LINE app (ไม่ใช่ browser)<br>';
+                html += '2. ต้องเปิดจากกลุ่ม LINE (ไม่ใช่แชท 1:1)<br>';
+                html += '3. Group ID ต้องตรงกับ line_id ในตาราง line_aliases';
+                debugBox.innerHTML = html;
+            }
         }
 
         function showError(msg) {
@@ -711,4 +753,3 @@
     </script>
 </body>
 </html>
-
