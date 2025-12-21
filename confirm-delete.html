@@ -3,235 +3,632 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ยืนยันการลบออเดอร์</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>ยืนยันการลบ</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        body { background-color: #f4f6f9; font-family: 'Sarabun', sans-serif; padding: 20px; }
-        .confirm-card { background: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 25px; max-width: 400px; margin: 20px auto; }
-        .order-detail { background: #f8f9fa; border-radius: 10px; padding: 15px; margin: 15px 0; }
-        .detail-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; }
-        .detail-label { color: #666; }
-        .detail-value { font-weight: bold; }
-        .btn-confirm-delete { background: #dc3545; color: white; border: none; border-radius: 25px; padding: 12px 30px; font-size: 16px; font-weight: bold; width: 100%; }
-        .btn-confirm-delete:hover { background: #c82333; color: white; }
-        .btn-cancel { background: #6c757d; color: white; border: none; border-radius: 25px; padding: 12px 30px; font-size: 16px; width: 100%; margin-top: 10px; }
-        .status-msg { text-align: center; padding: 40px 20px; }
-        .status-msg.success { color: #198754; }
-        .status-msg.error { color: #dc3545; }
-        .status-msg.already { color: #ffc107; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .header-order {
+            background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+        
+        .content {
+            padding: 25px;
+        }
+        
+        .info-box {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .info-value {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .warning-box.danger {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+        
+        .warning-box h3 {
+            color: #856404;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+        }
+        
+        .warning-box.danger h3 {
+            color: #721c24;
+        }
+        
+        .warning-box ul {
+            margin-left: 20px;
+            color: #856404;
+            font-size: 0.85rem;
+        }
+        
+        .warning-box.danger ul {
+            color: #721c24;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-approved {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(220, 53, 69, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #dc3545;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .success-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+        
+        .error-box {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        /* Order items table */
+        .order-items {
+            margin-top: 15px;
+        }
+        
+        .order-items table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .order-items th, .order-items td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .order-items th {
+            background: #f8f9fa;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        
+        .order-items td {
+            font-size: 0.9rem;
+        }
+        
+        .total-row {
+            font-weight: 600;
+            background: #e9ecef;
+        }
     </style>
 </head>
 <body>
-
-    <div id="loading" class="text-center mt-5">
-        <h4>⏳ กำลังโหลด...</h4>
-    </div>
-
-    <div id="confirmSection" style="display: none;">
-        <div class="confirm-card">
-            <h4 class="text-center text-danger mb-3">🗑️ ยืนยันลบออเดอร์</h4>
+    <div class="container">
+        <div class="card">
+            <!-- Loading State -->
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>กำลังโหลดข้อมูล...</p>
+            </div>
             
-            <div class="order-detail">
-                <div class="detail-row">
-                    <span class="detail-label">เลขบิล:</span>
-                    <span class="detail-value" id="invoiceNo">-</span>
+            <!-- Content (hidden initially) -->
+            <div id="mainContent" style="display: none;">
+                <div id="header" class="header">
+                    <h1 id="headerTitle">🗑️ ยืนยันการลบ</h1>
+                    <p id="headerSubtitle">กรุณาตรวจสอบข้อมูลก่อนยืนยัน</p>
                 </div>
-                <div class="detail-row">
-                    <span class="detail-label">ลูกค้า:</span>
-                    <span class="detail-value" id="customerName">-</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">วันที่:</span>
-                    <span class="detail-value" id="orderDate">-</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">ยอดรวม:</span>
-                    <span class="detail-value text-success" id="grandTotal">-</span>
+                
+                <div class="content">
+                    <div class="info-box" id="infoBox">
+                        <!-- Info rows will be inserted here -->
+                    </div>
+                    
+                    <!-- Order items (for order deletion only) -->
+                    <div id="orderItemsBox" class="order-items" style="display: none;">
+                    </div>
+                    
+                    <div id="warningBox" class="warning-box danger">
+                        <h3>⚠️ คำเตือน</h3>
+                        <ul id="warningList">
+                            <li>การลบไม่สามารถยกเลิกได้</li>
+                        </ul>
+                    </div>
+                    
+                    <button id="confirmBtn" class="btn btn-danger" onclick="confirmDelete()">
+                        🗑️ ยืนยันการลบ
+                    </button>
+                    
+                    <button class="btn btn-secondary" onclick="closeWindow()">
+                        ❌ ยกเลิก
+                    </button>
                 </div>
             </div>
             
-            <div id="itemsList" class="mb-3">
-                <strong>รายการสินค้า:</strong>
-                <div id="orderItems" class="mt-2" style="font-size: 13px; color: #666;"></div>
+            <!-- Already Approved State -->
+            <div id="approvedContent" style="display: none;">
+                <div class="header" style="background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);">
+                    <h1>✅ ดำเนินการแล้ว</h1>
+                </div>
+                <div class="content" style="text-align: center;">
+                    <div class="success-icon">✅</div>
+                    <h2 id="approvedTitle">ได้รับการอนุมัติแล้ว</h2>
+                    <p id="approvedMessage" style="color: #666; margin-top: 10px;"></p>
+                    <button class="btn btn-secondary" style="margin-top: 20px;" onclick="closeWindow()">
+                        ปิดหน้านี้
+                    </button>
+                </div>
             </div>
             
-            <div class="alert alert-warning" style="font-size: 13px;">
-                ⚠️ การลบออเดอร์จะไม่สามารถกู้คืนได้
+            <!-- Error State -->
+            <div id="errorContent" style="display: none;">
+                <div class="header">
+                    <h1>❌ เกิดข้อผิดพลาด</h1>
+                </div>
+                <div class="content">
+                    <div class="error-box">
+                        <p id="errorMessage">ไม่สามารถโหลดข้อมูลได้</p>
+                    </div>
+                    <button class="btn btn-secondary" style="margin-top: 20px;" onclick="closeWindow()">
+                        ปิดหน้านี้
+                    </button>
+                </div>
             </div>
-            
-            <button class="btn-confirm-delete" onclick="confirmDelete()">
-                ✅ ยืนยันลบออเดอร์
-            </button>
-            <button class="btn-cancel" onclick="cancelDelete()">
-                ❌ ยกเลิก
-            </button>
         </div>
     </div>
 
-    <div id="statusSection" style="display: none;">
-        <div class="confirm-card">
-            <div class="status-msg" id="statusMsg"></div>
-        </div>
-    </div>
-
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script>
-        const MY_LIFF_ID = "2008689090-mSalEn61";
-        const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
+        const BASE_URL = 'https://n8n.ckflowsystem.com/webhook';
         
-        // 🔥 รายชื่อ ID ที่มีสิทธิ์ยืนยันการลบ
-        const APPROVER_IDS = [
-            "U4dc8fa32570dca3dfb4093b48a5c2093", //แชมป์
-            "U5a9979d87d7f62faa2917c0253269be0", //เฮียเก่ง
-        ];
+        // Detect mode from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const deletionId = urlParams.get('deletionId');
+        const customerId = urlParams.get('customerId');
+        const orderId = urlParams.get('orderId');
         
-        let deletionId = null;
-        let orderId = null;
-        let currentUserId = null;
-
-        async function main() {
+        // Determine mode: 'customer' or 'order'
+        const mode = customerId ? 'customer' : 'order';
+        
+        let currentData = null;
+        let approverName = '';
+        let approverUserId = '';
+        
+        async function init() {
             try {
-                // ดึง parameters จาก URL
-                let params = new URLSearchParams(window.location.search);
+                await liff.init({ liffId: '2008689090-mSalEn61' });
                 
-                // ถ้ามี liff.state ให้ parse จากนั้น
-                const liffState = params.get('liff.state');
-                if (liffState) {
-                    params = new URLSearchParams(liffState);
-                }
-                
-                deletionId = params.get('deletionId');
-                orderId = params.get('orderId');
-                
-                if (!deletionId || !orderId) {
-                    showStatus('error', '❌ ลิงก์ไม่ถูกต้อง');
+                if (liff.isLoggedIn()) {
+                    const profile = await liff.getProfile();
+                    approverName = profile.displayName;
+                    approverUserId = profile.userId;
+                } else {
+                    liff.login();
                     return;
                 }
                 
-                await liff.init({ liffId: MY_LIFF_ID });
-                if (!liff.isLoggedIn()) { 
-                    liff.login(); 
-                    return;
-                }
-                
-                const profile = await liff.getProfile();
-                currentUserId = profile.userId;
-                
-                // ตรวจสอบสิทธิ์
-                if (!APPROVER_IDS.includes(currentUserId)) {
-                    showStatus('error', '⛔ คุณไม่มีสิทธิ์ยืนยันการลบ');
-                    return;
-                }
-                
-                // โหลดข้อมูลออเดอร์
-                await loadOrderDetail();
-                
-            } catch (err) {
-                showStatus('error', '❌ เกิดข้อผิดพลาด: ' + err.message);
+                await loadData();
+            } catch (error) {
+                console.error('Init error:', error);
+                showError('ไม่สามารถเชื่อมต่อ LINE ได้');
             }
         }
-        main();
-
-        async function loadOrderDetail() {
+        
+        async function loadData() {
             try {
-                const res = await fetch(`${BASE_URL}/get-deletion-detail`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ deletionId, orderId })
-                });
-                const data = await res.json();
+                let response;
                 
-                if (data.error) {
-                    showStatus('error', '❌ ' + data.error);
+                if (mode === 'customer') {
+                    // Load customer deletion data
+                    response = await fetch(`${BASE_URL}/get-customer-deletion-detail`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ deletionId, customerId })
+                    });
+                } else {
+                    // Load order deletion data
+                    response = await fetch(`${BASE_URL}/get-deletion-detail`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ deletionId })
+                    });
+                }
+                
+                const data = await response.json();
+                
+                if (!data || data.error) {
+                    showError(data?.error || 'ไม่พบข้อมูล');
                     return;
                 }
                 
-                if (data.deletion_status === 'approved' || !data.id) {
-                    showStatus('already', '✅ ออเดอร์นี้ถูกลบไปแล้ว');
+                currentData = data;
+                
+                // Check if already approved
+                if (data.deletion_status === 'approved') {
+                    showApproved();
                     return;
                 }
                 
-                // แสดงข้อมูล
-                document.getElementById('invoiceNo').textContent = data.invoice_no || '-';
-                document.getElementById('customerName').textContent = data.customer_name || '-';
-                document.getElementById('orderDate').textContent = formatDate(data.order_date) + ' ' + (data.order_time || '');
-                document.getElementById('grandTotal').textContent = parseFloat(data.total || 0).toLocaleString() + ' บาท';
+                renderContent();
                 
-                // แสดงรายการสินค้า
-                let items = data.items;
-                if (typeof items === 'string') {
-                    try { items = JSON.parse(items); } catch(e) { items = items.split('\n'); }
-                }
-                if (Array.isArray(items)) {
-                    document.getElementById('orderItems').innerHTML = items.map(i => `<div>• ${i}</div>`).join('');
-                }
-                
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('confirmSection').style.display = 'block';
-                
-            } catch (e) {
-                showStatus('error', '❌ โหลดข้อมูลไม่สำเร็จ');
+            } catch (error) {
+                console.error('Load error:', error);
+                showError('ไม่สามารถโหลดข้อมูลได้');
             }
         }
-
+        
+        function renderContent() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            
+            const header = document.getElementById('header');
+            const headerTitle = document.getElementById('headerTitle');
+            const headerSubtitle = document.getElementById('headerSubtitle');
+            const infoBox = document.getElementById('infoBox');
+            const warningList = document.getElementById('warningList');
+            const confirmBtn = document.getElementById('confirmBtn');
+            
+            if (mode === 'customer') {
+                // Customer deletion UI
+                header.classList.remove('header-order');
+                headerTitle.textContent = '🗑️ ยืนยันลบลูกค้า';
+                headerSubtitle.textContent = 'ข้อมูลทั้งหมดจะถูกลบถาวร';
+                
+                infoBox.innerHTML = `
+                    <div class="info-row">
+                        <span class="info-label">ชื่อลูกค้า</span>
+                        <span class="info-value">${currentData.customer_name || '-'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">ขอลบโดย</span>
+                        <span class="info-value">${currentData.requested_by || '-'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">สถานะ</span>
+                        <span class="status-badge status-pending">รอการอนุมัติ</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">ราคาพิเศษ</span>
+                        <span class="info-value">${currentData.price_count || 0} รายการ</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">LINE ที่ผูก</span>
+                        <span class="info-value">${currentData.line_count || 0} บัญชี</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">รอบจัดส่ง</span>
+                        <span class="info-value">${currentData.round_count || 0} รอบ</span>
+                    </div>
+                `;
+                
+                warningList.innerHTML = `
+                    <li>ข้อมูลลูกค้าจะถูกลบถาวร</li>
+                    <li>ราคาพิเศษทั้งหมดจะถูกลบ</li>
+                    <li>โปรโมชั่นทั้งหมดจะถูกลบ</li>
+                    <li>LINE ID ที่ผูกไว้จะถูกลบ</li>
+                    <li>รอบจัดส่งจะถูกลบ</li>
+                    <li>การลบไม่สามารถยกเลิกได้</li>
+                `;
+                
+                confirmBtn.textContent = '🗑️ ยืนยันลบลูกค้า';
+                
+            } else {
+                // Order deletion UI
+                header.classList.add('header-order');
+                headerTitle.textContent = '🗑️ ยืนยันลบออเดอร์';
+                headerSubtitle.textContent = `บิล: ${currentData.invoice_no || '-'}`;
+                
+                infoBox.innerHTML = `
+                    <div class="info-row">
+                        <span class="info-label">เลขบิล</span>
+                        <span class="info-value">${currentData.invoice_no || '-'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">ลูกค้า</span>
+                        <span class="info-value">${currentData.customer_name || '-'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">วันที่</span>
+                        <span class="info-value">${formatDate(currentData.order_date)}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">ยอดรวม</span>
+                        <span class="info-value" style="color: #28a745; font-size: 1.1rem;">฿${Number(currentData.total || 0).toLocaleString()}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">ขอลบโดย</span>
+                        <span class="info-value">${currentData.requested_by || '-'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">สถานะ</span>
+                        <span class="status-badge status-pending">รอการอนุมัติ</span>
+                    </div>
+                `;
+                
+                // Show order items if available
+                if (currentData.order_items) {
+                    try {
+                        const items = typeof currentData.order_items === 'string' 
+                            ? JSON.parse(currentData.order_items) 
+                            : currentData.order_items;
+                        
+                        if (items && items.length > 0) {
+                            const orderItemsBox = document.getElementById('orderItemsBox');
+                            orderItemsBox.style.display = 'block';
+                            orderItemsBox.innerHTML = `
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>สินค้า</th>
+                                            <th style="text-align: center;">จำนวน</th>
+                                            <th style="text-align: right;">ราคา</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${items.map(item => `
+                                            <tr>
+                                                <td>${item.name || item.productName || '-'}</td>
+                                                <td style="text-align: center;">${item.qty || item.quantity || 0}</td>
+                                                <td style="text-align: right;">฿${Number(item.total || item.subtotal || 0).toLocaleString()}</td>
+                                            </tr>
+                                        `).join('')}
+                                        <tr class="total-row">
+                                            <td colspan="2">รวม</td>
+                                            <td style="text-align: right;">฿${Number(currentData.total || 0).toLocaleString()}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            `;
+                        }
+                    } catch (e) {
+                        console.log('Cannot parse order items');
+                    }
+                }
+                
+                warningList.innerHTML = `
+                    <li>ออเดอร์จะถูกลบถาวร</li>
+                    <li>ไม่สามารถกู้คืนได้</li>
+                `;
+                
+                confirmBtn.textContent = '🗑️ ยืนยันลบออเดอร์';
+            }
+        }
+        
         async function confirmDelete() {
-            if (!confirm('ยืนยันลบออเดอร์นี้?')) return;
+            const btn = document.getElementById('confirmBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ กำลังดำเนินการ...';
             
             try {
-                const res = await fetch(`${BASE_URL}/confirm-delete-order`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        deletionId,
-                        orderId,
-                        approvedBy: currentUserId
-                    })
-                });
-                const result = await res.json();
+                let response;
+                
+                if (mode === 'customer') {
+                    response = await fetch(`${BASE_URL}/confirm-delete-customer`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            deletionId,
+                            customerId,
+                            approvedBy: approverName,
+                            approvedByUserId: approverUserId
+                        })
+                    });
+                } else {
+                    response = await fetch(`${BASE_URL}/confirm-delete-order`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            deletionId,
+                            orderId: currentData.order_id || orderId,
+                            approvedBy: approverName
+                        })
+                    });
+                }
+                
+                const result = await response.json();
                 
                 if (result.success) {
-                    showStatus('success', '✅ ลบออเดอร์สำเร็จ');
-                    setTimeout(() => {
-                        if (liff.isInClient()) {
-                            liff.closeWindow();
-                        }
-                    }, 2000);
+                    showSuccess();
                 } else {
-                    showStatus('error', '❌ ' + (result.message || 'เกิดข้อผิดพลาด'));
+                    throw new Error(result.message || 'เกิดข้อผิดพลาด');
                 }
-            } catch (e) {
-                showStatus('error', '❌ เกิดข้อผิดพลาด');
+                
+            } catch (error) {
+                console.error('Delete error:', error);
+                alert('เกิดข้อผิดพลาด: ' + error.message);
+                btn.disabled = false;
+                btn.textContent = mode === 'customer' ? '🗑️ ยืนยันลบลูกค้า' : '🗑️ ยืนยันลบออเดอร์';
             }
         }
-
-        function cancelDelete() {
+        
+        function showSuccess() {
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('approvedContent').style.display = 'block';
+            
+            const title = document.getElementById('approvedTitle');
+            const message = document.getElementById('approvedMessage');
+            
+            if (mode === 'customer') {
+                title.textContent = 'ลบลูกค้าเรียบร้อยแล้ว';
+                message.textContent = `"${currentData.customer_name}" ถูกลบออกจากระบบแล้ว`;
+            } else {
+                title.textContent = 'ลบออเดอร์เรียบร้อยแล้ว';
+                message.textContent = `บิล ${currentData.invoice_no} ถูกลบออกจากระบบแล้ว`;
+            }
+        }
+        
+        function showApproved() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('approvedContent').style.display = 'block';
+            
+            const title = document.getElementById('approvedTitle');
+            const message = document.getElementById('approvedMessage');
+            
+            if (mode === 'customer') {
+                title.textContent = 'ลูกค้านี้ถูกลบไปแล้ว';
+                message.textContent = 'คำขอนี้ได้รับการอนุมัติไปแล้ว';
+            } else {
+                title.textContent = 'ออเดอร์นี้ถูกลบไปแล้ว';
+                message.textContent = 'คำขอนี้ได้รับการอนุมัติไปแล้ว';
+            }
+        }
+        
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('errorContent').style.display = 'block';
+            document.getElementById('errorMessage').textContent = message;
+        }
+        
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('th-TH', { 
+                day: 'numeric', 
+                month: 'short', 
+                year: 'numeric' 
+            });
+        }
+        
+        function closeWindow() {
             if (liff.isInClient()) {
                 liff.closeWindow();
             } else {
                 window.close();
             }
         }
-
-        function showStatus(type, message) {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('confirmSection').style.display = 'none';
-            document.getElementById('statusSection').style.display = 'block';
-            
-            const msgEl = document.getElementById('statusMsg');
-            msgEl.className = 'status-msg ' + type;
-            msgEl.innerHTML = `<h4>${message}</h4>`;
-        }
-
-        function formatDate(dateStr) {
-            if (!dateStr) return '-';
-            const date = new Date(dateStr);
-            const day = date.getDate();
-            const month = date.toLocaleDateString('th-TH', { month: 'short' });
-            const year = date.getFullYear() + 543;
-            return `${day} ${month} ${year}`;
-        }
+        
+        // Initialize
+        init();
     </script>
 </body>
 </html>
-
-
