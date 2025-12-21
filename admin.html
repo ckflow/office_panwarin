@@ -78,6 +78,24 @@
         .alias-select-group label { font-size: 13px; color: #666; margin-bottom: 5px; display: block; }
         .alias-select-group select { width: 100%; }
         .or-divider { text-align: center; color: #999; font-size: 12px; margin: 10px 0; }
+        
+        /* Billing Section */
+        .billing-box { 
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); 
+            border: 1px solid #a5d6a7; 
+            border-radius: 8px; 
+            padding: 12px; 
+            margin-bottom: 10px; 
+        }
+        .billing-box.disabled { 
+            background: #f8f9fa; 
+            border-color: #dee2e6; 
+        }
+        .billing-options { 
+            margin-top: 10px; 
+            padding-top: 10px; 
+            border-top: 1px dashed #a5d6a7; 
+        }
     </style>
 </head>
 <body>
@@ -341,6 +359,7 @@
             DELETE_MULTIPLIER: `${BASE_URL}/delete-multiplier`,
             UPDATE_SETTINGS: `${BASE_URL}/update-customer-settings`,
             UPDATE_DEPOSIT_PERMISSION: `${BASE_URL}/update-deposit-permission`,
+            UPDATE_BILLING_SETTINGS: `${BASE_URL}/update-billing-settings`,
             SAVE_ROUND: `${BASE_URL}/save-customer-round`,
             DELETE_ROUND: `${BASE_URL}/delete-customer-round`,
             TOGGLE_EXTRA_ROUND: `${BASE_URL}/toggle-extra-round`
@@ -500,6 +519,9 @@
                         name: item.customer_name,
                         can_see_price: item.can_see_price,
                         can_deposit: item.can_deposit,
+                        billing_enabled: item.billing_enabled,
+                        billing_period: item.billing_period || 'daily',
+                        billing_time: item.billing_time || '18:00',
                         prices: []
                     };
                 }
@@ -553,6 +575,9 @@
                     pricesHtml = '<div class="empty-text">- ยังไม่ได้ตั้งราคา -</div>';
                 }
 
+                // Billing time display
+                const billingTimeDisplay = customer.billing_time ? customer.billing_time.substring(0, 5) : '18:00';
+
                 const cardHtml = `
                     <div class="customer-card">
                         <div class="customer-card-main">
@@ -594,6 +619,40 @@
                                         <label class="form-check-label" for="deposit-${customer.id}" style="font-size:13px;">
                                             ${customer.can_deposit ? '✅ มีสิทธิ์ฝาก' : '❌ ไม่มีสิทธิ์ฝาก'}
                                         </label>
+                                    </div>
+                                </div>
+
+                                <div class="section-title">
+                                    <span class="title-text">🧾 เปิดบิล</span>
+                                    <span class="title-btn"></span>
+                                    <span class="title-space"></span>
+                                </div>
+                                <div class="billing-box ${customer.billing_enabled ? '' : 'disabled'}" id="billing-box-${customer.id}">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="billing-${customer.id}" 
+                                            ${customer.billing_enabled ? 'checked' : ''} 
+                                            onchange="toggleBillingEnabled(${customer.id}, this.checked)">
+                                        <label class="form-check-label" for="billing-${customer.id}" style="font-size:13px;">
+                                            ${customer.billing_enabled ? '✅ เปิดส่งบิล' : '❌ ปิดส่งบิล'}
+                                        </label>
+                                    </div>
+                                    <div class="billing-options" id="billing-options-${customer.id}" style="display: ${customer.billing_enabled ? 'block' : 'none'};">
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <label class="small text-muted">รอบส่ง</label>
+                                                <select class="form-select form-select-sm" id="billing-period-${customer.id}" onchange="saveBillingSettings(${customer.id})">
+                                                    <option value="daily" ${customer.billing_period === 'daily' ? 'selected' : ''}>ทุกวัน</option>
+                                                    <option value="10days" ${customer.billing_period === '10days' ? 'selected' : ''}>10 วัน</option>
+                                                    <option value="monthly" ${customer.billing_period === 'monthly' ? 'selected' : ''}>ทั้งเดือน</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="small text-muted">เวลาส่ง</label>
+                                                <input type="time" class="form-control form-control-sm" id="billing-time-${customer.id}" 
+                                                    value="${billingTimeDisplay}"
+                                                    onchange="saveBillingSettings(${customer.id})">
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -642,6 +701,51 @@
                 loadAndRenderRounds(customer.id);
             });
         }
+
+        // ==================== Billing Functions ====================
+        
+        function toggleBillingEnabled(customerId, enabled) {
+            const optionsEl = document.getElementById(`billing-options-${customerId}`);
+            const boxEl = document.getElementById(`billing-box-${customerId}`);
+            const labelEl = document.querySelector(`label[for="billing-${customerId}"]`);
+            
+            if (enabled) {
+                optionsEl.style.display = 'block';
+                boxEl.classList.remove('disabled');
+                labelEl.textContent = '✅ เปิดส่งบิล';
+            } else {
+                optionsEl.style.display = 'none';
+                boxEl.classList.add('disabled');
+                labelEl.textContent = '❌ ปิดส่งบิล';
+            }
+            
+            saveBillingSettings(customerId);
+        }
+        
+        async function saveBillingSettings(customerId) {
+            const enabled = document.getElementById(`billing-${customerId}`).checked;
+            const period = document.getElementById(`billing-period-${customerId}`).value;
+            const time = document.getElementById(`billing-time-${customerId}`).value;
+            
+            try {
+                await fetch(API.UPDATE_BILLING_SETTINGS, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        customerId,
+                        billingEnabled: enabled,
+                        billingPeriod: period,
+                        billingTime: time
+                    })
+                });
+                console.log('Billing settings saved:', { customerId, enabled, period, time });
+            } catch (e) {
+                console.error('Error saving billing settings:', e);
+                alert('เกิดข้อผิดพลาดในการบันทึก');
+            }
+        }
+
+        // ==================== Round Functions ====================
 
         async function loadAndRenderRounds(customerId) {
             const container = document.getElementById(`rounds-${customerId}`);
