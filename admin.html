@@ -1336,17 +1336,29 @@
         }
 
         async function deleteCustomer(customerId, customerName) {
-            if (!confirm(`⚠️ ลบลูกค้า "${customerName}"?\n\nจะลบข้อมูลทั้งหมด:\n- LINE ID ที่ผูก\n- ราคาที่ตั้งไว้\n- โปรโมชั่น\n- ตัวคูณถุง\n- รอบจัดส่ง`)) return;
-            if (!confirm(`❗ ยืนยันอีกครั้ง: ลบ "${customerName}" ?`)) return;
+            if (!confirm(`⚠️ ขอลบลูกค้า "${customerName}"?\n\nจะลบข้อมูลทั้งหมด:\n- LINE ID ที่ผูก\n- ราคาที่ตั้งไว้\n- โปรโมชั่น\n- ตัวคูณถุง\n- รอบจัดส่ง\n\nระบบจะส่งคำขอไปให้ Admin อนุมัติ`)) return;
             
             try {
-                await fetch(API.DELETE_CUSTOMER, {
+                const profile = await liff.getProfile();
+                const requesterName = profile.displayName || 'Admin';
+                
+                const res = await fetch(`${BASE_URL}/request-delete-customer`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ customerId })
+                    body: JSON.stringify({ 
+                        customerId, 
+                        customerName,
+                        requestedBy: requesterName,
+                        requestedByUserId: profile.userId
+                    })
                 });
-                alert("✅ ลบแล้ว");
-                location.reload();
+                const result = await res.json();
+                
+                if (result.success) {
+                    alert('✅ ส่งคำขอลบแล้ว\n\nรอ Admin อนุมัติทาง LINE');
+                } else {
+                    alert('❌ ' + (result.message || 'เกิดข้อผิดพลาด'));
+                }
             } catch (e) {
                 alert("Error: " + e);
             }
