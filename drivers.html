@@ -1032,7 +1032,7 @@
                         <div class="cr-checkbox">${isSelected ? '<i class="fas fa-check"></i>' : ''}</div>
                         <div class="cr-info">
                             <div class="cr-customer">${escapeHtml(cr.customer_name)}</div>
-                            <div class="cr-round">🚚 รอบ ${cr.round_number} ${cr.time_start ? `(${cr.time_start}-${cr.time_end})` : ''}</div>
+                            <div class="cr-round">🚚 รอบ ${cr.round_number} ${cr.time_start ? `(${cr.time_start.substring(0,5)}-${cr.time_end.substring(0,5)})` : ''}</div>
                         </div>
                         ${isAssignedOther ? `<div class="cr-assigned">${escapeHtml(otherRoundName)}</div>` : ''}
                     </div>
