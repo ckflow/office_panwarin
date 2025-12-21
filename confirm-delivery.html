@@ -367,12 +367,14 @@
                 isAdmin = ADMIN_IDS.includes(profile.userId);
                 const groupId = context?.groupId || null;
                 
-                if (isAdmin && !groupId) {
+                // Admin สามารถเข้า Admin Mode ได้เสมอ (ไม่ว่าจะเปิดจากไหน)
+                if (isAdmin) {
                     showAdminMode();
                 } else if (groupId) {
                     await checkDriverAccess(groupId);
                 } else {
-                    // แสดง debug info
+                    // แสดง debug info พร้อม groupId
+                    debugInfo.problem = 'ไม่ได้รับ groupId จาก LIFF';
                     showAccessDenied(debugInfo);
                 }
             } catch (err) {
@@ -390,7 +392,26 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ groupId })
                 });
-                let data = await res.json();
+                
+                // Get raw text first to debug
+                const rawText = await res.text();
+                console.log('Raw API response:', rawText);
+                
+                // Try to parse JSON
+                let data = [];
+                if (rawText && rawText.trim()) {
+                    try {
+                        data = JSON.parse(rawText);
+                    } catch (parseErr) {
+                        showAccessDenied({
+                            groupId: groupId,
+                            error: 'API returned invalid JSON',
+                            rawResponse: rawText.substring(0, 200)
+                        });
+                        return;
+                    }
+                }
+                
                 console.log('Driver info response:', data);
                 
                 data = Array.isArray(data) ? data : (data && data.alias_id ? [data] : []);
@@ -403,13 +424,16 @@
                     // ไม่พบ driver - แสดง debug
                     showAccessDenied({
                         groupId: groupId,
-                        message: 'ไม่พบกลุ่มนี้ในระบบ กรุณาตรวจสอบว่า line_id ในตาราง line_aliases ตรงกับ Group ID',
-                        apiResponse: JSON.stringify(data)
+                        message: 'ไม่พบกลุ่มนี้ในระบบ',
+                        hint: 'ตรวจสอบว่า line_id ในตาราง line_aliases ตรงกับ Group ID ด้านบน'
                     });
                 }
             } catch (e) {
                 console.error('Error:', e);
-                showAccessDenied({ error: e.message });
+                showAccessDenied({ 
+                    groupId: groupId || 'unknown',
+                    error: e.message 
+                });
             }
         }
 
