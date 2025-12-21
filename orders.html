@@ -1293,7 +1293,11 @@
                 const res = await fetch(`${BASE_URL}/request-delete-order`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ orderId, requestedBy: ADMINS[profile.userId] || profile.displayName || 'Staff' })
+                    body: JSON.stringify({ 
+                        orderId, 
+                        requestedBy: ADMINS[profile.userId] || profile.displayName || 'Staff',
+                        requestedByUserId: profile.userId
+                    })
                 });
                 const result = await res.json();
                 
