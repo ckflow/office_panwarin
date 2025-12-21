@@ -580,11 +580,10 @@
 
                 // Set default dates
                 const today = new Date();
-                const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-                
-                document.getElementById('allDateFrom').value = formatDateInput(firstDayOfMonth);
+
+                document.getElementById('allDateFrom').value = formatDateInput(today);
                 document.getElementById('allDateTo').value = formatDateInput(today);
-                document.getElementById('detailDateFrom').value = formatDateInput(firstDayOfMonth);
+                document.getElementById('detailDateFrom').value = formatDateInput(today);
                 document.getElementById('detailDateTo').value = formatDateInput(today);
                 document.getElementById('returnDate').value = formatDateInput(today);
 
@@ -988,3 +987,4 @@
     </script>
 </body>
 </html>
+
