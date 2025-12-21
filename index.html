@@ -42,7 +42,6 @@
         
         .multiplier-badge { background: #0d6efd; color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px; margin-left: 5px; }
         
-        /* Product Loading Overlay */
         .product-loading-overlay {
             display: none;
             position: fixed;
@@ -56,7 +55,6 @@
             align-items: center;
         }
         
-        /* Round Selection Buttons */
         .round-btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
         .round-btn {
             flex: 1;
@@ -100,7 +98,6 @@
             color: white;
         }
         
-        /* Tab Navigation */
         .tab-nav {
             display: flex;
             background: white;
@@ -135,7 +132,6 @@
             display: block;
         }
         
-        /* My Orders Styles */
         .my-order-card {
             background: white;
             border-radius: 12px;
@@ -222,7 +218,6 @@
             color: #ddd;
         }
         
-        /* Date Filter for My Orders - Floating/Sticky */
         .order-filter-section {
             background: white;
             border-radius: 12px;
@@ -259,7 +254,6 @@
             font-weight: bold;
         }
         
-        /* Edit Order Modal */
         .edit-modal-overlay {
             display: none;
             position: fixed;
@@ -340,25 +334,6 @@
             margin-top: 15px;
         }
         .edit-item-delete {
-            background: none;
-            border: none;
-            color: #dc3545;
-            cursor: pointer;
-            padding: 5px 8px;
-            border-radius: 5px;
-        }
-        .edit-item-delete:hover {
-            background: #fdeaea;
-        }
-        .edit-item-row.deleted {
-            opacity: 0.5;
-            background: #f8d7da;
-            text-decoration: line-through;
-        }
-        .edit-item-row.deleted .edit-item-delete {
-            color: #198754;
-        }
-        .edit-item-delete {
             width: 32px;
             height: 32px;
             border: none;
@@ -380,7 +355,6 @@
             text-decoration: line-through;
         }
         
-        /* Page Navigation (Admin Only) */
         .page-nav {
             display: none;
             background: white;
@@ -433,7 +407,6 @@
             </div>
         </div>
 
-        <!-- Page Navigation (Admin Only) -->
         <div class="page-nav" id="adminPageNav">
             <a href="index.html" class="page-nav-btn active">
                 <i class="fas fa-shopping-cart"></i> สั่งซื้อ
@@ -449,25 +422,22 @@
             </a>
         </div>
 
-        <!-- Tab Navigation -->
         <div class="tab-nav" id="tabNav">
             <button class="tab-btn active" onclick="switchTab('order')">🛒 สั่งซื้อ</button>
             <button class="tab-btn" id="myOrdersTab" onclick="switchTab('myorders')">📋 ออเดอร์ของฉัน</button>
         </div>
 
-        <!-- Tab: สั่งซื้อ -->
         <div id="tabOrder" class="tab-content active">
             <div class="container-fluid px-3">
                 <div class="date-input-container">
                     <i class="fas fa-calendar-alt date-icon"></i>
-                    <input type="date" id="orderDate" class="date-input" onchange="checkFirstBill()">
+                    <input type="date" id="orderDate" class="date-input" onchange="onDateChange()">
                     <span class="divider">|</span>
                     <i class="fas fa-clock date-icon"></i>
                     <input type="time" id="orderTime" class="date-input">
                 </div>
             </div>
 
-            <!-- เลือกรอบจัดส่ง -->
             <div class="container mt-2" id="roundSelectSection">
                 <div class="product-card" style="background: #f0fff4; border: 1px solid #86efac;">
                     <div class="product-info">
@@ -479,7 +449,6 @@
                 </div>
             </div>
 
-            <!-- เลือกร้านของฉัน (สำหรับลูกค้าที่มีหลายร้าน) -->
             <div class="container mt-2" id="shopSelectSection" style="display: none;">
                 <div class="product-card" style="background: #e7f1ff; border: 1px solid #b6d4fe;">
                     <div class="product-info">
@@ -491,7 +460,6 @@
                 </div>
             </div>
 
-            <!-- เลือกลูกค้า (สำหรับ Admin) -->
             <div class="container mt-2" id="adminInputSection" style="display: none;">
                 <div class="product-card" style="background: #fff3cd; border: 1px solid #ffe69c;">
                     <div class="product-info">
@@ -533,7 +501,6 @@
                             <button class="stepper-btn plus admin-only" style="display:none;" onclick="manualAdjustBag(1)"><i class="fas fa-plus"></i></button>
                         </div>
                     </div>
-                    <!-- ยอดถุงคงค้าง (แสดงในบรรทัดเดียวกัน) -->
                     <div class="product-row" id="bagBalanceRow" style="display: none; border-top: 1px dashed #b6d4fe; padding-top: 10px; margin-top: 10px;">
                         <div class="product-info">
                             <div class="product-name" style="font-size: 13px; color: #f57c00;">📊 ยอดคงค้างสะสม</div>
@@ -558,10 +525,8 @@
             </div>
         </div>
 
-        <!-- Tab: ออเดอร์ของฉัน -->
         <div id="tabMyOrders" class="tab-content">
             <div class="container mt-2">
-                <!-- Date Filter -->
                 <div class="order-filter-section">
                     <div class="order-filter-row" id="shopFilterRow">
                         <label>🏪 ร้าน:</label>
@@ -579,7 +544,6 @@
                     </div>
                 </div>
                 
-                <!-- Orders List -->
                 <div id="myOrdersList">
                     <div class="text-center text-muted py-4">
                         <div class="spinner-border text-primary mb-2" role="status"></div>
@@ -596,17 +560,11 @@
                     <div class="drag-handle"></div>
                     <h5>✏️ แก้ไขออเดอร์ <span id="editInvoiceNo"></span></h5>
                 </div>
-                
-                <!-- วันที่ -->
                 <div class="edit-date-section">
                     <label>📅 วันที่ส่ง:</label>
                     <input type="date" id="editOrderDate">
                 </div>
-                
-                <!-- รายการสินค้า -->
                 <div id="editItemsList"></div>
-                
-                <!-- เพิ่มสินค้า -->
                 <div class="add-item-section">
                     <div style="font-size: 13px; color: #666; margin-bottom: 8px;">➕ เพิ่มสินค้า:</div>
                     <div style="display: flex; gap: 8px; align-items: center;">
@@ -617,14 +575,10 @@
                         <button type="button" class="btn btn-sm btn-primary" onclick="addNewItem()">เพิ่ม</button>
                     </div>
                 </div>
-                
-                <!-- ยอดรวม -->
                 <div style="background: #f0fff4; border-radius: 10px; padding: 12px; margin-top: 15px; text-align: center;">
                     <span style="font-size: 14px; color: #666;">ยอดรวมใหม่:</span>
                     <div id="editNewTotal" style="font-size: 22px; font-weight: bold; color: #198754;">0 บาท</div>
                 </div>
-                
-                <!-- Buttons -->
                 <div class="d-flex gap-2 mt-4">
                     <button class="btn btn-outline-secondary flex-fill" style="border-radius: 25px; padding: 12px;" onclick="closeEditModalDirect()">ยกเลิก</button>
                     <button class="btn btn-success flex-fill" id="saveEditBtn" style="border-radius: 25px; padding: 12px; font-weight: bold;" onclick="saveEditOrder()">💾 บันทึก</button>
@@ -639,17 +593,12 @@
                     <div class="drag-handle"></div>
                     <h5>📜 ข้อมูลก่อนแก้ไข</h5>
                 </div>
-                
                 <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 10px; padding: 12px; margin-bottom: 15px;">
                     <div style="font-size: 12px; color: #856404;">
                         <i class="fas fa-info-circle"></i> นี่คือข้อมูลออเดอร์ก่อนที่จะถูกแก้ไข
                     </div>
                 </div>
-                
-                <div id="originalOrderContent" style="background: #f8f9fa; border-radius: 10px; padding: 15px;">
-                    <!-- Content will be inserted here -->
-                </div>
-                
+                <div id="originalOrderContent" style="background: #f8f9fa; border-radius: 10px; padding: 15px;"></div>
                 <div class="d-flex gap-2 mt-4">
                     <button class="btn btn-secondary flex-fill" style="border-radius: 25px; padding: 12px;" onclick="closeOriginalModalDirect()">ปิด</button>
                 </div>
@@ -670,9 +619,7 @@
                 <div id="confirmRoundInfo" style="background: #f0fff4; border: 1px solid #86efac; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; text-align: center;">
                     <span style="color: #16a34a; font-weight: bold;">🚚 รอบ: <span id="confirmRoundText">-</span></span>
                 </div>
-                
                 <div id="confirmOrderLines" style="background: #f8f9fa; border-radius: 10px; padding: 12px; margin-bottom: 15px; font-size: 14px;"></div>
-                
                 <div style="border-top: 1px solid #eee; padding-top: 12px;">
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted">ยอดรวม</span>
@@ -691,7 +638,6 @@
                         <span id="confirmGrandTotal" style="font-size: 20px; font-weight: bold; color: #198754;">0 บาท</span>
                     </div>
                 </div>
-                
                 <div class="d-flex gap-2 mt-4">
                     <button class="btn btn-outline-secondary flex-fill" style="border-radius: 25px; padding: 12px;" onclick="closeConfirmModal()">ยกเลิก</button>
                     <button class="btn btn-primary flex-fill" id="finalConfirmBtn" style="border-radius: 25px; padding: 12px; font-weight: bold;" onclick="submitOrder()">✅ ยืนยันสั่ง</button>
@@ -750,11 +696,13 @@
         let myOrders = [];
         let myOrdersRefreshInterval = null;
         const MY_ORDERS_REFRESH_SECONDS = 10;
+        
+        // ⭐ เพิ่มตัวแปรใหม่สำหรับยืนยันวันที่
+        let dateConfirmed = false;
 
         const QUOTA_BAG_PRODUCTS = ['tube_l', 'tube_s', 'pack_l', 'pack_s', 'crush_sack', 'crush_sachet', 'crush_white', 'sack'];
         const QUOTA_CUBE_PRODUCTS = ['cube_sachet', 'cube_kak', 'cube_hand'];
         
-        // Auto-refresh for My Orders tab
         function startMyOrdersRefresh() {
             if (myOrdersRefreshInterval) clearInterval(myOrdersRefreshInterval);
             myOrdersRefreshInterval = setInterval(() => {
@@ -792,7 +740,6 @@
                 const newOrders = await res.json();
                 if (!Array.isArray(newOrders)) return;
                 
-                // เช็คว่ามีการเปลี่ยนแปลงหรือไม่
                 if (JSON.stringify(myOrders) !== JSON.stringify(newOrders)) {
                     myOrders = newOrders;
                     renderMyOrders();
@@ -810,13 +757,13 @@
             if (tab === 'order') {
                 document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
                 document.getElementById('tabOrder').classList.add('active');
-                stopMyOrdersRefresh(); // หยุด refresh เมื่อออกจาก tab
+                stopMyOrdersRefresh();
             } else {
                 document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
                 document.getElementById('tabMyOrders').classList.add('active');
                 initMyOrdersDateFilter();
                 loadMyOrders();
-                startMyOrdersRefresh(); // เริ่ม refresh เมื่อเข้า tab
+                startMyOrdersRefresh();
             }
         }
 
@@ -851,7 +798,7 @@
         function initMyOrdersDateFilter() {
             const today = new Date();
             const dateFrom = new Date();
-            dateFrom.setDate(today.getDate() - 7); // 7 วันย้อนหลัง
+            dateFrom.setDate(today.getDate() - 7);
             
             const formatDate = (d) => {
                 const yyyy = d.getFullYear();
@@ -863,13 +810,11 @@
             document.getElementById('myOrderDateFrom').value = formatDate(dateFrom);
             document.getElementById('myOrderDateTo').value = formatDate(today);
             
-            // Populate shop dropdown
             const shopFilterRow = document.getElementById('shopFilterRow');
             const shopSelect = document.getElementById('myOrderShopFilter');
             const shopNameDisplay = document.getElementById('shopNameDisplay');
             
             if (myShops && myShops.length > 1) {
-                // หลายร้าน: แสดง dropdown
                 shopFilterRow.style.display = 'flex';
                 shopSelect.style.display = 'block';
                 shopNameDisplay.style.display = 'none';
@@ -879,13 +824,11 @@
                     shopSelect.innerHTML += `<option value="${s.id}">${s.name}</option>`;
                 });
             } else if (myShops && myShops.length === 1) {
-                // ร้านเดียว: แสดงชื่อร้านเฉยๆ
                 shopFilterRow.style.display = 'flex';
                 shopSelect.style.display = 'none';
                 shopNameDisplay.style.display = 'block';
                 shopNameDisplay.textContent = myShops[0].name;
             } else {
-                // ไม่มีร้าน: ซ่อนทั้งแถว
                 shopFilterRow.style.display = 'none';
             }
         }
@@ -906,7 +849,6 @@
                 const roundText = getRoundDisplayText(order.delivery_round, order.pickup_time);
                 const isEdited = order.is_edited == 1;
                 
-                // Payment status badge
                 let paymentBadge = '';
                 if (order.status === 'confirmed') {
                     if (order.is_paid == 1 || order.is_paid === true) {
@@ -973,12 +915,10 @@
             const editedAt = order.edited_at ? new Date(order.edited_at).toLocaleString('th-TH') : '-';
             const rawData = order.original_data;
             
-            // ดึงค่าจาก JSON string ด้วย regex
             const dateMatch = rawData.match(/"order_date":"([^"]+)"/);
             const totalMatch = rawData.match(/"total":"?([0-9.]+)"?/);
             const bagsMatch = rawData.match(/"total_bags":(\d+)/);
             
-            // ดึงรายการสินค้าด้วย regex - หา pattern "- ชื่อสินค้า: จำนวน หน่วย (ราคา บาท)"
             const itemMatches = rawData.match(/- [^"\\]+?: \d+ [^"\\]+? \(\d+[,\d]* บาท\)/g);
             
             const originalData = {
@@ -988,7 +928,6 @@
                 order_items: itemMatches || []
             };
             
-            // Format order items
             let itemsHtml = '<span class="text-muted">ไม่มีรายการ</span>';
             if (originalData.order_items.length > 0) {
                 itemsHtml = originalData.order_items
@@ -1008,24 +947,20 @@
                     <div style="font-size: 12px; color: #666; margin-bottom: 5px;">📅 วันที่ส่ง (เดิม):</div>
                     <div style="font-weight: bold;">${formatOrderDate(originalData.order_date)}</div>
                 </div>
-                
                 <div style="margin-bottom: 15px;">
                     <div style="font-size: 12px; color: #666; margin-bottom: 5px;">📦 รายการสินค้า (เดิม):</div>
                     <div>${itemsHtml}</div>
                 </div>
-                
                 <div style="margin-bottom: 15px;">
                     <div style="font-size: 12px; color: #666; margin-bottom: 5px;">💰 ยอดรวม (เดิม):</div>
                     <div style="font-weight: bold; color: #198754;">${parseFloat(originalData.total || 0).toLocaleString()} บาท</div>
                 </div>
-                
                 ${originalData.total_bags > 0 ? `
                 <div style="margin-bottom: 15px;">
                     <div style="font-size: 12px; color: #666; margin-bottom: 5px;">👜 ยืมถุง (เดิม):</div>
                     <div>${originalData.total_bags} ใบ</div>
                 </div>
                 ` : ''}
-                
                 <div style="border-top: 1px solid #dee2e6; padding-top: 10px; margin-top: 10px;">
                     <div style="font-size: 11px; color: #888;">
                         <i class="fas fa-clock"></i> แก้ไขเมื่อ: ${editedAt}
@@ -1087,10 +1022,6 @@
             return '<span class="text-muted">ไม่มีรายการ</span>';
         }
 
-        async function cancelOrder(orderId, invoiceNo) {
-            // ไม่ใช้แล้ว - เปลี่ยนเป็นแก้ไขแทน
-        }
-        
         // ==================== EDIT ORDER FUNCTIONS ====================
         let editingOrder = null;
         let editingItems = [];
@@ -1102,28 +1033,20 @@
                 return;
             }
             
-            console.log('📋 Editing order:', editingOrder);
-            console.log('🔑 customer_id:', editingOrder.customer_id);
-            
-            // แสดง loading
             const btn = event?.target;
             if (btn) {
                 btn.disabled = true;
                 btn.innerHTML = '⏳ กำลังโหลด...';
             }
             
-            // โหลดราคาของลูกค้าเจ้าของออเดอร์ (ทุกครั้ง)
             if (editingOrder.customer_id) {
                 try {
-                    console.log('🔄 Loading prices for customer:', editingOrder.customer_id);
                     const res = await fetch(`${BASE_URL}/get-prices-by-customer`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ customerId: editingOrder.customer_id })
                     });
                     const data = await res.json();
-                    console.log('💰 Prices loaded:', data);
-                    // เก็บราคาสำหรับการแก้ไขนี้
                     customerPrices = {};
                     data.forEach(item => {
                         if (item.product_code) {
@@ -1135,36 +1058,25 @@
                             };
                         }
                     });
-                    console.log('✅ customerPrices:', customerPrices);
                 } catch (e) {
                     console.error('Error loading prices for edit:', e);
                 }
-            } else {
-                console.warn('⚠️ No customer_id in order!');
             }
             
-            // คืนค่าปุ่ม
             if (btn) {
                 btn.disabled = false;
                 btn.innerHTML = '✏️ แก้ไขออเดอร์';
             }
             
-            // ตั้งค่า Invoice No
             document.getElementById('editInvoiceNo').textContent = editingOrder.invoice_no;
-            
-            // ตั้งค่าวันที่
             const orderDate = editingOrder.order_date ? editingOrder.order_date.split('T')[0] : '';
             document.getElementById('editOrderDate').value = orderDate;
             
-            // Parse order items
             editingItems = parseOrderItemsForEdit(editingOrder.order_items);
             renderEditItems();
             calculateEditTotal();
-            
-            // Populate add item dropdown
             populateAddItemDropdown();
             
-            // แสดง Modal
             document.getElementById('editOrderModal').style.display = 'block';
             document.body.style.overflow = 'hidden';
         }
@@ -1177,7 +1089,6 @@
             
             if (!matches) return [];
             
-            // Map ชื่อสินค้า → product code
             const nameToCode = {
                 'หลอดใหญ่': 'tube_l', 'หลอดเล็ก': 'tube_s',
                 'แพ็คกระสอบ': 'pack_l', 'แพ็คเล็ก': 'pack_s',
@@ -1191,7 +1102,6 @@
                 const line = m.replace(/^"|"$/g, '');
                 if (line.startsWith('---') || line.includes('ยืมถุง') || line.includes('คืนถุง')) return;
                 
-                // Parse: "หลอดใหญ่: 10 กระสอบ (240 บาท)" หรือ "- หลอดใหญ่: 10 กระสอบ (240 บาท)"
                 const cleanLine = line.replace(/^-\s*/, '');
                 const match = cleanLine.match(/(.+?):\s*(\d+)\s*(.+?)\s*\((\d+,?\d*)\s*บาท\)/);
                 
@@ -1200,15 +1110,12 @@
                     const qty = parseInt(match[2]);
                     const priceFromOrder = parseInt(match[4].replace(',', ''));
                     
-                    // หา product code และราคาจาก customerPrices
                     const code = nameToCode[name];
                     let unitPrice = 0;
                     
                     if (code && customerPrices[code]) {
-                        // ใช้ราคาจาก customerPrices (ราคาปัจจุบัน)
                         unitPrice = customerPrices[code].price || 0;
                     } else if (qty > 0 && priceFromOrder > 0) {
-                        // ใช้ราคาจากออเดอร์เดิม
                         unitPrice = Math.round(priceFromOrder / qty);
                     }
                     
@@ -1278,12 +1185,10 @@
             const select = document.getElementById('addItemSelect');
             select.innerHTML = '<option value="">-- เลือกสินค้า --</option>';
             
-            // ใช้ลำดับเดียวกับหน้าสั่งซื้อ
             const productOrder = [
-                'tube_l', 'tube_s',           // น้ำแข็งหลอด
-                'pack_l', 'pack_s',           // น้ำแข็งแพ็ค
-                'crush_white', 'crush_sack', 'crush_sachet',  // น้ำแข็งบด
-                'cube_sachet', 'cube_kak', 'cube_hand', 'sack' // ก้อน & อื่นๆ
+                'tube_l', 'tube_s', 'pack_l', 'pack_s',
+                'crush_white', 'crush_sack', 'crush_sachet',
+                'cube_sachet', 'cube_kak', 'cube_hand', 'sack'
             ];
             
             const productNames = {
@@ -1301,7 +1206,6 @@
                 'sack': 'มัด'
             };
             
-            // สร้าง options ตามลำดับที่กำหนด
             if (Object.keys(customerPrices).length > 0) {
                 productOrder.forEach(code => {
                     if (customerPrices[code]) {
@@ -1312,7 +1216,6 @@
                     }
                 });
             } else {
-                // ใช้ default list ถ้าไม่มี customerPrices
                 productOrder.forEach(code => {
                     const name = productNames[code];
                     const unit = productUnits[code];
@@ -1341,15 +1244,12 @@
             const unit = option.dataset.unit;
             const unitPrice = parseFloat(option.dataset.price) || 0;
             
-            // เช็คว่ามีสินค้านี้ในรายการแล้วหรือยัง
             const existingIndex = editingItems.findIndex(item => item.name === name && !item.deleted);
             
             if (existingIndex >= 0) {
-                // เพิ่มจำนวนให้สินค้าที่มีอยู่แล้ว
                 editingItems[existingIndex].qty += qty;
                 editingItems[existingIndex].price = editingItems[existingIndex].qty * unitPrice;
             } else {
-                // เพิ่มสินค้าใหม่
                 editingItems.push({
                     name: name,
                     qty: qty,
@@ -1360,7 +1260,6 @@
                 });
             }
             
-            // Reset form
             select.value = '';
             qtyInput.value = 1;
             
@@ -1411,7 +1310,6 @@
                 return;
             }
             
-            // สร้าง order items ใหม่ (ไม่รวมรายการที่ลบ)
             const newItems = editingItems
                 .filter(item => item.qty > 0 && !item.deleted)
                 .map(item => `- ${item.name}: ${item.qty} ${item.unit} (${item.price.toLocaleString()} บาท)`);
@@ -1421,7 +1319,6 @@
                 return;
             }
             
-            // คำนวณยอดรวมใหม่
             let newTotal = 0;
             editingItems.forEach(item => { 
                 if (!item.deleted) {
@@ -1429,7 +1326,6 @@
                 }
             });
             
-            // คำนวณถุงยืมใหม่
             let newBags = 0;
             editingItems.forEach(item => {
                 if (!item.deleted) {
@@ -1476,6 +1372,7 @@
             }
         }
 
+        // ⭐ แก้ไขฟังก์ชัน selectRound - เพิ่มการยืนยันวันที่
         function selectRound(round) {
             const roundData = customerRounds.find(r => r.round_number == round);
             if (!roundData) { alert("ลูกค้านี้ไม่มีรอบนี้"); return; }
@@ -1485,15 +1382,68 @@
                 return;
             }
             
+            // ⭐ ถ้ายังไม่เคยยืนยันวันที่ → ถามก่อน
+            if (!dateConfirmed) {
+                const orderDate = document.getElementById('orderDate').value;
+                const thaiDate = formatDateThai(orderDate);
+                
+                const confirmed = confirm(`📅 ยืนยันวันที่ส่ง:\n\n${thaiDate}\n\nถูกต้องใช่ไหม?`);
+                if (!confirmed) {
+                    return;
+                }
+                dateConfirmed = true;
+            }
+            
             selectedRound = round;
             document.querySelectorAll('.round-btn').forEach(btn => {
                 btn.classList.remove('active');
-                // Reset ปุ่มรับเองกลับเป็นปกติ
                 if (btn.dataset.round === 'pickup') {
                     btn.innerHTML = '<span class="round-icon">🏭</span>รับเอง';
                 }
             });
             document.querySelector(`.round-btn[data-round="${round}"]`).classList.add('active');
+        }
+
+        // ⭐ แก้ไขฟังก์ชัน selectPickup - เพิ่มการยืนยันวันที่
+        function selectPickup() {
+            // ⭐ ถ้ายังไม่เคยยืนยันวันที่ → ถามก่อน
+            if (!dateConfirmed) {
+                const orderDate = document.getElementById('orderDate').value;
+                const thaiDate = formatDateThai(orderDate);
+                
+                const confirmed = confirm(`📅 ยืนยันวันที่รับสินค้า:\n\n${thaiDate}\n\nถูกต้องใช่ไหม?`);
+                if (!confirmed) {
+                    return;
+                }
+                dateConfirmed = true;
+            }
+            
+            selectedRound = 'pickup';
+            document.querySelectorAll('.round-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.round === 'pickup') {
+                    btn.innerHTML = '<span class="round-icon">🏭</span>รับเอง';
+                }
+            });
+            const pickupBtn = document.querySelector('.round-btn.pickup');
+            pickupBtn.classList.add('active');
+            pickupBtn.innerHTML = '<span class="round-icon">✓</span>รับเอง';
+        }
+
+        // ⭐ เพิ่มฟังก์ชัน onDateChange - รีเซ็ตเมื่อเปลี่ยนวันที่
+        function onDateChange() {
+            dateConfirmed = false;
+            selectedRound = null;
+            
+            // รีเซ็ตปุ่มรอบทั้งหมด
+            document.querySelectorAll('.round-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.round === 'pickup') {
+                    btn.innerHTML = '<span class="round-icon">🏭</span>รับเอง';
+                }
+            });
+            
+            checkFirstBill();
         }
 
         function getRoundText(round) {
@@ -1565,22 +1515,7 @@
             selectedRound = null;
         }
 
-        function selectPickup() {
-            selectedRound = 'pickup';
-            document.querySelectorAll('.round-btn').forEach(btn => {
-                btn.classList.remove('active');
-                // Reset ปุ่มรับเองกลับเป็นปกติ
-                if (btn.dataset.round === 'pickup') {
-                    btn.innerHTML = '<span class="round-icon">🏭</span>รับเอง';
-                }
-            });
-            const pickupBtn = document.querySelector('.round-btn.pickup');
-            pickupBtn.classList.add('active');
-            pickupBtn.innerHTML = '<span class="round-icon">✓</span>รับเอง';
-        }
-
         function getPickupTime() { 
-            // ใช้เวลาจาก orderTime แทน
             const input = document.getElementById('orderTime'); 
             return input ? input.value : '10:00'; 
         }
@@ -1630,11 +1565,7 @@
                     document.getElementById('adminInputSection').style.display = 'block';
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
                     document.getElementById('qty_bag_borrow').removeAttribute('readonly');
-                    
-                    // แสดง Page Navigation สำหรับ Admin
                     document.getElementById('adminPageNav').classList.add('show');
-                    
-                    // ซ่อน Tab Navigation สำหรับ Admin (ใช้ Page Nav แทน)
                     document.getElementById('tabNav').style.display = 'none';
                     
                     await loadAllCustomers();
@@ -1655,12 +1586,10 @@
 
         document.addEventListener('visibilitychange', async function() {
             if (document.visibilityState === 'visible') {
-                // Refresh deposits
                 if (currentCustomerId) {
                     await loadPendingDeposits(currentCustomerId);
                     updateTotals();
                 }
-                // Refresh my orders ถ้าอยู่ใน tab นั้น
                 if (document.getElementById('tabMyOrders').classList.contains('active')) {
                     silentRefreshMyOrders();
                 }
@@ -1719,12 +1648,14 @@
             if (!shopId) {
                 currentCustomerId = null; currentCustomerName = null; customerPrices = {}; customerMultipliers = {};
                 pendingDeposits = []; depositTotal = 0; customerRounds = []; selectedRound = null;
+                dateConfirmed = false; // ⭐ รีเซ็ต
                 stopDepositPolling(); renderProductsForAdmin(); renderRoundButtons(); updateTotals();
                 return;
             }
             
             currentCustomerId = parseInt(shopId);
             currentCustomerName = select.options[select.selectedIndex].dataset.name;
+            dateConfirmed = false; // ⭐ รีเซ็ต
             
             showProductLoading();
             await loadPricesForCustomer(currentCustomerId);
@@ -1801,16 +1732,14 @@
                 
                 if (data && data.summary) {
                     const balance = data.summary.balance || 0;
-                    
                     valueEl.textContent = balance + ' ใบ';
                     
-                    // เปลี่ยนสีตามยอดคงค้าง
                     if (balance > 0) {
-                        valueEl.style.color = '#f57c00'; // ส้ม - ค้างอยู่
+                        valueEl.style.color = '#f57c00';
                     } else if (balance === 0) {
-                        valueEl.style.color = '#388e3c'; // เขียว - ไม่ค้าง
+                        valueEl.style.color = '#388e3c';
                     } else {
-                        valueEl.style.color = '#d32f2f'; // แดง - คืนเกิน
+                        valueEl.style.color = '#d32f2f';
                     }
                     
                     row.style.display = 'flex';
@@ -1840,12 +1769,14 @@
             if (!customerId) {
                 currentCustomerId = null; currentCustomerName = null; customerPrices = {}; customerMultipliers = {};
                 pendingDeposits = []; depositTotal = 0; customerRounds = []; selectedRound = null;
+                dateConfirmed = false; // ⭐ รีเซ็ต
                 stopDepositPolling(); renderProductsForAdmin(); renderRoundButtons(); updateTotals();
                 return;
             }
             
             currentCustomerId = parseInt(customerId);
             currentCustomerName = select.options[select.selectedIndex].dataset.name;
+            dateConfirmed = false; // ⭐ รีเซ็ต
             
             showProductLoading();
             await loadPricesForCustomer(currentCustomerId);
@@ -2053,7 +1984,6 @@
             dateInput.min = formattedDate; 
             timeInput.value = `${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}`;
             
-            // เพิ่ม event listener สำหรับ validate เวลา
             dateInput.addEventListener('change', validateOrderTime);
             timeInput.addEventListener('change', validateOrderTime);
         }
@@ -2067,16 +1997,13 @@
             const today = new Date();
             const todayStr = today.toISOString().split('T')[0];
             
-            // ถ้าเป็นวันนี้ ห้ามเลือกเวลาย้อนหลัง
             if (selectedDate === todayStr) {
                 const nowHour = today.getHours();
                 const nowMin = today.getMinutes();
                 const nowTimeStr = `${String(nowHour).padStart(2, '0')}:${String(nowMin).padStart(2, '0')}`;
                 
                 if (selectedTime < nowTimeStr) {
-                    // ตั้งเวลาเป็นเวลาปัจจุบัน
                     timeInput.value = nowTimeStr;
-                    // alert('⚠️ ไม่สามารถเลือกเวลาย้อนหลังได้');
                 }
             }
         }
@@ -2187,8 +2114,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
