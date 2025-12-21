@@ -696,9 +696,6 @@
         let myOrders = [];
         let myOrdersRefreshInterval = null;
         const MY_ORDERS_REFRESH_SECONDS = 10;
-        
-        // ⭐ เพิ่มตัวแปรใหม่สำหรับยืนยันวันที่
-        let dateConfirmed = false;
 
         const QUOTA_BAG_PRODUCTS = ['tube_l', 'tube_s', 'pack_l', 'pack_s', 'crush_sack', 'crush_sachet', 'crush_white', 'sack'];
         const QUOTA_CUBE_PRODUCTS = ['cube_sachet', 'cube_kak', 'cube_hand'];
@@ -1372,7 +1369,7 @@
             }
         }
 
-        // ⭐ แก้ไขฟังก์ชัน selectRound - เพิ่มการยืนยันวันที่
+        // ⭐ แก้ไขฟังก์ชัน selectRound - ถามยืนยันวันที่ทุกครั้ง
         function selectRound(round) {
             const roundData = customerRounds.find(r => r.round_number == round);
             if (!roundData) { alert("ลูกค้านี้ไม่มีรอบนี้"); return; }
@@ -1382,16 +1379,13 @@
                 return;
             }
             
-            // ⭐ ถ้ายังไม่เคยยืนยันวันที่ → ถามก่อน
-            if (!dateConfirmed) {
-                const orderDate = document.getElementById('orderDate').value;
-                const thaiDate = formatDateThai(orderDate);
-                
-                const confirmed = confirm(`📅 ยืนยันวันที่ส่ง:\n\n${thaiDate}\n\nถูกต้องใช่ไหม?`);
-                if (!confirmed) {
-                    return;
-                }
-                dateConfirmed = true;
+            // ⭐ ถามยืนยันวันที่ทุกครั้งที่เลือกรอบ
+            const orderDate = document.getElementById('orderDate').value;
+            const thaiDate = formatDateThai(orderDate);
+            
+            const confirmed = confirm(`📅 ยืนยันวันที่ส่ง:\n\n${thaiDate}\n\nถูกต้องใช่ไหม?`);
+            if (!confirmed) {
+                return;
             }
             
             selectedRound = round;
@@ -1404,18 +1398,15 @@
             document.querySelector(`.round-btn[data-round="${round}"]`).classList.add('active');
         }
 
-        // ⭐ แก้ไขฟังก์ชัน selectPickup - เพิ่มการยืนยันวันที่
+        // ⭐ แก้ไขฟังก์ชัน selectPickup - ถามยืนยันวันที่ทุกครั้ง
         function selectPickup() {
-            // ⭐ ถ้ายังไม่เคยยืนยันวันที่ → ถามก่อน
-            if (!dateConfirmed) {
-                const orderDate = document.getElementById('orderDate').value;
-                const thaiDate = formatDateThai(orderDate);
-                
-                const confirmed = confirm(`📅 ยืนยันวันที่รับสินค้า:\n\n${thaiDate}\n\nถูกต้องใช่ไหม?`);
-                if (!confirmed) {
-                    return;
-                }
-                dateConfirmed = true;
+            // ⭐ ถามยืนยันวันที่ทุกครั้งที่เลือกรับเอง
+            const orderDate = document.getElementById('orderDate').value;
+            const thaiDate = formatDateThai(orderDate);
+            
+            const confirmed = confirm(`📅 ยืนยันวันที่รับสินค้า:\n\n${thaiDate}\n\nถูกต้องใช่ไหม?`);
+            if (!confirmed) {
+                return;
             }
             
             selectedRound = 'pickup';
@@ -1430,9 +1421,8 @@
             pickupBtn.innerHTML = '<span class="round-icon">✓</span>รับเอง';
         }
 
-        // ⭐ เพิ่มฟังก์ชัน onDateChange - รีเซ็ตเมื่อเปลี่ยนวันที่
+        // ⭐ ฟังก์ชัน onDateChange - รีเซ็ตเมื่อเปลี่ยนวันที่
         function onDateChange() {
-            dateConfirmed = false;
             selectedRound = null;
             
             // รีเซ็ตปุ่มรอบทั้งหมด
@@ -1648,14 +1638,12 @@
             if (!shopId) {
                 currentCustomerId = null; currentCustomerName = null; customerPrices = {}; customerMultipliers = {};
                 pendingDeposits = []; depositTotal = 0; customerRounds = []; selectedRound = null;
-                dateConfirmed = false; // ⭐ รีเซ็ต
                 stopDepositPolling(); renderProductsForAdmin(); renderRoundButtons(); updateTotals();
                 return;
             }
             
             currentCustomerId = parseInt(shopId);
             currentCustomerName = select.options[select.selectedIndex].dataset.name;
-            dateConfirmed = false; // ⭐ รีเซ็ต
             
             showProductLoading();
             await loadPricesForCustomer(currentCustomerId);
@@ -1769,14 +1757,12 @@
             if (!customerId) {
                 currentCustomerId = null; currentCustomerName = null; customerPrices = {}; customerMultipliers = {};
                 pendingDeposits = []; depositTotal = 0; customerRounds = []; selectedRound = null;
-                dateConfirmed = false; // ⭐ รีเซ็ต
                 stopDepositPolling(); renderProductsForAdmin(); renderRoundButtons(); updateTotals();
                 return;
             }
             
             currentCustomerId = parseInt(customerId);
             currentCustomerName = select.options[select.selectedIndex].dataset.name;
-            dateConfirmed = false; // ⭐ รีเซ็ต
             
             showProductLoading();
             await loadPricesForCustomer(currentCustomerId);
