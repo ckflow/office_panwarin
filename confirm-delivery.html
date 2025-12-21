@@ -320,6 +320,12 @@
         let allDrivers = [];
         let allDriverRounds = [];
 
+        // ⭐ อ่าน groupId จาก URL parameter
+        function getGroupIdFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('groupId');
+        }
+
         function parseOrderItems(orderItems) {
             try {
                 if (Array.isArray(orderItems)) {
@@ -353,29 +359,34 @@
                 profile = await liff.getProfile();
                 const context = liff.getContext();
                 
+                // ⭐ อ่าน groupId จาก URL ก่อน ถ้าไม่มีค่อยใช้ LIFF context
+                const urlGroupId = getGroupIdFromUrl();
+                const liffGroupId = context?.groupId || null;
+                const groupId = urlGroupId || liffGroupId;
+                
                 // Debug info
                 const debugInfo = {
                     isInClient: liff.isInClient(),
                     contextType: context?.type || 'null',
-                    groupId: context?.groupId || 'null',
-                    roomId: context?.roomId || 'null',
+                    urlGroupId: urlGroupId || 'null',
+                    liffGroupId: liffGroupId || 'null',
+                    finalGroupId: groupId || 'null',
                     userId: profile?.userId?.substring(0, 10) + '...',
                     isAdmin: ADMIN_IDS.includes(profile.userId)
                 };
                 console.log('=== LIFF Debug ===', debugInfo);
                 
                 isAdmin = ADMIN_IDS.includes(profile.userId);
-                const groupId = context?.groupId || null;
                 
-                // ถ้าเปิดจากกลุ่ม LINE → แสดง Driver Mode ของกลุ่มนั้น (ไม่ว่าจะเป็น Admin หรือไม่)
+                // ถ้ามี groupId → แสดง Driver Mode
                 if (groupId) {
                     await checkDriverAccess(groupId);
                 } else if (isAdmin) {
                     // ไม่มี groupId แต่เป็น Admin → แสดง Admin Mode
                     showAdminMode();
                 } else {
-                    // แสดง debug info พร้อม groupId
-                    debugInfo.problem = 'ไม่ได้รับ groupId จาก LIFF';
+                    // แสดง debug info
+                    debugInfo.problem = 'ไม่ได้รับ groupId จาก URL หรือ LIFF';
                     showAccessDenied(debugInfo);
                 }
             } catch (err) {
@@ -718,6 +729,9 @@
                 const today = new Date();
                 const dateStr = `${today.getDate()}/${today.getMonth()+1}/${today.getFullYear()}`;
                 
+                // ⭐ เพิ่ม groupId ใน URL
+                const liffUrl = `https://liff.line.me/2008689090-qpzFeqNR?groupId=${encodeURIComponent(driver.line_id)}`;
+                
                 const flexMessage = {
                     type: "flex",
                     altText: "📦 ออเดอร์พร้อมแล้ว!",
@@ -745,7 +759,7 @@
                             layout: "vertical",
                             contents: [{
                                 type: "button",
-                                action: { type: "uri", label: "ดูรายละเอียด", uri: "https://liff.line.me/2008689090-qpzFeqNR" },
+                                action: { type: "uri", label: "ดูรายละเอียด", uri: liffUrl },
                                 style: "primary",
                                 color: "#667eea"
                             }],
