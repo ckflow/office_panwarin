@@ -186,29 +186,6 @@
             z-index: 9999;
         }
         
-        .page-nav {
-            display: flex;
-            background: white;
-            border-radius: 12px;
-            padding: 4px;
-            margin: 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .page-nav-btn {
-            flex: 1;
-            padding: 8px 5px;
-            border: none;
-            background: transparent;
-            font-size: 11px;
-            font-weight: bold;
-            color: #666;
-            border-radius: 8px;
-            text-decoration: none;
-            text-align: center;
-        }
-        .page-nav-btn:hover { background: #f8f9fa; color: #00B900; }
-        .page-nav-btn.active { background: #00B900; color: white; }
-        
         .info-box {
             background: #e7f1ff;
             border: 1px solid #b6d4fe;
@@ -545,15 +522,11 @@
         <div class="header-section">
             <div class="d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fab fa-line me-2"></i>ผูก LINE ID</h5>
-                <button onclick="loadData()" class="btn btn-light btn-sm"><i class="fas fa-sync-alt"></i></button>
+                <div>
+                    <a href="admin.html" class="btn btn-light btn-sm me-1"><i class="fas fa-arrow-left"></i> กลับ</a>
+                    <button onclick="loadData()" class="btn btn-light btn-sm"><i class="fas fa-sync-alt"></i></button>
+                </div>
             </div>
-        </div>
-
-        <div class="page-nav">
-            <a href="index.html" class="page-nav-btn"><i class="fas fa-shopping-cart"></i> สั่งซื้อ</a>
-            <a href="orders.html" class="page-nav-btn"><i class="fas fa-clipboard-list"></i> ออเดอร์</a>
-            <a href="admin.html" class="page-nav-btn"><i class="fas fa-cog"></i> จัดการ</a>
-            <a href="drivers.html" class="page-nav-btn active"><i class="fab fa-line"></i> ผูก LINE</a>
         </div>
 
         <div class="tab-nav">
@@ -638,8 +611,8 @@
         const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
         
         let allAliases = [];
-        let allDriverRounds = [];      // รอบของคนขับทั้งหมด
-        let allCustomerRounds = [];    // รอบลูกค้าทั้งหมด
+        let allDriverRounds = [];
+        let allCustomerRounds = [];
         let currentDriverAliasId = null;
         let currentDriverRoundId = null;
 
@@ -671,7 +644,6 @@
         async function loadData() {
             showLoading(true);
             try {
-                // Load LINE aliases
                 const res1 = await fetch(`${BASE_URL}/get-line-aliases`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -681,7 +653,6 @@
                 if (!Array.isArray(allAliases)) allAliases = [];
                 allAliases = allAliases.filter(a => a && a.id);
                 
-                // Load driver rounds (with error handling)
                 try {
                     const res2 = await fetch(`${BASE_URL}/get-all-driver-rounds`, {
                         method: 'POST',
@@ -700,7 +671,6 @@
                     allDriverRounds = [];
                 }
                 
-                // Load customer rounds (with error handling)
                 try {
                     const res3 = await fetch(`${BASE_URL}/get-all-customer-rounds`, {
                         method: 'POST',
@@ -718,10 +688,6 @@
                     console.warn('Customer rounds API not ready:', e3);
                     allCustomerRounds = [];
                 }
-                
-                console.log('Aliases:', allAliases);
-                console.log('Driver Rounds:', allDriverRounds);
-                console.log('Customer Rounds:', allCustomerRounds);
                 
                 updateBadges();
                 renderAll();
@@ -919,8 +885,6 @@
             `;
         }
 
-        // ========== Driver Round Functions ==========
-        
         function openAddRoundModal(driverAliasId, driverName) {
             currentDriverAliasId = driverAliasId;
             document.getElementById('addRoundDriverName').textContent = driverName;
@@ -1013,8 +977,6 @@
             showLoading(false);
         }
 
-        // ========== Manage Customers Modal ==========
-
         function openManageCustomersModal(driverAliasId, driverName, driverRoundId, roundName) {
             currentDriverAliasId = driverAliasId;
             currentDriverRoundId = driverRoundId;
@@ -1040,7 +1002,6 @@
                 return true;
             });
             
-            // Sort: assigned to current round first, then available, then assigned to others
             items.sort((a, b) => {
                 const aIsCurrent = a.driver_round_id === currentDriverRoundId;
                 const bIsCurrent = b.driver_round_id === currentDriverRoundId;
@@ -1087,7 +1048,6 @@
         }
 
         async function toggleCustomerRound(customerRoundId, isCurrentlySelected, isAssignedOther) {
-            // Allow reassignment from other rounds
             if (isAssignedOther) {
                 if (!confirm('รอบลูกค้านี้ผูกกับคนขับอื่นอยู่ ต้องการย้ายมาที่นี่?')) return;
             }
@@ -1102,7 +1062,6 @@
                     body: JSON.stringify({ customerRoundId, driverRoundId: newDriverRoundId })
                 });
                 
-                // Update local data
                 const cr = allCustomerRounds.find(c => c.id === customerRoundId);
                 if (cr) cr.driver_round_id = newDriverRoundId;
                 
@@ -1133,8 +1092,6 @@
             }
             showLoading(false);
         }
-
-        // ========== Alias Functions ==========
 
         async function linkAlias(id) {
             const name = document.getElementById(`name_${id}`).value.trim();
@@ -1209,8 +1166,6 @@
             } catch (e) { alert('เกิดข้อผิดพลาด'); }
             showLoading(false);
         }
-
-        // ========== Utilities ==========
 
         function formatDateTime(dateTimeStr) {
             if (!dateTimeStr) return '-';
