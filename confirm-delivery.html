@@ -593,7 +593,11 @@
                 await fetch(`${BASE_URL}/confirm-order`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ orderId, isPaid: 0, confirmedBy: driverInfo.alias_name })
+                    body: JSON.stringify({ 
+                        orderId, 
+                        isPaid: 0, 
+                        confirmedByUserId: profile.userId  // ⭐ ส่ง LINE User ID
+                    })
                 });
                 
                 // ⭐ ลบออกจาก list และเพิ่ม confirmedCount
@@ -616,7 +620,11 @@
                     await fetch(`${BASE_URL}/confirm-order`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ orderId: o.id, isPaid: 0, confirmedBy: driverInfo.alias_name })
+                        body: JSON.stringify({ 
+                            orderId: o.id, 
+                            isPaid: 0, 
+                            confirmedByUserId: profile.userId  // ⭐ ส่ง LINE User ID
+                        })
                     });
                 }
                 
