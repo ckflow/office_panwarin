@@ -436,6 +436,16 @@
             padding-top: 10px;
             border-top: 1px solid #f0f0f0;
         }
+        
+        /* Confirmed Info */
+        .confirmed-info {
+            background: #d1e7dd;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #0f5132;
+        }
 
         @media (max-width: 576px) {
             .filter-row { flex-direction: column; align-items: stretch; }
@@ -793,26 +803,27 @@
         }
 
         function renderOrders() {
-            let filteredOrders = allOrders;
-            if (currentStatusFilter) {
-                filteredOrders = allOrders.filter(o => o.status === currentStatusFilter);
-            }
-            
+            // Filter by time
             const timeFrom = document.getElementById('timeFrom').value || '00:00';
             const timeTo = document.getElementById('timeTo').value || '23:59';
             
-            filteredOrders = filteredOrders.filter(o => {
+            let filteredByTime = allOrders.filter(o => {
                 const orderTime = o.order_time ? o.order_time.substring(0, 5) : '00:00';
                 return orderTime >= timeFrom && orderTime <= timeTo;
             });
             
+            // Filter by status
+            let filteredOrders = filteredByTime;
+            if (currentStatusFilter) {
+                filteredOrders = filteredByTime.filter(o => o.status === currentStatusFilter);
+            }
+            
             const pickupOrders = filteredOrders.filter(o => o.delivery_round === 'pickup');
             const deliveryOrders = filteredOrders.filter(o => o.delivery_round !== 'pickup');
             
-            const pendingPickup = pickupOrders.filter(o => o.status === 'pending').length;
-            const pendingDelivery = deliveryOrders.filter(o => o.status === 'pending').length;
-            document.getElementById('badgePickup').textContent = pendingPickup;
-            document.getElementById('badgeDelivery').textContent = pendingDelivery;
+            // ⭐ Badge นับตาม filter ที่เลือก (ไม่ใช่แค่ pending)
+            document.getElementById('badgePickup').textContent = pickupOrders.length;
+            document.getElementById('badgeDelivery').textContent = deliveryOrders.length;
             
             // Render Pickup Orders
             const pickupContainer = document.getElementById('pickupOrdersList');
@@ -912,6 +923,18 @@
             
             const canConfirm = order.status === 'pending';
             
+            // ⭐ เพิ่มส่วนแสดงข้อมูลการยืนยัน (ชื่อ + เวลา)
+            let confirmedInfoHtml = '';
+            if (order.status === 'confirmed' && order.confirmed_by) {
+                const confirmedTime = order.confirmed_at ? formatDateTime(order.confirmed_at) : '';
+                confirmedInfoHtml = `
+                    <div class="confirmed-info">
+                        ✅ ยืนยันโดย: <b>${order.confirmed_by}</b>
+                        ${confirmedTime ? `<br>🕐 เวลา: ${confirmedTime}` : ''}
+                    </div>
+                `;
+            }
+            
             return `
                 <div class="order-card ${statusClass}">
                     <div class="order-header">
@@ -940,8 +963,9 @@
                             ${order.created_by 
                                 ? `<span>📝 คีย์โดย: <b>${order.created_by}</b></span>` 
                                 : `<span>📝 สั่งโดย: <b>${order.ordered_by_alias || order.customer_name}</b></span>`}
-                            ${order.confirmed_by ? ` | <span>✅ ยืนยันโดย: <b>${order.confirmed_by}</b></span>` : ''}
                         </div>
+                        
+                        ${confirmedInfoHtml}
                         
                         ${canConfirm ? `
                             <div class="order-actions">
@@ -1290,9 +1314,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
