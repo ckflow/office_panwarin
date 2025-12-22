@@ -394,6 +394,36 @@
             background: #667eea;
             color: white;
         }
+        
+        /* Mode Toggle Button */
+        .mode-toggle-container {
+            display: none;
+            justify-content: center;
+            margin: 10px 15px;
+        }
+        .mode-toggle-container.show {
+            display: flex;
+        }
+        .mode-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            border-radius: 25px;
+            background: white;
+            color: #667eea;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .mode-toggle-btn:hover {
+            background: #f0f4ff;
+        }
+        .mode-toggle-btn .icon {
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
@@ -430,6 +460,14 @@
             <a href="admin.html" class="page-nav-btn">
                 <i class="fas fa-users"></i> ลูกค้า
             </a>
+        </div>
+
+        <!-- Mode Toggle Button (สำหรับคนที่เป็นทั้ง admin และ customer) -->
+        <div class="mode-toggle-container" id="modeToggleContainer">
+            <button class="mode-toggle-btn" id="modeToggleBtn" onclick="toggleViewMode()">
+                <span class="icon" id="modeToggleIcon">👤</span>
+                <span id="modeToggleText">สลับเป็นโหมดลูกค้า</span>
+            </button>
         </div>
 
         <!-- Customer 4-tab Navigation -->
@@ -694,6 +732,9 @@
         let currentCustomerId = null;
         let currentCustomerName = null;
         let isAdmin = false;
+        let isCustomer = false;
+        let isDualRole = false;
+        let currentViewMode = 'admin'; // 'admin' or 'customer'
         let isFirstBill = false;
         let customerPrices = {};
         let customerMultipliers = {};
@@ -1573,37 +1614,130 @@
                 isAdmin = adminData.isAdmin === true;
                 adminName = adminData.adminName || null;
                 
-                // Test mode: ?mode=customer เพื่อทดสอบมุมมองลูกค้า
-                const urlParams = new URLSearchParams(window.location.search);
-                if (urlParams.get('mode') === 'customer') {
-                    isAdmin = false;
-                    console.log('🧪 Test Mode: Customer View');
+                // Check customer (has shops?) via API
+                const shopsRes = await fetch(`${BASE_URL}/get-my-shops`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lineId: currentUserId })
+                });
+                myShops = await shopsRes.json();
+                isCustomer = Array.isArray(myShops) && myShops.length > 0;
+                
+                // Check if dual role (both admin and customer)
+                isDualRole = isAdmin && isCustomer;
+                
+                // Get saved view mode from localStorage (only for dual role)
+                if (isDualRole) {
+                    const savedMode = localStorage.getItem('viewMode');
+                    if (savedMode === 'customer' || savedMode === 'admin') {
+                        currentViewMode = savedMode;
+                    } else {
+                        currentViewMode = 'customer'; // Default to customer view for dual role
+                    }
                     
-                    // รักษา parameter ไว้ในลิงก์ทั้งหมด
-                    document.querySelectorAll('.nav-link').forEach(link => {
-                        link.href += '?mode=customer';
-                    });
+                    // Show toggle button
+                    document.getElementById('modeToggleContainer').classList.add('show');
+                    updateModeToggleButton();
                 }
                 
-                if (isAdmin) {
-                    document.getElementById('adminInputSection').style.display = 'block';
-                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
-                    document.getElementById('qty_bag_borrow').removeAttribute('readonly');
-                    document.getElementById('adminPageNav').classList.add('show');
-                    document.getElementById('tabNav').style.display = 'none';
-                    
-                    await loadAllCustomers();
-                    renderProductsForAdmin();
-                    
-                    document.getElementById('loadingScreen').style.display = 'none';
-                    document.getElementById('mainContent').style.display = 'block';
+                // Test mode: ?mode=customer เพื่อทดสอบมุมมองลูกค้า (override)
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('mode') === 'customer') {
+                    currentViewMode = 'customer';
+                    console.log('🧪 Test Mode: Customer View');
+                }
+                
+                // Decide which view to show
+                if (isDualRole) {
+                    if (currentViewMode === 'admin') {
+                        await initAdminView();
+                    } else {
+                        await initCustomerView();
+                    }
+                } else if (isAdmin) {
+                    currentViewMode = 'admin';
+                    await initAdminView();
+                } else if (isCustomer) {
+                    currentViewMode = 'customer';
+                    await initCustomerView();
                 } else {
-                    await loadMyShops();
+                    // Neither admin nor customer
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('noPriceScreen').style.display = 'block';
                 }
                 
             } catch (err) { 
                 console.error(err);
                 document.getElementById('loadingScreen').innerHTML = '<h4>❌ เกิดข้อผิดพลาด</h4>';
+            }
+        }
+        
+        async function initAdminView() {
+            document.getElementById('adminInputSection').style.display = 'block';
+            document.getElementById('shopSelectSection').style.display = 'none';
+            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
+            document.getElementById('qty_bag_borrow').removeAttribute('readonly');
+            document.getElementById('adminPageNav').classList.add('show');
+            document.getElementById('tabNav').style.display = 'none';
+            
+            await loadAllCustomers();
+            renderProductsForAdmin();
+            
+            document.getElementById('loadingScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+        }
+        
+        async function initCustomerView() {
+            document.getElementById('adminInputSection').style.display = 'none';
+            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+            document.getElementById('qty_bag_borrow').setAttribute('readonly', true);
+            document.getElementById('adminPageNav').classList.remove('show');
+            document.getElementById('tabNav').style.display = 'flex';
+            
+            if (myShops.length === 0) {
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('noPriceScreen').style.display = 'block';
+            } else if (myShops.length === 1) {
+                document.getElementById('shopSelectSection').style.display = 'none';
+                currentCustomerId = myShops[0].id;
+                currentCustomerName = myShops[0].name;
+                await loadPricesForCustomer(currentCustomerId);
+            } else {
+                const select = document.getElementById('myShopSelect');
+                select.innerHTML = '<option value="">-- เลือกร้าน --</option>';
+                myShops.forEach(s => { select.innerHTML += `<option value="${s.id}" data-name="${s.name}">${s.name}</option>`; });
+                
+                document.getElementById('shopSelectSection').style.display = 'block';
+                renderProductsForAdmin();
+                
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+            }
+        }
+        
+        function toggleViewMode() {
+            if (!isDualRole) return;
+            
+            // Toggle mode
+            currentViewMode = currentViewMode === 'admin' ? 'customer' : 'admin';
+            
+            // Save to localStorage
+            localStorage.setItem('viewMode', currentViewMode);
+            
+            // Reload page to apply new mode
+            location.reload();
+        }
+        
+        function updateModeToggleButton() {
+            const icon = document.getElementById('modeToggleIcon');
+            const text = document.getElementById('modeToggleText');
+            
+            if (currentViewMode === 'admin') {
+                icon.textContent = '👤';
+                text.textContent = 'สลับเป็นโหมดลูกค้า';
+            } else {
+                icon.textContent = '👑';
+                text.textContent = 'สลับเป็นโหมดแอดมิน';
             }
         }
         main();
@@ -1632,6 +1766,8 @@
         function stopDepositPolling() { if (depositPollingInterval) { clearInterval(depositPollingInterval); depositPollingInterval = null; } }
 
         async function loadMyShops() {
+            // This function is now only used for refreshing shop data
+            // Initial load is handled by main() -> initCustomerView()
             try {
                 const res = await fetch(`${BASE_URL}/get-my-shops`, {
                     method: 'POST',
@@ -1639,29 +1775,9 @@
                     body: JSON.stringify({ lineId: currentUserId })
                 });
                 myShops = await res.json();
-                
-                if (myShops.length === 0) {
-                    document.getElementById('loadingScreen').style.display = 'none';
-                    document.getElementById('noPriceScreen').style.display = 'block';
-                } else if (myShops.length === 1) {
-                    currentCustomerId = myShops[0].id;
-                    currentCustomerName = myShops[0].name;
-                    await loadPricesForCustomer(currentCustomerId);
-                } else {
-                    const select = document.getElementById('myShopSelect');
-                    select.innerHTML = '<option value="">-- เลือกร้าน --</option>';
-                    myShops.forEach(s => { select.innerHTML += `<option value="${s.id}" data-name="${s.name}">${s.name}</option>`; });
-                    
-                    document.getElementById('shopSelectSection').style.display = 'block';
-                    renderProductsForAdmin();
-                    
-                    document.getElementById('loadingScreen').style.display = 'none';
-                    document.getElementById('mainContent').style.display = 'block';
-                }
-                
+                isCustomer = Array.isArray(myShops) && myShops.length > 0;
             } catch (e) {
                 console.error('Error loading my shops:', e);
-                document.getElementById('loadingScreen').innerHTML = '<h4>❌ โหลดข้อมูลไม่สำเร็จ</h4>';
             }
         }
 
