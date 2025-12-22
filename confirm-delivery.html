@@ -830,17 +830,21 @@
                 console.log('Sending to:', driver.line_id);
                 console.log('Message:', flexMessage);
                 
-                const res = await fetch('https://api.line.me/v2/bot/message/push', {
+                // ⭐ ส่งผ่าน N8N เพื่อหลีกเลี่ยง CORS
+                const res = await fetch(`${BASE_URL}/send-driver-notification`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': LINE_TOKEN },
-                    body: JSON.stringify({ to: driver.line_id, messages: [flexMessage] })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        to: driver.line_id, 
+                        messages: [flexMessage] 
+                    })
                 });
                 
                 const result = await res.json().catch(() => ({}));
-                console.log('LINE API response:', res.status, result);
+                console.log('N8N response:', res.status, result);
                 
                 if (!res.ok) {
-                    throw new Error(result.message || `LINE API error: ${res.status}`);
+                    throw new Error(result.message || `Send failed: ${res.status}`);
                 }
                 
                 alert('✅ ส่งแจ้งเตือนเรียบร้อย!');
