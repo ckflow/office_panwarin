@@ -268,10 +268,13 @@
             
             <div class="info-box" style="background: #d1fae5; border-color: #6ee7b7; color: #065f46;">
                 <i class="fas fa-info-circle me-1"></i>
-                เลือกกลุ่มคนขับและรอบ แล้วกด "ส่งให้คนขับ" เพื่อแจ้งเตือนผ่าน LINE
+                เลือกวันที่ กลุ่มคนขับ และรอบ แล้วกด "ส่งให้คนขับ" เพื่อแจ้งเตือนผ่าน LINE
             </div>
             
             <div class="admin-controls">
+                <label class="form-label small text-muted">เลือกวันที่</label>
+                <input type="date" class="admin-select" id="adminDateSelect" onchange="loadAdminOrders()">
+                
                 <label class="form-label small text-muted">เลือกกลุ่มคนขับ</label>
                 <select class="admin-select" id="driverSelect" onchange="onDriverSelected()">
                     <option value="">-- เลือกกลุ่มคนขับ --</option>
@@ -643,6 +646,11 @@
 
         async function loadAdminData() {
             showLoading(true);
+            
+            // ตั้งค่าวันที่เริ่มต้นเป็นวันนี้
+            const today = new Date().toLocaleDateString('en-CA');
+            document.getElementById('adminDateSelect').value = today;
+            
             try {
                 const res1 = await fetch(`${BASE_URL}/get-line-aliases`, {
                     method: 'POST',
@@ -691,10 +699,11 @@
 
         async function loadAdminOrders() {
             const roundId = parseInt(document.getElementById('roundSelect').value);
+            const selectedDate = document.getElementById('adminDateSelect').value;
             const container = document.getElementById('adminOrdersList');
             const btn = document.getElementById('sendToDriverBtn');
             
-            if (!roundId) {
+            if (!roundId || !selectedDate) {
                 container.innerHTML = '';
                 btn.disabled = true;
                 return;
@@ -702,23 +711,30 @@
             
             showLoading(true);
             try {
-                const today = new Date().toLocaleDateString('en-CA');
                 const res = await fetch(`${BASE_URL}/get-driver-orders-by-round`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ driverRoundId: roundId, date: today })
+                    body: JSON.stringify({ driverRoundId: roundId, date: selectedDate })
                 });
                 let orders = await res.json();
                 orders = Array.isArray(orders) ? orders : (orders && orders.id ? [orders] : []);
                 
-                if (orders.length === 0) {
-                    container.innerHTML = `<div class="empty-state"><i class="fas fa-box-open"></i><h5>ไม่มีออเดอร์</h5></div>`;
+                // Filter เฉพาะ pending orders
+                const pendingOrders = orders.filter(o => o.status !== 'confirmed');
+                
+                if (pendingOrders.length === 0) {
+                    container.innerHTML = `<div class="empty-state"><i class="fas fa-box-open"></i><h5>ไม่มีออเดอร์รอยืนยัน</h5><p class="text-muted">ออเดอร์ทั้งหมดถูกยืนยันแล้ว หรือไม่มีออเดอร์ในวันที่เลือก</p></div>`;
                     btn.disabled = true;
                 } else {
-                    container.innerHTML = orders.map(o => {
+                    container.innerHTML = `
+                        <div class="info-box" style="background: #fef3c7; border-color: #fcd34d; color: #92400e;">
+                            <i class="fas fa-clock me-1"></i>
+                            รอยืนยัน ${pendingOrders.length} ออเดอร์
+                        </div>
+                    ` + pendingOrders.map(o => {
                         const itemsHtml = parseOrderItems(o.order_items);
                         return `
-                            <div class="order-card ${o.status === 'confirmed' ? 'confirmed' : 'pending'}">
+                            <div class="order-card pending">
                                 <div class="order-header">
                                     <div class="order-customer">${escapeHtml(o.customer_name)}</div>
                                     <div class="order-round">รอบ ${o.delivery_round}</div>
@@ -739,21 +755,23 @@
         async function sendToDriver() {
             const driverId = parseInt(document.getElementById('driverSelect').value);
             const roundId = parseInt(document.getElementById('roundSelect').value);
-            if (!driverId || !roundId) return;
+            const selectedDate = document.getElementById('adminDateSelect').value;
+            if (!driverId || !roundId || !selectedDate) return;
             
             const driver = allDrivers.find(d => d.id === driverId);
             const round = allDriverRounds.find(r => r.id === roundId);
             if (!driver || !round) return;
             
-            if (!confirm(`ส่งแจ้งเตือนไปยังกลุ่ม "${driver.alias_name}" - ${round.round_name}?`)) return;
+            // Format วันที่สำหรับแสดง
+            const dateObj = new Date(selectedDate);
+            const dateStr = `${dateObj.getDate()}/${dateObj.getMonth()+1}/${dateObj.getFullYear()}`;
+            
+            if (!confirm(`ส่งแจ้งเตือนไปยังกลุ่ม "${driver.alias_name}" - ${round.round_name}\nวันที่ ${dateStr}?`)) return;
             
             showLoading(true);
             try {
-                const today = new Date();
-                const dateStr = `${today.getDate()}/${today.getMonth()+1}/${today.getFullYear()}`;
-                
-                // ⭐ เพิ่ม groupId ใน URL
-                const liffUrl = `https://liff.line.me/2008689090-qpzFeqNR?groupId=${encodeURIComponent(driver.line_id)}`;
+                // ⭐ เพิ่ม groupId และ date ใน URL
+                const liffUrl = `https://liff.line.me/2008689090-qpzFeqNR?groupId=${encodeURIComponent(driver.line_id)}&date=${selectedDate}`;
                 
                 const flexMessage = {
                     type: "flex",
