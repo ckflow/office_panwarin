@@ -1574,6 +1574,13 @@
                 isAdmin = adminData.isAdmin === true;
                 adminName = adminData.adminName || null;
                 
+                // Test mode: ?mode=customer เพื่อทดสอบมุมมองลูกค้า
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('mode') === 'customer') {
+                    isAdmin = false;
+                    console.log('🧪 Test Mode: Customer View');
+                }
+                
                 if (isAdmin) {
                     document.getElementById('adminInputSection').style.display = 'block';
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
