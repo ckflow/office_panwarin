@@ -71,14 +71,17 @@
         
         .view-only-badge { background: #6c757d; color: white; padding: 3px 10px; border-radius: 15px; font-size: 11px; }
         
-        /* Page Navigation */
+        /* Admin Page Navigation (5 tabs) */
         .page-nav {
-            display: flex;
+            display: none;
             background: white;
             border-radius: 12px;
             padding: 4px;
             margin: 15px 15px 0;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .page-nav.show {
+            display: flex;
         }
         .page-nav-btn {
             flex: 1;
@@ -101,6 +104,41 @@
         .page-nav-btn.active {
             background: #667eea;
             color: white;
+        }
+
+        /* Customer Tab Navigation (4 tabs) */
+        .tab-nav {
+            display: none;
+            background: white;
+            border-radius: 12px;
+            padding: 4px;
+            margin: 15px 15px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .tab-nav.show {
+            display: flex;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px 5px;
+            border: none;
+            background: transparent;
+            font-size: 12px;
+            font-weight: bold;
+            color: #666;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            text-decoration: none;
+        }
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        .tab-btn:hover:not(.active) {
+            background: #f0f0f0;
+            color: #667eea;
         }
     </style>
 </head>
@@ -126,8 +164,8 @@
             </div>
         </div>
 
-        <!-- Page Navigation (Admin only) -->
-        <div class="page-nav" id="pageNav" style="display: none;">
+        <!-- Admin 5-tab Page Navigation -->
+        <div class="page-nav" id="adminPageNav">
             <a href="index.html" class="page-nav-btn">
                 <i class="fas fa-shopping-cart"></i> สั่งซื้อ
             </a>
@@ -143,6 +181,14 @@
             <a href="admin.html" class="page-nav-btn">
                 <i class="fas fa-users"></i> ลูกค้า
             </a>
+        </div>
+
+        <!-- Customer 4-tab Navigation -->
+        <div class="tab-nav" id="tabNav">
+            <a href="index.html" class="tab-btn" style="text-decoration:none;">🛒 สั่งซื้อ</a>
+            <a href="index.html" class="tab-btn" style="text-decoration:none;">📋 ออเดอร์</a>
+            <a href="bags-summary.html" class="tab-btn" style="text-decoration:none;">🛍️ ยอดถุง</a>
+            <a href="deposit.html" class="tab-btn active" style="text-decoration:none;">📦 ฝาก-เหลือ</a>
         </div>
 
         <div class="container">
@@ -405,12 +451,13 @@
                     document.getElementById('adminSelectSection').style.display = 'block';
                     document.getElementById('addDepositSection').style.display = 'block';
                     document.getElementById('addLeftoverSection').style.display = 'block';
-                    document.getElementById('pageNav').style.display = 'flex';
+                    document.getElementById('adminPageNav').classList.add('show');
                     
                     document.getElementById('loadingScreen').style.display = 'none';
                     document.getElementById('mainContent').style.display = 'block';
                 } else {
-                    // ลูกค้า: ดูได้อย่างเดียว
+                    // ลูกค้า: ดูได้อย่างเดียว + แสดง tabNav
+                    document.getElementById('tabNav').classList.add('show');
                     await loadMyShops();
                 }
 
@@ -591,6 +638,7 @@
                             ? `<span class="shift-badge shift-${d.shift}">${shiftNames[d.shift] || d.shift}</span>`
                             : '';
                         
+                        // ปุ่มลบ - แสดงเฉพาะ Admin และยังไม่ถูกใช้
                         const deleteBtn = (isAdmin && !isUsed) 
                             ? `<button class="delete-btn" onclick="deleteDeposit(${d.id})"><i class="fas fa-trash"></i></button>` 
                             : '';
@@ -642,6 +690,7 @@
                             ? `<span class="shift-badge shift-${l.shift}">${shiftNames[l.shift] || l.shift}</span>`
                             : '';
                         
+                        // ปุ่มลบ - แสดงเฉพาะ Admin
                         const deleteBtn = isAdmin 
                             ? `<button class="delete-btn" onclick="deleteLeftover(${l.id})"><i class="fas fa-trash"></i></button>` 
                             : '';
@@ -831,4 +880,3 @@
     </script>
 </body>
 </html>
-
