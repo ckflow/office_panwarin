@@ -96,6 +96,38 @@
             padding-top: 10px; 
             border-top: 1px dashed #a5d6a7; 
         }
+
+        /* Page Navigation */
+        .page-nav {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            padding: 4px;
+            margin: 0 0 15px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .page-nav-btn {
+            flex: 1;
+            padding: 8px 5px;
+            border: none;
+            background: transparent;
+            font-size: 11px;
+            font-weight: bold;
+            color: #666;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            text-align: center;
+        }
+        .page-nav-btn:hover {
+            background: #f8f9fa;
+            color: #667eea;
+        }
+        .page-nav-btn.active {
+            background: #667eea;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -103,6 +135,25 @@
     <div id="auth-check" class="text-center mt-5"><h4>🔒 กำลังตรวจสอบสิทธิ์...</h4></div>
 
     <div id="content" class="container" style="display: none;">
+        <!-- Navigation Bar -->
+        <div class="page-nav">
+            <a href="index.html" class="page-nav-btn">
+                <i class="fas fa-shopping-cart"></i> สั่งซื้อ
+            </a>
+            <a href="orders.html" class="page-nav-btn">
+                <i class="fas fa-clipboard-list"></i> ออเดอร์
+            </a>
+            <a href="bags-summary.html" class="page-nav-btn">
+                <i class="fas fa-shopping-bag"></i> ยอดถุง
+            </a>
+            <a href="deposit.html" class="page-nav-btn">
+                <i class="fas fa-box"></i> ฝาก-เหลือ
+            </a>
+            <a href="admin.html" class="page-nav-btn active">
+                <i class="fas fa-users"></i> ลูกค้า
+            </a>
+        </div>
+
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div><h4 class="text-primary fw-bold mb-0">📋 จัดการลูกค้า</h4></div>
             <div>
