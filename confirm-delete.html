@@ -603,12 +603,10 @@
             if (mode === 'customer') {
                 title.textContent = 'ลบลูกค้าเรียบร้อยแล้ว';
                 message.textContent = `"${currentData.customer_name}" ถูกลบออกจากระบบแล้ว`;
-                // Set flag for customers.html to reload
                 localStorage.setItem('customerDeleted', Date.now());
             } else {
                 title.textContent = 'ลบออเดอร์เรียบร้อยแล้ว';
                 message.textContent = `บิล ${currentData.invoice_no} ถูกลบออกจากระบบแล้ว`;
-                // Set flag for orders.html to reload
                 localStorage.setItem('orderDeleted', Date.now());
             }
         }
