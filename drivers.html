@@ -209,7 +209,6 @@
         }
         .add-manual-btn:hover { background: #f0fff0; }
         
-        /* Modal */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -251,7 +250,6 @@
         }
         .modal-footer button { flex: 1; padding: 12px; border-radius: 10px; font-weight: bold; }
         
-        /* Driver Rounds Section */
         .driver-rounds-section {
             margin-top: 12px;
             padding-top: 12px;
@@ -354,7 +352,6 @@
         }
         .manage-round-btn:hover { background: #c7d2fe; }
         
-        /* Customer Round Selection in Modal */
         .customer-round-list {
             max-height: 350px;
             overflow-y: auto;
@@ -504,12 +501,10 @@
                     <div id="manageDriverName" style="font-weight: bold; color: #667eea;">-</div>
                     <div id="manageRoundName" style="font-size: 14px; color: #333; margin-top: 4px;">-</div>
                 </div>
-                
                 <div class="mb-2">
                     <input type="text" class="form-control form-control-sm" id="searchCustomerRound" 
                            placeholder="🔍 ค้นหาลูกค้า..." oninput="renderCustomerRoundList()">
                 </div>
-                
                 <div class="customer-round-list" id="customerRoundList"></div>
             </div>
             <div class="modal-footer">
@@ -603,12 +598,10 @@
 
     <script>
         const MY_LIFF_ID = "2008689090-CnrdxM5k";
-        const ADMIN_IDS = [
-            "U4dc8fa32570dca3dfb4093b48a5c2093",
-            "U4cc74cb6346dece926adf6b2a3b7cb77",
-            "Ufab5bb133c511730b583f47104965370",
-        ];
         const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
+        
+        // Admin check via API (no hardcoded IDs)
+        let isAdmin = false;
         
         let allAliases = [];
         let allDriverRounds = [];
@@ -622,7 +615,17 @@
                 if (!liff.isLoggedIn()) { liff.login(); return; }
                 
                 const profile = await liff.getProfile();
-                if (!ADMIN_IDS.includes(profile.userId)) {
+                
+                // Check admin via API
+                const adminRes = await fetch(`${BASE_URL}/check-admin`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lineId: profile.userId })
+                });
+                const adminData = await adminRes.json();
+                isAdmin = adminData.isAdmin === true;
+                
+                if (!isAdmin) {
                     document.getElementById('auth-check').innerHTML = `
                         <div class="text-center"><h3 class="text-danger">⛔ Access Denied</h3></div>
                     `;
@@ -778,14 +781,14 @@
             container.innerHTML = items.map(a => renderLinkedCard(a, true)).join('');
         }
 
-        function renderLinkedCard(a, isAdmin = false) {
-            const icon = isAdmin ? '👑' : '👤';
-            const cardClass = isAdmin ? 'admin' : 'linked';
-            const infoClass = isAdmin ? 'admin-info' : '';
+        function renderLinkedCard(a, isAdminCard = false) {
+            const icon = isAdminCard ? '👑' : '👤';
+            const cardClass = isAdminCard ? 'admin' : 'linked';
+            const infoClass = isAdminCard ? 'admin-info' : '';
             return `
                 <div class="line-card ${cardClass}">
                     <div class="line-header">
-                        <div class="line-avatar ${isAdmin ? 'admin' : 'linked'}">${icon}</div>
+                        <div class="line-avatar ${isAdminCard ? 'admin' : 'linked'}">${icon}</div>
                         <div class="line-info">
                             <div class="line-name">${escapeHtml(a.alias_name)}</div>
                             <div class="line-id">${a.line_id}</div>
