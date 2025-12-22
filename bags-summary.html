@@ -601,6 +601,13 @@
                 });
                 const adminData = await adminRes.json();
                 isAdmin = adminData.isAdmin === true;
+                
+                // Test mode: ?mode=customer เพื่อทดสอบมุมมองลูกค้า
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('mode') === 'customer') {
+                    isAdmin = false;
+                    console.log('🧪 Test Mode: Customer View');
+                }
 
                 // Set default dates
                 const today = new Date();
