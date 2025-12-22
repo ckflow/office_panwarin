@@ -671,11 +671,8 @@
         const MY_LIFF_ID = "2008689090-CnrdxM5k"; 
         const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
         
-        const ADMINS = {
-            "U4dc8fa32570dca3dfb4093b48a5c2093": "แชมป์",
-            "U4cc74cb6346dece926adf6b2a3b7cb77": "บี",
-            "Ufab5bb133c511730b583f47104965370": "ก้อย"
-        };
+        // Admin check via API (no hardcoded IDs)
+        let adminName = null;
 
         const productIcons = {
             'tube_l': '🍻', 'tube_s': '🥤', 'pack_l': '🅿️', 'pack_s': '🅿️',
@@ -1566,7 +1563,16 @@
                 
                 const profile = await liff.getProfile();
                 currentUserId = profile.userId;
-                isAdmin = currentUserId in ADMINS;
+                
+                // Check admin via API
+                const adminRes = await fetch(`${BASE_URL}/check-admin`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lineId: currentUserId })
+                });
+                const adminData = await adminRes.json();
+                isAdmin = adminData.isAdmin === true;
+                adminName = adminData.adminName || null;
                 
                 if (isAdmin) {
                     document.getElementById('adminInputSection').style.display = 'block';
@@ -2082,7 +2088,7 @@
                     depositDeduction: safeDepositTotal, total: grandTotal,
                     orderDate: document.getElementById('orderDate').value, orderTime: document.getElementById('orderTime').value,
                     deliveryRound: selectedRound, pickupTime: selectedRound === 'pickup' ? getPickupTime() : null,
-                    createdBy: isAdmin ? ADMINS[currentUserId] : null
+                    createdBy: isAdmin ? adminName : null
                 };
 
                 const response = await fetch(`${BASE_URL}/order-id`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
