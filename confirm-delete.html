@@ -311,11 +311,33 @@
     <script>
         const BASE_URL = 'https://n8n.ckflowsystem.com/webhook';
         
-        // Detect mode from URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
+        // Parse URL parameters - handle LIFF redirect
+        function getUrlParams() {
+            let urlParams = new URLSearchParams(window.location.search);
+            
+            // ถ้าไม่เจอ deletionId โดยตรง ให้ดึงจาก liffRedirectUri
+            if (!urlParams.get('deletionId')) {
+                const redirectUri = urlParams.get('liffRedirectUri');
+                if (redirectUri) {
+                    try {
+                        const decodedUri = decodeURIComponent(redirectUri);
+                        const redirectUrl = new URL(decodedUri);
+                        urlParams = new URLSearchParams(redirectUrl.search);
+                    } catch (e) {
+                        console.error('Error parsing liffRedirectUri:', e);
+                    }
+                }
+            }
+            
+            return urlParams;
+        }
+        
+        const urlParams = getUrlParams();
         const deletionId = urlParams.get('deletionId');
         const customerId = urlParams.get('customerId');
         const orderId = urlParams.get('orderId');
+        
+        console.log('Parsed params:', { deletionId, customerId, orderId });
         
         // Determine mode: 'customer' or 'order'
         const mode = customerId ? 'customer' : 'order';
