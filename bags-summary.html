@@ -423,10 +423,10 @@
 
         <!-- Customer 4-tab Navigation -->
         <div class="tab-nav" id="tabNav">
-            <a href="index.html" class="tab-btn" style="text-decoration:none;">🛒 สั่งซื้อ</a>
-            <a href="index.html" class="tab-btn" style="text-decoration:none;">📋 ออเดอร์</a>
+            <a href="index.html" class="tab-btn nav-link" style="text-decoration:none;">🛒 สั่งซื้อ</a>
+            <a href="index.html" class="tab-btn nav-link" style="text-decoration:none;">📋 ออเดอร์</a>
             <a href="bags-summary.html" class="tab-btn active" style="text-decoration:none;">🛍️ ยอดถุง</a>
-            <a href="deposit.html" class="tab-btn" style="text-decoration:none;">📦 ฝาก-เหลือ</a>
+            <a href="deposit.html" class="tab-btn nav-link" style="text-decoration:none;">📦 ฝาก-เหลือ</a>
         </div>
 
         <!-- Admin: Tab Navigation (ภาพรวม/รายละเอียด) -->
@@ -607,6 +607,11 @@
                 if (urlParams.get('mode') === 'customer') {
                     isAdmin = false;
                     console.log('🧪 Test Mode: Customer View');
+                    
+                    // รักษา parameter ไว้ในลิงก์ทั้งหมด
+                    document.querySelectorAll('.nav-link').forEach(link => {
+                        link.href += '?mode=customer';
+                    });
                 }
 
                 // Set default dates
