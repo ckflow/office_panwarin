@@ -268,15 +268,19 @@
             color: #ddd;
         }
         
-        .tab-nav {
-            display: flex;
+        /* Admin internal tabs (ภาพรวม/รายละเอียด) */
+        .admin-tabs {
+            display: none;
             background: white;
             margin: 15px;
             border-radius: 12px;
             padding: 4px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
-        .tab-btn {
+        .admin-tabs.show {
+            display: flex;
+        }
+        .admin-tab-btn {
             flex: 1;
             padding: 10px;
             border: none;
@@ -287,7 +291,7 @@
             border-radius: 8px;
             cursor: pointer;
         }
-        .tab-btn.active {
+        .admin-tab-btn.active {
             background: #667eea;
             color: white;
         }
@@ -299,14 +303,17 @@
             display: block;
         }
         
-        /* Page Navigation */
+        /* Admin Page Navigation (5 tabs) */
         .page-nav {
-            display: flex;
+            display: none;
             background: white;
             border-radius: 12px;
             padding: 4px;
             margin: 15px 15px 0;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .page-nav.show {
+            display: flex;
         }
         .page-nav-btn {
             flex: 1;
@@ -330,37 +337,40 @@
             background: #667eea;
             color: white;
         }
-        
-        /* Page Navigation */
-        .page-nav {
-            display: flex;
+
+        /* Customer Tab Navigation (4 tabs) */
+        .tab-nav {
+            display: none;
             background: white;
             border-radius: 12px;
             padding: 4px;
             margin: 15px 15px 0;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
-        .page-nav-btn {
+        .tab-nav.show {
+            display: flex;
+        }
+        .tab-btn {
             flex: 1;
-            padding: 8px 5px;
+            padding: 10px 5px;
             border: none;
             background: transparent;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: bold;
             color: #666;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s;
-            text-decoration: none;
             text-align: center;
+            text-decoration: none;
         }
-        .page-nav-btn:hover {
-            background: #f8f9fa;
-            color: #667eea;
-        }
-        .page-nav-btn.active {
+        .tab-btn.active {
             background: #667eea;
             color: white;
+        }
+        .tab-btn:hover:not(.active) {
+            background: #f0f0f0;
+            color: #667eea;
         }
     </style>
 </head>
@@ -392,8 +402,8 @@
             </div>
         </div>
 
-        <!-- Page Navigation (Admin only) -->
-        <div class="page-nav" id="pageNav" style="display: none;">
+        <!-- Admin 5-tab Page Navigation -->
+        <div class="page-nav" id="adminPageNav">
             <a href="index.html" class="page-nav-btn">
                 <i class="fas fa-shopping-cart"></i> สั่งซื้อ
             </a>
@@ -411,10 +421,18 @@
             </a>
         </div>
 
-        <!-- Admin: Tab Navigation -->
-        <div class="tab-nav" id="adminTabs" style="display: none;">
-            <button class="tab-btn active" onclick="switchTab('all')">📊 ภาพรวม</button>
-            <button class="tab-btn" onclick="switchTab('detail')">🔍 รายละเอียด</button>
+        <!-- Customer 4-tab Navigation -->
+        <div class="tab-nav" id="tabNav">
+            <a href="index.html" class="tab-btn" style="text-decoration:none;">🛒 สั่งซื้อ</a>
+            <a href="index.html" class="tab-btn" style="text-decoration:none;">📋 ออเดอร์</a>
+            <a href="bags-summary.html" class="tab-btn active" style="text-decoration:none;">🛍️ ยอดถุง</a>
+            <a href="deposit.html" class="tab-btn" style="text-decoration:none;">📦 ฝาก-เหลือ</a>
+        </div>
+
+        <!-- Admin: Tab Navigation (ภาพรวม/รายละเอียด) -->
+        <div class="admin-tabs" id="adminTabs">
+            <button class="admin-tab-btn active" onclick="switchTab('all')">📊 ภาพรวม</button>
+            <button class="admin-tab-btn" onclick="switchTab('detail')">🔍 รายละเอียด</button>
         </div>
 
         <!-- Admin: เลือกลูกค้า (ใน Tab รายละเอียด) -->
@@ -510,7 +528,7 @@
         </div>
     </div>
 
-    <!-- Modal: เพิ่มยอดคืนถุง -->
+    <!-- Modal: เพิ่มยอดคืนถุง (Admin only) -->
     <div id="addReturnModal" class="modal-overlay" onclick="closeModal(event)">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-header">
@@ -591,9 +609,9 @@
 
                 if (isAdmin) {
                     // Admin mode
-                    document.getElementById('adminTabs').style.display = 'flex';
+                    document.getElementById('adminTabs').classList.add('show');
                     document.getElementById('btnAddReturn').style.display = 'inline-block';
-                    document.getElementById('pageNav').style.display = 'flex';
+                    document.getElementById('adminPageNav').classList.add('show');
                     
                     await loadAllCustomers();
                     await loadAllSummary();
@@ -601,7 +619,8 @@
                     document.getElementById('loadingScreen').style.display = 'none';
                     document.getElementById('mainContent').style.display = 'block';
                 } else {
-                    // Customer mode
+                    // Customer mode - แสดง tabNav
+                    document.getElementById('tabNav').classList.add('show');
                     document.getElementById('tabAll').classList.remove('active');
                     document.getElementById('tabDetail').classList.add('active');
                     
@@ -717,15 +736,15 @@
         }
 
         function switchTab(tab) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             
             if (tab === 'all') {
-                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+                document.querySelector('.admin-tab-btn:nth-child(1)').classList.add('active');
                 document.getElementById('tabAll').classList.add('active');
                 document.getElementById('adminSelectSection').style.display = 'none';
             } else {
-                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+                document.querySelector('.admin-tab-btn:nth-child(2)').classList.add('active');
                 document.getElementById('tabDetail').classList.add('active');
                 document.getElementById('adminSelectSection').style.display = 'block';
             }
@@ -907,7 +926,7 @@
             return sources[source] || source;
         }
 
-        // ==================== Modal Functions ====================
+        // ==================== Modal Functions (Admin only) ====================
         
         function openAddReturnModal() {
             // Pre-select current customer if viewing
@@ -989,6 +1008,3 @@
     </script>
 </body>
 </html>
-
-
-
