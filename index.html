@@ -808,8 +808,6 @@
         
         function initMyOrdersDateFilter() {
             const today = new Date();
-            const dateFrom = new Date();
-            dateFrom.setDate(today.getDate() - 7);
             
             const formatDate = (d) => {
                 const yyyy = d.getFullYear();
@@ -818,7 +816,8 @@
                 return `${yyyy}-${mm}-${dd}`;
             };
             
-            document.getElementById('myOrderDateFrom').value = formatDate(dateFrom);
+            // Default: เฉพาะวันนี้
+            document.getElementById('myOrderDateFrom').value = formatDate(today);
             document.getElementById('myOrderDateTo').value = formatDate(today);
             
             const shopFilterRow = document.getElementById('shopFilterRow');
