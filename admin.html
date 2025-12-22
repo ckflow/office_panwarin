@@ -399,6 +399,23 @@
         }
         main();
 
+        // Auto-reload when customer is deleted from LIFF page
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'customerDeleted') {
+                console.log('Customer deleted, reloading...');
+                loadCustomers();
+            }
+        });
+        
+        // Also check on focus (when user returns to this tab)
+        window.addEventListener('focus', function() {
+            const lastDeleted = localStorage.getItem('customerDeleted');
+            if (lastDeleted && (Date.now() - parseInt(lastDeleted)) < 30000) {
+                localStorage.removeItem('customerDeleted');
+                loadCustomers();
+            }
+        });
+
         async function loadProducts() {
             try {
                 const res = await fetch(API.GET_PRODUCTS);
