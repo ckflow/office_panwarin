@@ -395,7 +395,7 @@
                     <button id="btnAddReturn" onclick="openAddReturnModal()" class="btn btn-warning btn-sm me-1" style="display: none;">
                         <i class="fas fa-plus"></i>
                     </button>
-                    <button id="btnRefresh" onclick="refreshData()" class="btn btn-light btn-sm" style="position: relative; z-index: 1000;">
+                    <button onclick="location.reload()" class="btn btn-light btn-sm">
                         <i class="fas fa-sync-alt"></i>
                     </button>
                 </div>
@@ -1012,34 +1012,6 @@
             } catch (e) {
                 console.error('Error saving return:', e);
                 alert('เกิดข้อผิดพลาด');
-            }
-        }
-
-        async function refreshData() {
-            // Visual feedback - spin icon
-            const btn = document.getElementById('btnRefresh');
-            const icon = btn.querySelector('i');
-            icon.classList.add('fa-spin');
-            btn.disabled = true;
-            
-            try {
-                if (isAdmin) {
-                    await loadAllSummary();
-                    if (currentCustomerId) {
-                        await loadCustomerDetail();
-                    }
-                } else {
-                    // Customer mode - reload shops and data
-                    if (currentCustomerId) {
-                        await loadCustomerDetail();
-                    } else {
-                        await loadMyShops();
-                    }
-                }
-            } finally {
-                // Stop spinning
-                icon.classList.remove('fa-spin');
-                btn.disabled = false;
             }
         }
 
