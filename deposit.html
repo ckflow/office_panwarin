@@ -390,11 +390,7 @@
         const MY_LIFF_ID = "2008689090-CnrdxM5k";
         const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
         
-        const ADMIN_IDS = [
-            "U4dc8fa32570dca3dfb4093b48a5c2093",
-            "U4cc74cb6346dece926adf6b2a3b7cb77",
-            "Ufab5bb133c511730b583f47104965370",
-        ];
+        // Admin check via API (no hardcoded IDs)
 
         const DEPOSIT_PRODUCTS = ['tube_l', 'tube_s', 'crush_white', 'crush_sack'];
         const LEFTOVER_PRODUCTS = ['tube_l', 'tube_s', 'pack_s', 'crush_white', 'crush_sack'];
@@ -443,7 +439,15 @@
 
                 const profile = await liff.getProfile();
                 currentUserId = profile.userId;
-                isAdmin = ADMIN_IDS.includes(currentUserId);
+                
+                // Check admin via API
+                const adminRes = await fetch(`${BASE_URL}/check-admin`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lineId: currentUserId })
+                });
+                const adminData = await adminRes.json();
+                isAdmin = adminData.isAdmin === true;
 
                 if (isAdmin) {
                     // Admin: เลือกลูกค้าได้ + เพิ่ม/ลบได้
