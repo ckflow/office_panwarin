@@ -903,7 +903,10 @@
         function renderHistory(details) {
             const container = document.getElementById('historyList');
             
-            if (!details || details.length === 0) {
+            // กรองเฉพาะข้อมูลที่สมบูรณ์
+            const validDetails = (details || []).filter(d => d && d.type && d.quantity !== undefined && d.quantity !== null);
+            
+            if (validDetails.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-history"></i>
@@ -913,17 +916,18 @@
                 return;
             }
             
-            container.innerHTML = details.map(d => {
+            container.innerHTML = validDetails.map(d => {
                 const isBorrow = d.type === 'borrow';
                 const icon = isBorrow ? '📦' : '♻️';
                 const typeText = isBorrow ? 'ยืม' : 'คืน';
-                const sourceText = getSourceText(d.source);
+                const sourceText = d.source ? getSourceText(d.source) : '';
+                const dateText = d.date ? formatDateThai(d.date) : '';
                 
                 return `
                     <div class="history-item ${d.type}">
                         <div>
-                            <div><strong>${icon} ${typeText}</strong> <span class="history-source">(${sourceText})</span></div>
-                            <div class="history-date">${formatDateThai(d.date)} ${d.sourceRef ? '| ' + d.sourceRef : ''} ${d.note ? '| ' + d.note : ''}</div>
+                            <div><strong>${icon} ${typeText}</strong>${sourceText ? ` <span class="history-source">(${sourceText})</span>` : ''}</div>
+                            <div class="history-date">${dateText}${d.sourceRef ? ' | ' + d.sourceRef : ''}${d.note ? ' | ' + d.note : ''}</div>
                         </div>
                         <div class="history-qty ${d.type}">${isBorrow ? '+' : '-'}${d.quantity}</div>
                     </div>
