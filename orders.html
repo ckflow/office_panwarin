@@ -686,6 +686,22 @@
         
         main();
         
+        // Auto-reload when order is deleted from LIFF page
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'orderDeleted') {
+                loadOrders();
+            }
+        });
+        
+        // Also check on focus (when user returns to this tab)
+        window.addEventListener('focus', function() {
+            const lastDeleted = localStorage.getItem('orderDeleted');
+            if (lastDeleted && (Date.now() - parseInt(lastDeleted)) < 30000) {
+                localStorage.removeItem('orderDeleted');
+                loadOrders();
+            }
+        });
+        
         function startAutoRefresh() {
             if (autoRefreshInterval) clearInterval(autoRefreshInterval);
             autoRefreshInterval = setInterval(() => {
