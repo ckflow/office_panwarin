@@ -383,12 +383,9 @@
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script>
         const MY_LIFF_ID = "2008689090-CnrdxM5k";
-        const ADMIN_IDS = [
-            "U4dc8fa32570dca3dfb4093b48a5c2093",
-            "U4cc74cb6346dece926adf6b2a3b7cb77",
-            "Ufab5bb133c511730b583f47104965370",
-        ];
         const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
+        
+        // Admin check via API (no hardcoded IDs)
 
         const API = {
             GET_PRICES: `${BASE_URL}/get-prices`,
@@ -433,8 +430,18 @@
                 if (!liff.isLoggedIn()) { liff.login(); return; }
                 
                 const profile = await liff.getProfile();
-                if (!ADMIN_IDS.includes(profile.userId)) {
-                    document.getElementById('auth-check').innerHTML = `<h3 class="text-danger">⛔ Access Denied</h3>`;
+                
+                // Check admin via API
+                const adminRes = await fetch(`${BASE_URL}/check-admin`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lineId: profile.userId })
+                });
+                const adminData = await adminRes.json();
+                const isAdmin = adminData.isAdmin === true;
+                
+                if (!isAdmin) {
+                    document.getElementById('auth-check').innerHTML = `<h3 class="text-danger">⛔ Access Denied</h3><p>คุณไม่มีสิทธิ์เข้าถึงหน้านี้</p>`;
                     return;
                 }
                 
