@@ -756,11 +756,29 @@
             const driverId = parseInt(document.getElementById('driverSelect').value);
             const roundId = parseInt(document.getElementById('roundSelect').value);
             const selectedDate = document.getElementById('adminDateSelect').value;
-            if (!driverId || !roundId || !selectedDate) return;
+            
+            console.log('sendToDriver:', { driverId, roundId, selectedDate });
+            
+            if (!driverId || !roundId || !selectedDate) {
+                alert('กรุณาเลือกวันที่ กลุ่มคนขับ และรอบให้ครบ');
+                return;
+            }
             
             const driver = allDrivers.find(d => d.id === driverId);
             const round = allDriverRounds.find(r => r.id === roundId);
-            if (!driver || !round) return;
+            
+            console.log('driver:', driver);
+            console.log('round:', round);
+            
+            if (!driver || !round) {
+                alert('ไม่พบข้อมูลคนขับหรือรอบ');
+                return;
+            }
+            
+            if (!driver.line_id) {
+                alert('ไม่พบ LINE ID ของกลุ่มคนขับ');
+                return;
+            }
             
             // Format วันที่สำหรับแสดง
             const dateObj = new Date(selectedDate);
@@ -809,14 +827,27 @@
                     }
                 };
                 
-                await fetch('https://api.line.me/v2/bot/message/push', {
+                console.log('Sending to:', driver.line_id);
+                console.log('Message:', flexMessage);
+                
+                const res = await fetch('https://api.line.me/v2/bot/message/push', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': LINE_TOKEN },
                     body: JSON.stringify({ to: driver.line_id, messages: [flexMessage] })
                 });
                 
+                const result = await res.json().catch(() => ({}));
+                console.log('LINE API response:', res.status, result);
+                
+                if (!res.ok) {
+                    throw new Error(result.message || `LINE API error: ${res.status}`);
+                }
+                
                 alert('✅ ส่งแจ้งเตือนเรียบร้อย!');
-            } catch (e) { alert('เกิดข้อผิดพลาดในการส่ง'); console.error(e); }
+            } catch (e) { 
+                console.error('sendToDriver error:', e);
+                alert('เกิดข้อผิดพลาดในการส่ง: ' + e.message); 
+            }
             showLoading(false);
         }
 
