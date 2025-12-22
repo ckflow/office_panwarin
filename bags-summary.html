@@ -650,7 +650,11 @@
         main();
 
         function formatDateInput(date) {
-            return date.toISOString().split('T')[0];
+            // ใช้ local timezone แทน UTC
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
 
         function formatDateThai(dateStr) {
@@ -1014,9 +1018,16 @@
         async function refreshData() {
             if (isAdmin) {
                 await loadAllSummary();
-            }
-            if (currentCustomerId) {
-                await loadCustomerDetail();
+                if (currentCustomerId) {
+                    await loadCustomerDetail();
+                }
+            } else {
+                // Customer mode - reload shops and data
+                if (currentCustomerId) {
+                    await loadCustomerDetail();
+                } else {
+                    await loadMyShops();
+                }
             }
         }
 
