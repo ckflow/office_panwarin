@@ -1281,7 +1281,7 @@
                 const price = customerPrices[code]?.price || 0;
                 select.innerHTML += `<option value="${code}" data-price="${price}" data-unit="${unit}" data-name="${name}">${name} (${price} บาท/${unit})</option>`;
             });
-        
+        }
         function addNewItem() {
             const select = document.getElementById('addItemSelect');
             const qtyInput = document.getElementById('addItemQty');
@@ -2539,5 +2539,6 @@
     </script>
 </body>
 </html>
+
 
 
