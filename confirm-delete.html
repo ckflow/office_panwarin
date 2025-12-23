@@ -312,25 +312,46 @@
         const BASE_URL = 'https://n8n.ckflowsystem.com/webhook';
         
         // Parse URL parameters - handle LIFF redirect
-        function getUrlParams() {
-            let urlParams = new URLSearchParams(window.location.search);
-            
-            // ถ้าไม่เจอ deletionId โดยตรง ให้ดึงจาก liffRedirectUri
-            if (!urlParams.get('deletionId')) {
-                const redirectUri = urlParams.get('liffRedirectUri');
-                if (redirectUri) {
-                    try {
-                        const decodedUri = decodeURIComponent(redirectUri);
-                        const redirectUrl = new URL(decodedUri);
-                        urlParams = new URLSearchParams(redirectUrl.search);
-                    } catch (e) {
-                        console.error('Error parsing liffRedirectUri:', e);
-                    }
+        // Parse URL parameters - handle LIFF redirect
+function getUrlParams() {
+    let urlParams = new URLSearchParams(window.location.search);
+    
+    // ถ้าไม่เจอ deletionId โดยตรง ให้ดึงจาก liffRedirectUri
+    if (!urlParams.get('deletionId') && !urlParams.get('orderId')) {
+        const redirectUri = urlParams.get('liffRedirectUri');
+        console.log('liffRedirectUri:', redirectUri);
+        
+        if (redirectUri) {
+            try {
+                const decodedUri = decodeURIComponent(redirectUri);
+                console.log('Decoded URI:', decodedUri);
+                
+                // ดึง query string จาก URL
+                const queryStart = decodedUri.indexOf('?');
+                if (queryStart !== -1) {
+                    const queryString = decodedUri.substring(queryStart + 1);
+                    urlParams = new URLSearchParams(queryString);
                 }
+            } catch (e) {
+                console.error('Error parsing liffRedirectUri:', e);
             }
-            
-            return urlParams;
         }
+        
+        // ลองดึงจาก hash ด้วย (บาง LIFF ใส่ไว้ใน hash)
+        if (!urlParams.get('deletionId') && window.location.hash) {
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+            if (hashParams.get('deletionId')) {
+                urlParams = hashParams;
+            }
+        }
+    }
+    
+    console.log('Final params - deletionId:', urlParams.get('deletionId'), 
+                'orderId:', urlParams.get('orderId'),
+                'customerId:', urlParams.get('customerId'));
+    
+    return urlParams;
+}
         
         const urlParams = getUrlParams();
         const deletionId = urlParams.get('deletionId');
@@ -656,3 +677,4 @@
     </script>
 </body>
 </html>
+
