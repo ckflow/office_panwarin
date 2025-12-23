@@ -846,7 +846,6 @@
                 const usedDeposits = deposits.filter(d => d.status === 'used');
                 const allDeposits = [...pendingDeposits, ...usedDeposits];
 
-                const isSingleDay = fromDate === toDate;
                 const today = getTodayStr();
 
                 if (allDeposits.length === 0) {
@@ -952,7 +951,6 @@
                 const leftovers = await res.json();
                 console.log('📋 Leftovers API response:', leftovers);
 
-                const isSingleDay = fromDate === toDate;
                 const today = getTodayStr();
 
                 if (leftovers.length === 0) {
