@@ -708,8 +708,11 @@
             document.getElementById('adminPageNav').classList.add('show');
             document.getElementById('tabNav').classList.remove('show');
             
-            await loadAllCustomers();
-            await loadAllSummary();
+            // ✅ OPTIMIZED: Load in parallel
+            await Promise.all([
+                loadAllCustomers(),
+                loadAllSummary()
+            ]);
             
             document.getElementById('loadingScreen').style.display = 'none';
             document.getElementById('mainContent').style.display = 'block';
@@ -1123,13 +1126,11 @@
                 alert('✅ บันทึกสำเร็จ!');
                 closeModalDirect();
                 
-                // Refresh data
-                if (isAdmin) {
-                    await loadAllSummary();
-                }
-                if (currentCustomerId) {
-                    await loadCustomerDetail();
-                }
+                // ✅ OPTIMIZED: Refresh data in parallel
+                const refreshTasks = [];
+                if (isAdmin) refreshTasks.push(loadAllSummary());
+                if (currentCustomerId) refreshTasks.push(loadCustomerDetail());
+                await Promise.all(refreshTasks);
                 
             } catch (e) {
                 console.error('Error saving return:', e);
