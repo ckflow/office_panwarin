@@ -1173,7 +1173,15 @@
         function formatDateTime(dateTimeStr) {
             if (!dateTimeStr) return '-';
             try {
-                const date = new Date(dateTimeStr);
+                // แก้ไข: ถ้าไม่มี timezone info ให้ถือว่าเป็น UTC แล้วแปลงเป็นเวลาไทย
+                let date;
+                if (dateTimeStr.endsWith('Z') || dateTimeStr.includes('+') || dateTimeStr.includes('-', 10)) {
+                    // มี timezone info อยู่แล้ว
+                    date = new Date(dateTimeStr);
+                } else {
+                    // ไม่มี timezone info → ถือว่าเป็น UTC → เติม Z
+                    date = new Date(dateTimeStr + 'Z');
+                }
                 const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
                 return `${date.getDate()} ${months[date.getMonth()]} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
             } catch (e) { return dateTimeStr; }
