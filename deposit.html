@@ -170,6 +170,10 @@
         .mode-toggle-btn .icon {
             font-size: 16px;
         }
+        @keyframes slideDown {
+            from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -876,8 +880,9 @@
             }
 
             try {
-                for (const d of deposits) {
-                    await fetch(`${BASE_URL}/add-deposit`, {
+                // ✅ OPTIMIZED: Save all deposits in PARALLEL
+                await Promise.all(deposits.map(d => 
+                    fetch(`${BASE_URL}/add-deposit`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -887,10 +892,11 @@
                             shift: shift,
                             note: note
                         })
-                    });
-                }
+                    })
+                ));
 
-                alert('บันทึกฝากสำเร็จ!');
+                // ✅ Toast instead of alert
+                showToast('✅ บันทึกฝากสำเร็จ!');
                 
                 DEPOSIT_PRODUCTS.forEach(code => {
                     document.getElementById(`deposit_${code}`).value = '';
@@ -941,8 +947,9 @@
             }
 
             try {
-                for (const l of leftovers) {
-                    await fetch(`${BASE_URL}/add-leftover`, {
+                // ✅ OPTIMIZED: Save all leftovers in PARALLEL
+                await Promise.all(leftovers.map(l => 
+                    fetch(`${BASE_URL}/add-leftover`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -952,10 +959,11 @@
                             shift: shift,
                             note: note
                         })
-                    });
-                }
+                    })
+                ));
 
-                alert('บันทึกเหลือสำเร็จ!');
+                // ✅ Toast instead of alert
+                showToast('✅ บันทึกเหลือสำเร็จ!');
                 
                 LEFTOVER_PRODUCTS.forEach(code => {
                     document.getElementById(`leftover_${code}`).value = '';
@@ -1008,6 +1016,25 @@
             if (!dateStr) return '';
             const d = new Date(dateStr);
             return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
+        }
+        
+        // ✅ Toast notification for smooth UX
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+                background: ${type === 'success' ? '#198754' : '#dc3545'}; color: white;
+                padding: 12px 24px; border-radius: 8px; font-size: 14px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999;
+                animation: slideDown 0.3s ease;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 1500);
         }
     </script>
 </body>
