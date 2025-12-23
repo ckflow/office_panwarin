@@ -403,6 +403,18 @@
             color: #999;
             font-style: italic;
         }
+        
+        .notify-group-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #fef3c7;
+            color: #92400e;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            margin-top: 4px;
+        }
     </style>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
@@ -481,10 +493,54 @@
                     </select>
                     <div class="form-text">ถ้ารอบส่งตี 4 และ deadline 21:30 คืนก่อน ให้เลือก "พรุ่งนี้"</div>
                 </div>
+                <div class="mb-3">
+                    <label class="form-label small text-muted">🔔 ส่งแจ้งเตือนไปที่</label>
+                    <select id="newNotifyLineAliasId" class="form-select">
+                        <option value="">-- ไม่แจ้งเตือน --</option>
+                    </select>
+                    <div class="form-text">เลือกกลุ่ม LINE ที่จะส่งแจ้งเตือนเมื่อถึง deadline แต่ออเดอร์ยังไม่ครบ</div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-light" onclick="closeAddRoundModal()">ยกเลิก</button>
                 <button class="btn btn-primary" onclick="saveDriverRound()">บันทึก</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: แก้ไขรอบคนขับ -->
+    <div class="modal-overlay" id="editRoundModal">
+        <div class="modal-box">
+            <div class="modal-header driver-header">
+                <h5 class="mb-0">✏️ แก้ไขรอบคนขับ</h5>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editRoundId">
+                <div class="mb-3">
+                    <label class="form-label small text-muted">ชื่อรอบ</label>
+                    <div id="editRoundName" style="font-weight: bold; font-size: 16px; color: #667eea;">-</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-muted">⏰ เวลา Deadline</label>
+                    <input type="time" id="editDeadlineTime" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-muted">📅 เช็คออเดอร์ของวัน</label>
+                    <select id="editOrderDateOffset" class="form-select">
+                        <option value="0">วันนี้</option>
+                        <option value="1">พรุ่งนี้</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-muted">🔔 ส่งแจ้งเตือนไปที่</label>
+                    <select id="editNotifyLineAliasId" class="form-select">
+                        <option value="">-- ไม่แจ้งเตือน --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-light" onclick="closeEditRoundModal()">ยกเลิก</button>
+                <button class="btn btn-primary" onclick="updateDriverRound()">บันทึก</button>
             </div>
         </div>
     </div>
@@ -797,62 +853,62 @@
         }
 
         function renderLinkedCard(a, isAdminCard = false) {
-    const icon = isAdminCard ? '👑' : '👤';
-    const cardClass = isAdminCard ? 'admin' : 'linked';
-    const infoClass = isAdminCard ? 'admin-info' : '';
-    
-    // Parse linked customers (เฉพาะ use_for = customer)
-    let linkedCustomersHtml = '';
-    if (a.use_for === 'customer' && a.linked_customers) {
-        const customers = a.linked_customers.split('||').map(c => {
-            const [id, name] = c.split(':');
-            return { id, name };
-        }).filter(c => c.name);
-        
-        if (customers.length > 0) {
-            linkedCustomersHtml = `
-                <div style="margin-top: 10px; padding: 8px 12px; background: #f0fdf4; border-radius: 8px; font-size: 12px;">
-                    <div style="color: #166534; font-weight: bold; margin-bottom: 4px;">
-                        🏪 ผูกกับร้าน (${customers.length}):
+            const icon = isAdminCard ? '👑' : '👤';
+            const cardClass = isAdminCard ? 'admin' : 'linked';
+            const infoClass = isAdminCard ? 'admin-info' : '';
+            
+            // Parse linked customers (เฉพาะ use_for = customer)
+            let linkedCustomersHtml = '';
+            if (a.use_for === 'customer' && a.linked_customers) {
+                const customers = a.linked_customers.split('||').map(c => {
+                    const [id, name] = c.split(':');
+                    return { id, name };
+                }).filter(c => c.name);
+                
+                if (customers.length > 0) {
+                    linkedCustomersHtml = `
+                        <div style="margin-top: 10px; padding: 8px 12px; background: #f0fdf4; border-radius: 8px; font-size: 12px;">
+                            <div style="color: #166534; font-weight: bold; margin-bottom: 4px;">
+                                🏪 ผูกกับร้าน (${customers.length}):
+                            </div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                                ${customers.map(c => `
+                                    <span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px;">
+                                        ${escapeHtml(c.name)}
+                                    </span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    linkedCustomersHtml = `
+                        <div style="margin-top: 10px; padding: 8px 12px; background: #fef9c3; border-radius: 8px; font-size: 12px; color: #854d0e;">
+                            ⚠️ ยังไม่ได้ผูกกับร้านค้าในระบบ
+                        </div>
+                    `;
+                }
+            }
+            
+            return `
+                <div class="line-card ${cardClass}">
+                    <div class="line-header">
+                        <div class="line-avatar ${isAdminCard ? 'admin' : 'linked'}">${icon}</div>
+                        <div class="line-info">
+                            <div class="line-name">${escapeHtml(a.alias_name)}</div>
+                            <div class="line-id">${a.line_id}</div>
+                        </div>
                     </div>
-                    <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                        ${customers.map(c => `
-                            <span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px;">
-                                ${escapeHtml(c.name)}
-                            </span>
-                        `).join('')}
+                    <div class="linked-info ${infoClass}">
+                        <div><div class="linked-name">✅ ผูกแล้ว</div></div>
+                        <div>
+                            <button class="unlink-btn" onclick="editAlias(${a.id}, '${escapeHtml(a.alias_name)}', '${a.use_for}')"><i class="fas fa-edit"></i> แก้ไข</button>
+                            <button class="unlink-btn" onclick="unlinkAlias(${a.id}, '${escapeHtml(a.alias_name)}')"><i class="fas fa-unlink"></i> ยกเลิก</button>
+                        </div>
                     </div>
-                </div>
-            `;
-        } else {
-            linkedCustomersHtml = `
-                <div style="margin-top: 10px; padding: 8px 12px; background: #fef9c3; border-radius: 8px; font-size: 12px; color: #854d0e;">
-                    ⚠️ ยังไม่ได้ผูกกับร้านค้าในระบบ
+                    ${linkedCustomersHtml}
                 </div>
             `;
         }
-    }
-    
-    return `
-        <div class="line-card ${cardClass}">
-            <div class="line-header">
-                <div class="line-avatar ${isAdminCard ? 'admin' : 'linked'}">${icon}</div>
-                <div class="line-info">
-                    <div class="line-name">${escapeHtml(a.alias_name)}</div>
-                    <div class="line-id">${a.line_id}</div>
-                </div>
-            </div>
-            <div class="linked-info ${infoClass}">
-                <div><div class="linked-name">✅ ผูกแล้ว</div></div>
-                <div>
-                    <button class="unlink-btn" onclick="editAlias(${a.id}, '${escapeHtml(a.alias_name)}', '${a.use_for}')"><i class="fas fa-edit"></i> แก้ไข</button>
-                    <button class="unlink-btn" onclick="unlinkAlias(${a.id}, '${escapeHtml(a.alias_name)}')"><i class="fas fa-unlink"></i> ยกเลิก</button>
-                </div>
-            </div>
-            ${linkedCustomersHtml}
-        </div>
-    `;
-}
 
         function renderDrivers() {
             const search = document.getElementById('searchDriver').value.toLowerCase();
@@ -886,6 +942,14 @@
                     const deadlineStr = dr.deadline_time ? `⏰ ${dr.deadline_time.substring(0,5)}` : '';
                     const offsetStr = dr.order_date_offset === 1 ? '📅พรุ่งนี้' : (dr.deadline_time ? '📅วันนี้' : '');
                     
+                    // แสดงกลุ่มแจ้งเตือน
+                    let notifyGroupHtml = '';
+                    if (dr.notify_line_alias_id) {
+                        const notifyAlias = allAliases.find(al => al.id === dr.notify_line_alias_id);
+                        const notifyName = dr.notify_group_name || (notifyAlias ? notifyAlias.alias_name : 'กลุ่ม ID: ' + dr.notify_line_alias_id);
+                        notifyGroupHtml = `<div class="notify-group-badge">🔔 ${escapeHtml(notifyName)}</div>`;
+                    }
+                    
                     return `
                         <div class="driver-round-card">
                             <div class="driver-round-header">
@@ -895,10 +959,11 @@
                                     ${offsetStr ? `<span style="font-size:10px;color:#667eea;margin-left:4px;">${offsetStr}</span>` : ''}
                                 </div>
                                 <div class="driver-round-actions">
-                                    <button class="edit-btn" onclick="editDriverRound(${dr.id}, '${escapeHtml(dr.round_name)}', '${dr.deadline_time || ''}', ${dr.order_date_offset || 0})"><i class="fas fa-clock"></i></button>
+                                    <button class="edit-btn" onclick="openEditRoundModal(${dr.id}, '${escapeHtml(dr.round_name)}', '${dr.deadline_time || ''}', ${dr.order_date_offset || 0}, ${dr.notify_line_alias_id || 'null'})"><i class="fas fa-clock"></i></button>
                                     <button class="delete-btn" onclick="deleteDriverRound(${dr.id}, '${escapeHtml(dr.round_name)}')"><i class="fas fa-trash"></i></button>
                                 </div>
                             </div>
+                            ${notifyGroupHtml}
                             <div class="customer-badges">${customersHtml}</div>
                             <button class="manage-round-btn" onclick="openManageCustomersModal(${a.id}, '${escapeHtml(a.alias_name)}', ${dr.id}, '${escapeHtml(dr.round_name)}')">
                                 <i class="fas fa-plus me-1"></i>เพิ่ม/จัดการลูกค้า
@@ -937,12 +1002,41 @@
             `;
         }
 
+        // =============================================
+        // Populate notify dropdown
+        // =============================================
+        function populateNotifyDropdown(selectId, selectedValue = null) {
+            const select = document.getElementById(selectId);
+            // Clear existing options except first
+            select.innerHTML = '<option value="">-- ไม่แจ้งเตือน --</option>';
+            
+            // Filter groups and admins that can receive notifications
+            const notifyOptions = allAliases.filter(a => 
+                a.alias_name && (a.id_type === 'group' || a.use_for === 'admin' || a.use_for === 'driver')
+            );
+            
+            notifyOptions.forEach(a => {
+                const option = document.createElement('option');
+                option.value = a.id;
+                const typeLabel = a.id_type === 'group' ? '👥' : '👤';
+                option.textContent = `${typeLabel} ${a.alias_name}`;
+                if (selectedValue && a.id === selectedValue) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+        }
+
+        // =============================================
+        // Add Round Modal
+        // =============================================
         function openAddRoundModal(driverAliasId, driverName) {
             currentDriverAliasId = driverAliasId;
             document.getElementById('addRoundDriverName').textContent = driverName;
             document.getElementById('newRoundName').value = '';
             document.getElementById('newDeadlineTime').value = '';
             document.getElementById('newOrderDateOffset').value = '0';
+            populateNotifyDropdown('newNotifyLineAliasId');
             document.getElementById('addRoundModal').classList.add('show');
         }
 
@@ -958,6 +1052,7 @@
             const driverAliasId = currentDriverAliasId;
             const deadlineTime = document.getElementById('newDeadlineTime').value || null;
             const orderDateOffset = parseInt(document.getElementById('newOrderDateOffset').value) || 0;
+            const notifyLineAliasId = document.getElementById('newNotifyLineAliasId').value || null;
             
             showLoading(true);
             closeAddRoundModal();
@@ -970,7 +1065,52 @@
                         driverAliasId: driverAliasId, 
                         roundName: roundName, 
                         deadlineTime: deadlineTime,
-                        orderDateOffset: orderDateOffset
+                        orderDateOffset: orderDateOffset,
+                        notifyLineAliasId: notifyLineAliasId ? parseInt(notifyLineAliasId) : null
+                    })
+                });
+                await loadData();
+            } catch (e) {
+                alert('เกิดข้อผิดพลาด');
+                console.error(e);
+            }
+            showLoading(false);
+        }
+
+        // =============================================
+        // Edit Round Modal
+        // =============================================
+        function openEditRoundModal(roundId, roundName, deadlineTime, orderDateOffset, notifyLineAliasId) {
+            document.getElementById('editRoundId').value = roundId;
+            document.getElementById('editRoundName').textContent = roundName;
+            document.getElementById('editDeadlineTime').value = deadlineTime ? deadlineTime.substring(0, 5) : '';
+            document.getElementById('editOrderDateOffset').value = String(orderDateOffset || 0);
+            populateNotifyDropdown('editNotifyLineAliasId', notifyLineAliasId);
+            document.getElementById('editRoundModal').classList.add('show');
+        }
+
+        function closeEditRoundModal() {
+            document.getElementById('editRoundModal').classList.remove('show');
+        }
+
+        async function updateDriverRound() {
+            const roundId = document.getElementById('editRoundId').value;
+            const deadlineTime = document.getElementById('editDeadlineTime').value || null;
+            const orderDateOffset = parseInt(document.getElementById('editOrderDateOffset').value) || 0;
+            const notifyLineAliasId = document.getElementById('editNotifyLineAliasId').value || null;
+            
+            showLoading(true);
+            closeEditRoundModal();
+            
+            try {
+                await fetch(`${BASE_URL}/update-driver-round-deadline`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        roundId: parseInt(roundId), 
+                        deadlineTime: deadlineTime,
+                        orderDateOffset: orderDateOffset,
+                        notifyLineAliasId: notifyLineAliasId ? parseInt(notifyLineAliasId) : null
                     })
                 });
                 await loadData();
@@ -990,36 +1130,6 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ roundId })
-                });
-                await loadData();
-            } catch (e) {
-                alert('เกิดข้อผิดพลาด');
-                console.error(e);
-            }
-            showLoading(false);
-        }
-
-        async function editDriverRound(roundId, roundName, currentDeadline, currentOffset) {
-            const newDeadline = prompt(`ตั้งเวลา Deadline สำหรับ "${roundName}"\n(รูปแบบ HH:MM เช่น 03:30, เว้นว่างถ้าไม่ต้องการ)`, currentDeadline ? currentDeadline.substring(0,5) : '');
-            if (newDeadline === null) return;
-            
-            let newOffset = currentOffset || 0;
-            if (newDeadline) {
-                const offsetChoice = prompt(`เช็คออเดอร์ของวันไหน?\n0 = วันนี้\n1 = พรุ่งนี้`, String(currentOffset || 0));
-                if (offsetChoice === null) return;
-                newOffset = parseInt(offsetChoice) || 0;
-            }
-            
-            showLoading(true);
-            try {
-                await fetch(`${BASE_URL}/update-driver-round-deadline`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        roundId, 
-                        deadlineTime: newDeadline || null,
-                        orderDateOffset: newOffset
-                    })
                 });
                 await loadData();
             } catch (e) {
@@ -1247,4 +1357,3 @@
     </script>
 </body>
 </html>
-
