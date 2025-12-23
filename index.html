@@ -730,23 +730,11 @@
         
         // Admin check via API (no hardcoded IDs)
         let adminName = null;
-
-        const productIcons = {
-            'tube_l': '🍻', 'tube_s': '🥤', 'pack_l': '🅿️', 'pack_s': '🅿️',
-            'crush_sack': '🛍️', 'crush_sachet': '📦', 'crush_white': '🛍️',
-            'cube_sachet': '🧊', 'cube_kak': '🧊', 'cube_hand': '🖐️', 'sack': '📦'
-        };
-
-        const productCategories = {
-            'น้ำแข็งหลอด': ['tube_l', 'tube_s'],
-            'น้ำแข็งแพ็ค': ['pack_l', 'pack_s'],
-            'น้ำแข็งบด': ['crush_white', 'crush_sack', 'crush_sachet'],
-            'ก้อน & อื่นๆ': ['cube_sachet', 'cube_kak', 'cube_hand', 'sack']
-        };
-
-        const productsUseBag = ['tube_l', 'tube_s', 'pack_l', 'crush_sack', 'crush_white'];
+        let allProducts = [];
+        let productsUseBag = [];
+                
         const MULTIPLIER_PRODUCTS = ['crush_sachet', 'cube_kak'];
-
+        
         let currentUserId = null;
         let currentCustomerId = null;
         let currentCustomerName = null;
@@ -776,7 +764,27 @@
 
         const QUOTA_BAG_PRODUCTS = ['tube_l', 'tube_s', 'pack_l', 'pack_s', 'crush_sack', 'crush_sachet', 'crush_white', 'sack'];
         const QUOTA_CUBE_PRODUCTS = ['cube_sachet', 'cube_kak', 'cube_hand'];
-        
+
+        function getProductIcon(code) {
+            const p = allProducts.find(x => x.product_code === code);
+        return p ? (p.icon || '📦') : '📦';
+        }
+
+        function buildProductsUseBag() {
+            productsUseBag = allProducts
+                .filter(p => p.uses_bag == 1 || p.uses_bag === true)
+                .map(p => p.product_code);
+        }
+
+        function groupProductsByCategory() {
+            const groups = {};
+            allProducts.forEach(p => {
+                const cat = p.category || 'อื่นๆ';
+                if (!groups[cat]) groups[cat] = [];
+                groups[cat].push(p);
+            });
+            return groups;
+        }
         function startMyOrdersRefresh() {
             if (myOrdersRefreshInterval) clearInterval(myOrdersRefreshInterval);
             myOrdersRefreshInterval = setInterval(() => {
@@ -1124,6 +1132,8 @@
                         body: JSON.stringify({ customerId: editingOrder.customer_id })
                     });
                     const data = await res.json();
+                    allProducts = data;
+                    
                     customerPrices = {};
                     data.forEach(item => {
                         if (item.product_code) {
@@ -1131,10 +1141,17 @@
                                 price: parseFloat(item.price) || 0, 
                                 promo_type: item.promo_type, 
                                 buy_qty: item.buy_qty, 
-                                free_qty: item.free_qty 
+                                free_qty: item.free_qty,
+                                name: item.name,
+                                unit: item.unit,
+                                category: item.category,
+                                icon: item.icon,
+                                uses_bag: item.uses_bag
                             };
                         }
                     });
+                    buildProductsUseBag();
+                    
                 } catch (e) {
                     console.error('Error loading prices for edit:', e);
                 }
@@ -1166,13 +1183,10 @@
             
             if (!matches) return [];
             
-            const nameToCode = {
-                'หลอดใหญ่': 'tube_l', 'หลอดเล็ก': 'tube_s',
-                'แพ็คกระสอบ': 'pack_l', 'แพ็คเล็ก': 'pack_s',
-                'บด(ถุงขาว)': 'crush_white', 'บด(ถุงบีซ)': 'crush_sack', 'บด(ซอง)': 'crush_sachet',
-                'ก้อน(ซอง)': 'cube_sachet', 'ก้อน(ลูก)': 'cube_kak', 'ก้อน(กั๊ก)': 'cube_hand',
-                'กระสอบ(มัด)': 'sack'
-            };
+            const nameToCode = {};
+            allProducts.forEach(p => {
+                nameToCode[p.name] = p.product_code;
+            });
             
             const result = [];
             matches.forEach(m => {
@@ -1258,48 +1272,13 @@
             calculateEditTotal();
         }
         
-        function populateAddItemDropdown() {
-            const select = document.getElementById('addItemSelect');
-            select.innerHTML = '<option value="">-- เลือกสินค้า --</option>';
-            
-            const productOrder = [
-                'tube_l', 'tube_s', 'pack_l', 'pack_s',
-                'crush_white', 'crush_sack', 'crush_sachet',
-                'cube_sachet', 'cube_kak', 'cube_hand', 'sack'
-            ];
-            
-            const productNames = {
-                'tube_l': 'หลอดใหญ่', 'tube_s': 'หลอดเล็ก', 
-                'pack_l': 'แพ็คกระสอบ', 'pack_s': 'แพ็คเล็ก',
-                'crush_white': 'บด(ถุงขาว)', 'crush_sack': 'บด(ถุงบีซ)', 'crush_sachet': 'บด(ซอง)',
-                'cube_sachet': 'ก้อน(ซอง)', 'cube_kak': 'ก้อน(ลูก)', 'cube_hand': 'ก้อน(กั๊ก)', 
-                'sack': 'กระสอบ(มัด)'
-            };
-            const productUnits = {
-                'tube_l': 'กระสอบ', 'tube_s': 'กระสอบ',
-                'pack_l': 'แพ็ค', 'pack_s': 'แพ็ค',
-                'crush_white': 'ถุง', 'crush_sack': 'ถุง', 'crush_sachet': 'ซอง',
-                'cube_sachet': 'ซอง', 'cube_kak': 'ลูก', 'cube_hand': 'กั๊ก',
-                'sack': 'มัด'
-            };
-            
-            if (Object.keys(customerPrices).length > 0) {
-                productOrder.forEach(code => {
-                    if (customerPrices[code]) {
-                        const name = productNames[code] || code;
-                        const price = customerPrices[code].price;
-                        const unit = productUnits[code] || 'หน่วย';
-                        select.innerHTML += `<option value="${code}" data-price="${price}" data-unit="${unit}" data-name="${name}">${name} (${price} บาท/${unit})</option>`;
-                    }
-                });
-            } else {
-                productOrder.forEach(code => {
-                    const name = productNames[code];
-                    const unit = productUnits[code];
-                    select.innerHTML += `<option value="${code}" data-price="0" data-unit="${unit}" data-name="${name}">${name}</option>`;
-                });
-            }
-        }
+        allProducts.forEach(p => {
+            const code = p.product_code;
+            const name = p.name;
+            const unit = p.unit;
+            const price = customerPrices[code]?.price || 0;
+            select.innerHTML += `<option value="${code}" data-price="${price}" data-unit="${unit}" data-name="${name}">${name} (${price} บาท/${unit})</option>`;
+        });
         
         function addNewItem() {
             const select = document.getElementById('addItemSelect');
@@ -2009,26 +1988,35 @@
         function renderProducts() {
             const container = document.getElementById('productList');
             container.innerHTML = '';
-            
-            for (const [category, codes] of Object.entries(productCategories)) {
-                const availableProducts = codes.filter(code => customerPrices[code]);
-                if (availableProducts.length === 0) continue;
-                
+    
+            if (allProducts.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted py-4">ไม่พบรายการสินค้า</div>';
+                return;
+            }
+    
+            // ★★★ จัดกลุ่มตาม category จาก API ★★★
+            const groups = groupProductsByCategory();
+    
+            for (const [category, products] of Object.entries(groups)) {
                 let html = `<div class="cat-title">${category}</div>`;
-                
-                availableProducts.forEach(code => {
-                    const p = customerPrices[code];
-                    const icon = productIcons[code] || '📦';
+        
+                products.forEach(p => {
+                    const code = p.product_code;
+                    const icon = p.icon || '📦';
+                    const name = p.name;
+                    const price = customerPrices[code]?.price || 0;
                     const hasMultiplier = MULTIPLIER_PRODUCTS.includes(code);
                     let multiplierBadge = '';
-                    if (hasMultiplier && customerMultipliers[code]) multiplierBadge = `<span class="multiplier-badge" id="badge_${code}">×${customerMultipliers[code]}ถุง</span>`;
-                    
+                    if (hasMultiplier && customerMultipliers[code]) {
+                        multiplierBadge = `<span class="multiplier-badge" id="badge_${code}">×${customerMultipliers[code]}ถุง</span>`;
+                    }
+            
                     html += `
                         <div class="product-card" id="card_${code}">
                             <div class="product-row">
                                 <div class="product-info">
-                                    <div class="product-name">${icon} ${getProductName(code)}${multiplierBadge}</div>
-                                    <div class="product-price">${p.price} บาท</div>
+                                    <div class="product-name">${icon} ${name}${multiplierBadge}</div>
+                                    <div class="product-price">${price} บาท</div>
                                 </div>
                                 <div class="product-right">
                                     <span class="line-total" id="total_${code}">0</span>
@@ -2046,39 +2034,17 @@
 
         function renderProductsForAdmin() {
             const container = document.getElementById('productList');
-            container.innerHTML = '';
-            
-            for (const [category, codes] of Object.entries(productCategories)) {
-                let html = `<div class="cat-title">${category}</div>`;
-                codes.forEach(code => {
-                    const icon = productIcons[code] || '📦';
-                    html += `
-                        <div class="product-card" id="card_${code}">
-                            <div class="product-row">
-                                <div class="product-info">
-                                    <div class="product-name">${icon} ${getProductName(code)}</div>
-                                    <div class="product-price" style="color:#999;">ไม่มีราคา</div>
-                                </div>
-                                <div class="product-right">
-                                    <input type="number" id="qty_${code}" class="qty-input calculate-trigger" placeholder="0" min="0">
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                container.innerHTML += html;
-            }
-            document.querySelectorAll('.calculate-trigger').forEach(input => { input.addEventListener('input', autoCalculateBags); });
+            container.innerHTML = '<div class="text-center text-muted py-4">กรุณาเลือกลูกค้าเพื่อดูรายการสินค้า</div>';
         }
 
         function getProductName(code) {
-            const names = { 'tube_l': 'หลอดใหญ่', 'tube_s': 'หลอดเล็ก', 'pack_l': 'แพ็คกระสอบ', 'pack_s': 'แพ็คเล็ก', 'crush_sack': 'บด(ถุงบีซ)', 'crush_sachet': 'บด(ซอง)', 'crush_white': 'บด(ถุงขาว)', 'cube_sachet': 'ก้อน(ซอง)', 'cube_kak': 'ก้อน(ลูก)', 'cube_hand': 'ก้อน(กั๊ก)', 'sack': 'กระสอบ(มัด)' };
-            return names[code] || code;
+            const p = allProducts.find(x => x.product_code === code);
+            return p ? p.name : code;
         }
 
         function getUnit(code) {
-            const units = { 'tube_l': 'กระสอบ', 'tube_s': 'กระสอบ', 'pack_l': 'แพ็ค', 'pack_s': 'แพ็ค', 'crush_sack': 'ถุง', 'crush_sachet': 'ซอง', 'crush_white': 'ถุง', 'cube_sachet': 'ซอง', 'cube_kak': 'ลูก', 'cube_hand': 'กั๊ก', 'sack': 'มัด' };
-            return units[code] || 'หน่วย';
+            const p = allProducts.find(x => x.product_code === code);
+            return p ? p.unit : 'หน่วย';
         }
 
         function calculateAll() { updateTotals(); }
@@ -2559,3 +2525,4 @@
     </script>
 </body>
 </html>
+
