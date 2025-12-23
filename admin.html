@@ -144,6 +144,10 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        @keyframes slideDown {
+            from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -824,7 +828,7 @@
                                     </span>
                                     <span class="title-space"></span>
                                 </div>
-                                <div style="margin-bottom:10px;">
+                                <div id="prices-${customer.id}" style="margin-bottom:10px;">
                                     ${pricesHtml}
                                 </div>
                             </div>
@@ -854,6 +858,79 @@
         }
 
         // ==================== Billing Functions ====================
+        
+        // ✅ Toast notification for smooth UX
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+                background: ${type === 'success' ? '#198754' : '#dc3545'}; color: white;
+                padding: 12px 24px; border-radius: 8px; font-size: 14px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999;
+                animation: slideDown 0.3s ease;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 1500);
+        }
+        
+        // ✅ Load and render prices for specific customer only
+        async function loadAndRenderPrices(customerId) {
+            const container = document.getElementById(`prices-${customerId}`);
+            if (!container) return;
+            
+            try {
+                const res = await fetch(API.GET_PRICES);
+                const data = await res.json();
+                
+                // Filter for this customer
+                const customerData = data.filter(item => item.customer_id === customerId);
+                const custMultipliers = multipliersCache[customerId] || [];
+                
+                let prices = [];
+                customerData.forEach(item => {
+                    if (item.product_code && item.price) {
+                        prices.push({
+                            id: item.price_id,
+                            product_code: item.product_code,
+                            product_name: item.product_name,
+                            price: item.price
+                        });
+                    }
+                });
+                
+                const customerName = customerData[0]?.customer_name || '';
+                
+                if (prices.length === 0) {
+                    container.innerHTML = '<div class="empty-text">- ยังไม่ได้ตั้งราคา -</div>';
+                } else {
+                    container.innerHTML = prices.map(p => {
+                        let multiplierBadge = '';
+                        if (MULTIPLIER_PRODUCTS[p.product_code]) {
+                            const mult = custMultipliers.find(m => m.product_code === p.product_code);
+                            if (mult) {
+                                multiplierBadge = `<span class="badge bg-info ms-2">×${mult.multiplier}ถุง</span>`;
+                            } else {
+                                multiplierBadge = `<span class="badge bg-warning text-dark ms-2">⚠️ ยังไม่ตั้งตัวคูณ</span>`;
+                            }
+                        }
+                        return `
+                            <div class="price-item">
+                                <span class="name">${p.product_name}${multiplierBadge}</span>
+                                <span class="value">${p.price} บาท</span>
+                                <button class="btn-del" onclick="deletePrice(${p.id}, '${p.product_name}', ${customerId}, '${customerName}')">✕</button>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (e) {
+                console.error('Error loading prices:', e);
+            }
+        }
         
         function toggleBillingEnabled(customerId, enabled) {
             const optionsEl = document.getElementById(`billing-options-${customerId}`);
@@ -1344,19 +1421,15 @@
                         price: parseFloat(price)
                     })
                 });
-                alert("✅ บันทึกแล้ว");
+                
+                // ✅ Close modal immediately + show toast
+                closeModal('addPriceModal');
+                showToast('✅ บันทึกแล้ว');
                 document.getElementById('priceValue').value = '';
-                await loadCustomers();
-                setTimeout(() => {
-                    const cards = document.querySelectorAll('.customer-card');
-                    cards.forEach(card => {
-                        const header = card.querySelector('.card-header-custom span');
-                        if (header && header.textContent.includes(currentCustomer.name)) {
-                            const body = card.querySelector('.card-body-custom');
-                            if (body) body.style.display = 'block';
-                        }
-                    });
-                }, 100);
+                
+                // ✅ Update only prices section (not entire page)
+                await loadAndRenderPrices(customerId);
+                
             } catch (e) {
                 alert("Error: " + e);
             }
@@ -1371,18 +1444,11 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ priceId })
                 });
-                alert("✅ ลบแล้ว");
-                await loadCustomers();
-                setTimeout(() => {
-                    const cards = document.querySelectorAll('.customer-card');
-                    cards.forEach(card => {
-                        const header = card.querySelector('.card-header-custom span');
-                        if (header && header.textContent.includes(customerName)) {
-                            const body = card.querySelector('.card-body-custom');
-                            if (body) body.style.display = 'block';
-                        }
-                    });
-                }, 100);
+                
+                // ✅ Show toast + update only prices section
+                showToast('✅ ลบแล้ว');
+                await loadAndRenderPrices(customerId);
+                
             } catch (e) {
                 alert("Error: " + e);
             }
