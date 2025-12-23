@@ -470,19 +470,16 @@
                     loadCustomers()
                 ]);
                 
-                // Start auto-refresh
-                startAutoRefresh();
+                // ✅ No auto-refresh needed - user can use refresh button
             } catch (err) {
                 alert("Error: " + err);
             }
         }
         main();
 
-        // Auto-refresh every 30 seconds
-        const AUTO_REFRESH_SECONDS = 60; // ✅ เพิ่มเป็น 60 วินาที
-        let autoRefreshInterval = null;
+        // ✅ Simple approach: No auto-refresh, only refresh on user actions
         
-        // ✅ Check if any modal is open
+        // Check if any modal is open
         function isAnyModalOpen() {
             const modals = document.querySelectorAll('.modal-overlay');
             for (const modal of modals) {
@@ -490,37 +487,10 @@
             }
             return false;
         }
-        
-        function startAutoRefresh() {
-            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
-            autoRefreshInterval = setInterval(() => {
-                // ✅ Skip refresh if modal is open or page not visible
-                if (document.visibilityState === 'visible' && !isAnyModalOpen()) {
-                    loadCustomers(true); // silent refresh
-                }
-            }, AUTO_REFRESH_SECONDS * 1000);
-        }
 
         // Auto-reload when customer is deleted from LIFF page
         window.addEventListener('storage', function(e) {
             if (e.key === 'customerDeleted') {
-                loadCustomers();
-            }
-        });
-        
-        // ✅ Reload LINE aliases when user returns to this tab (but not too often)
-        let lastFocusReload = 0;
-        window.addEventListener('focus', function() {
-            const now = Date.now();
-            // ✅ Throttle: only reload if more than 10 seconds since last focus
-            if (now - lastFocusReload > 10000) {
-                lastFocusReload = now;
-                loadLineAliases(true); // force reload to get latest data
-            }
-            
-            const lastDeleted = localStorage.getItem('customerDeleted');
-            if (lastDeleted && (Date.now() - parseInt(lastDeleted)) < 30000) {
-                localStorage.removeItem('customerDeleted');
                 loadCustomers();
             }
         });
