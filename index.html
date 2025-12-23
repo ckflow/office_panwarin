@@ -1604,22 +1604,24 @@
                 const profile = await liff.getProfile();
                 currentUserId = profile.userId;
                 
-                // Check admin via API
-                const adminRes = await fetch(`${BASE_URL}/check-admin`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lineId: currentUserId })
-                });
+                // ✅ OPTIMIZED: Check admin and customer in PARALLEL
+                const [adminRes, shopsRes] = await Promise.all([
+                    fetch(`${BASE_URL}/check-admin`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ lineId: currentUserId })
+                    }),
+                    fetch(`${BASE_URL}/get-my-shops`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ lineId: currentUserId })
+                    })
+                ]);
+                
                 const adminData = await adminRes.json();
                 isAdmin = adminData.isAdmin === true;
                 adminName = adminData.adminName || null;
                 
-                // Check customer (has shops?) via API
-                const shopsRes = await fetch(`${BASE_URL}/get-my-shops`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lineId: currentUserId })
-                });
                 myShops = await shopsRes.json();
                 isCustomer = Array.isArray(myShops) && myShops.length > 0;
                 
@@ -1816,11 +1818,14 @@
                     }
                 });
                 
-                await loadMultipliers(customerId);
-                await loadPendingDeposits(customerId);
-                await loadCustomerRounds(customerId);
-                await loadBagBalance(customerId);
-                await checkFirstBill();
+                // ✅ OPTIMIZED: Load all customer data in PARALLEL
+                await Promise.all([
+                    loadMultipliers(customerId),
+                    loadPendingDeposits(customerId),
+                    loadCustomerRounds(customerId),
+                    loadBagBalance(customerId),
+                    checkFirstBill()
+                ]);
                 renderProducts();
                 startDepositPolling();
                 
