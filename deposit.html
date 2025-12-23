@@ -658,8 +658,11 @@
             document.getElementById('leftoverSection').style.display = 'block';
             document.getElementById('depositSection').style.display = 'block';
             
-            await loadLeftoverData(currentCustomerId, selectedDate);
-            await loadDepositData(currentCustomerId, selectedDate);
+            // ✅ OPTIMIZED: Load in parallel
+            await Promise.all([
+                loadLeftoverData(currentCustomerId, selectedDate),
+                loadDepositData(currentCustomerId, selectedDate)
+            ]);
             
             document.getElementById('loadingScreen').style.display = 'none';
             document.getElementById('mainContent').style.display = 'block';
@@ -714,15 +717,21 @@
             document.getElementById('leftoverSection').style.display = 'block';
             document.getElementById('depositSection').style.display = 'block';
 
-            await loadLeftoverData(currentCustomerId, selectedDate);
-            await loadDepositData(currentCustomerId, selectedDate);
+            // ✅ OPTIMIZED: Load in parallel
+            await Promise.all([
+                loadLeftoverData(currentCustomerId, selectedDate),
+                loadDepositData(currentCustomerId, selectedDate)
+            ]);
         }
 
         async function onDateChange() {
             selectedDate = document.getElementById('filterDate').value;
             if (currentCustomerId) {
-                await loadLeftoverData(currentCustomerId, selectedDate);
-                await loadDepositData(currentCustomerId, selectedDate);
+                // ✅ OPTIMIZED: Load in parallel
+                await Promise.all([
+                    loadLeftoverData(currentCustomerId, selectedDate),
+                    loadDepositData(currentCustomerId, selectedDate)
+                ]);
             }
         }
 
