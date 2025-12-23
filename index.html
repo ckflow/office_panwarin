@@ -684,6 +684,16 @@
                         <span class="text-muted">🎁 ส่วนลดโปร</span>
                         <span id="confirmDiscount" style="color: #dc3545; font-weight: bold;">-0 บาท</span>
                     </div>
+                    <!-- ★★★ แสดงเครดิตโปรที่หัก (จากบิลก่อนหน้า) ★★★ -->
+                    <div class="justify-content-between mb-2" id="confirmPromoCreditsRow" style="display: none;">
+                        <span class="text-muted">🎫 หักเครดิตโปร</span>
+                        <span id="confirmPromoCredits" style="color: #9c27b0; font-weight: bold;">-0 บาท</span>
+                    </div>
+                    <!-- ★★★ แสดงโปรคงเหลือ (ถ้าโปรเกินยอดสั่ง) ★★★ -->
+                    <div class="justify-content-between mb-2" id="confirmPromoRemainingRow" style="display: none;">
+                        <span class="text-muted">🎁 โปรคงเหลือ (บิลหน้า)</span>
+                        <span id="confirmPromoRemaining" style="color: #e91e63; font-weight: bold;">0 บาท</span>
+                    </div>
                     <div class="justify-content-between mb-2" id="confirmDepositRow" style="display: none;">
                         <span class="text-muted">📦 หักยอดฝาก</span>
                         <span id="confirmDeposit" style="color: #0d6efd; font-weight: bold;">-0 บาท</span>
@@ -752,6 +762,12 @@
         let pendingDeposits = [];
         let depositTotal = 0;
         let cachedActualDeduction = 0; // ★★★ เพิ่มตัวแปรเก็บยอดหักจริง ★★★
+        
+        // ★★★ Promo Credits - เครดิตโปรที่ค้างจากบิลก่อนหน้า ★★★
+        let promoCreditsTotal = 0;
+        let promoCreditsData = [];
+        let cachedPromoCreditsDeduction = 0;
+        let cachedFirstBillRemaining = 0; // โปรบิลแรกที่เหลือ (ถ้าเกินยอดสั่ง)
         let selectedRound = null;
         let customerRounds = [];
         let myOrders = [];
@@ -1758,6 +1774,7 @@
             if (document.visibilityState === 'visible') {
                 if (currentCustomerId) {
                     await loadPendingDeposits(currentCustomerId);
+                    await loadPromoCredits(currentCustomerId);
                     updateTotals();
                 }
                 if (document.getElementById('tabMyOrders').classList.contains('active')) {
@@ -1771,7 +1788,11 @@
         function startDepositPolling() {
             if (depositPollingInterval) clearInterval(depositPollingInterval);
             depositPollingInterval = setInterval(async () => {
-                if (currentCustomerId) { await loadPendingDeposits(currentCustomerId); updateTotals(); }
+                if (currentCustomerId) { 
+                    await loadPendingDeposits(currentCustomerId); 
+                    await loadPromoCredits(currentCustomerId);
+                    updateTotals(); 
+                }
             }, 10000);
         }
         
@@ -1832,6 +1853,7 @@
                 await Promise.all([
                     loadMultipliers(customerId),
                     loadPendingDeposits(customerId),
+                    loadPromoCredits(customerId),
                     loadCustomerRounds(customerId),
                     loadBagBalance(customerId),
                     checkFirstBill()
@@ -1879,6 +1901,28 @@
                 console.error('Error loading pending deposits:', e); 
                 pendingDeposits = []; 
                 depositTotal = 0; 
+            }
+        }
+
+        // ★★★ โหลดเครดิตโปรที่ค้าง ★★★
+        async function loadPromoCredits(customerId) {
+            try {
+                const res = await fetch(`${BASE_URL}/get-promo-credits`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customerId })
+                });
+                promoCreditsData = await res.json();
+                if (!Array.isArray(promoCreditsData)) promoCreditsData = [];
+                
+                promoCreditsTotal = 0;
+                promoCreditsData.forEach(c => {
+                    promoCreditsTotal += parseFloat(c.remaining_amount) || 0;
+                });
+            } catch (e) {
+                console.error('Error loading promo credits:', e);
+                promoCreditsData = [];
+                promoCreditsTotal = 0;
             }
         }
 
@@ -1937,7 +1981,9 @@
             
             if (!customerId) {
                 currentCustomerId = null; currentCustomerName = null; customerPrices = {}; customerMultipliers = {};
-                pendingDeposits = []; depositTotal = 0; customerRounds = []; selectedRound = null;
+                pendingDeposits = []; depositTotal = 0; 
+                promoCreditsData = []; promoCreditsTotal = 0; // ★ reset promo credits
+                customerRounds = []; selectedRound = null;
                 stopDepositPolling(); renderProductsForAdmin(); renderRoundButtons(); updateTotals();
                 return;
             }
@@ -2070,8 +2116,18 @@
                 if (promoEl) { if (promoText) { promoEl.textContent = promoText; promoEl.style.display = 'block'; } else promoEl.style.display = 'none'; }
             }
             
-            // ★★★ คำนวณยอดหักจริง (ไม่เกินยอดที่ต้องจ่าย) ★★★
-            const amountBeforeDeposit = subtotal - totalDiscount;
+            // ★★★ คำนวณยอดหักจริง - รองรับโปรเกินยอดและเครดิตโปร ★★★
+            
+            // 1. คำนวณส่วนลดโปรจริง (ไม่เกินยอดสั่ง)
+            const actualDiscount = Math.min(totalDiscount, subtotal);
+            let amountAfterPromo = subtotal - actualDiscount;
+            
+            // 2. หักเครดิตโปรที่ค้าง (ถ้ามี)
+            const safePromoCredits = promoCreditsTotal && !isNaN(promoCreditsTotal) ? promoCreditsTotal : 0;
+            const promoCreditsUsed = Math.min(safePromoCredits, amountAfterPromo);
+            const amountBeforeDeposit = amountAfterPromo - promoCreditsUsed;
+            
+            // 3. หักยอดฝาก
             const safeDepositTotal = depositTotal && !isNaN(depositTotal) ? depositTotal : 0;
             const actualDeduction = Math.min(safeDepositTotal, amountBeforeDeposit);
             const grandTotal = amountBeforeDeposit - actualDeduction; // ไม่ติดลบแล้ว
@@ -2130,19 +2186,57 @@
             document.getElementById('confirmSubtotal').textContent = cachedSubtotal.toLocaleString() + ' บาท';
             document.getElementById('confirmDiscount').textContent = cachedDiscount > 0 ? '-' + cachedDiscount.toLocaleString() + ' บาท' : '-';
             
-            // ★★★ คำนวณยอดหักจริง (ไม่เกินยอดที่ต้องจ่าย) ★★★
-            const amountBeforeDeposit = cachedSubtotal - cachedDiscount;
+            // ★★★ คำนวณยอดหักจริง - รองรับโปรเกินยอดและเครดิตโปร ★★★
+            
+            // 1. คำนวณส่วนลดโปรจริง (ไม่เกินยอดสั่ง)
+            const actualDiscount = Math.min(cachedDiscount, cachedSubtotal);
+            cachedFirstBillRemaining = cachedDiscount > cachedSubtotal ? cachedDiscount - cachedSubtotal : 0;
+            let amountAfterPromo = cachedSubtotal - actualDiscount;
+            
+            // 2. หักเครดิตโปรที่ค้าง (ถ้ามี)
+            const safePromoCredits = promoCreditsTotal && !isNaN(promoCreditsTotal) ? promoCreditsTotal : 0;
+            cachedPromoCreditsDeduction = Math.min(safePromoCredits, amountAfterPromo);
+            const amountBeforeDeposit = amountAfterPromo - cachedPromoCreditsDeduction;
+            
+            // 3. หักยอดฝาก
             const actualDeduction = Math.min(depositTotal, amountBeforeDeposit);
             const grandTotal = amountBeforeDeposit - actualDeduction;
             
             // เก็บไว้ใช้ตอน submit
             cachedActualDeduction = actualDeduction;
             
+            // แสดงส่วนลดโปรที่หักได้จริง (กรณีโปรเกินยอด)
+            if (actualDiscount !== cachedDiscount && cachedDiscount > 0) {
+                document.getElementById('confirmDiscount').textContent = '-' + actualDiscount.toLocaleString() + ' บาท';
+            }
+            
+            // ★★★ แสดงเครดิตโปรที่หัก (ถ้ามี) ★★★
+            const promoCreditsRow = document.getElementById('confirmPromoCreditsRow');
+            if (promoCreditsRow) {
+                if (cachedPromoCreditsDeduction > 0) {
+                    document.getElementById('confirmPromoCredits').textContent = '-' + cachedPromoCreditsDeduction.toLocaleString() + ' บาท';
+                    promoCreditsRow.style.display = 'flex';
+                } else {
+                    promoCreditsRow.style.display = 'none';
+                }
+            }
+            
             document.getElementById('confirmDeposit').textContent = actualDeduction > 0 ? '-' + actualDeduction.toLocaleString() + ' บาท' : '-';
             document.getElementById('confirmGrandTotal').textContent = grandTotal.toLocaleString() + ' บาท';
 
             document.getElementById('confirmDiscountRow').style.display = cachedDiscount > 0 ? 'flex' : 'none';
             document.getElementById('confirmDepositRow').style.display = actualDeduction > 0 ? 'flex' : 'none';
+            
+            // ★★★ แสดงโปรคงเหลือ (ถ้าโปรเกินยอดสั่ง) ★★★
+            const promoRemainingRow = document.getElementById('confirmPromoRemainingRow');
+            if (promoRemainingRow) {
+                if (cachedFirstBillRemaining > 0) {
+                    document.getElementById('confirmPromoRemaining').textContent = cachedFirstBillRemaining.toLocaleString() + ' บาท';
+                    promoRemainingRow.style.display = 'flex';
+                } else {
+                    promoRemainingRow.style.display = 'none';
+                }
+            }
             
             // ★★★ แสดงยอดฝากคงเหลือ (ถ้ามี) ★★★
             const depositRemaining = depositTotal - actualDeduction;
@@ -2262,16 +2356,19 @@
             try {
                 let finalCustomerName = currentCustomerName || "ลูกค้าหน้าร้าน";
                 
-                // ★★★ ใช้ยอดหักจริงที่คำนวณไว้ ★★★
+                // ★★★ คำนวณยอดสุทธิรวมเครดิตโปร ★★★
                 const actualDeduction = cachedActualDeduction || 0;
-                const grandTotal = cachedSubtotal - cachedDiscount - actualDeduction;
+                const promoCreditsUsed = cachedPromoCreditsDeduction || 0;
+                const actualDiscount = Math.min(cachedDiscount, cachedSubtotal);
+                const grandTotal = cachedSubtotal - actualDiscount - promoCreditsUsed - actualDeduction;
 
                 const profile = await liff.getProfile();
 
                 let payload = {
                     lineId: currentUserId, customerId: currentCustomerId, customerName: finalCustomerName,
-                    items: orderLines, totalBags: borrowQty, subtotal: cachedSubtotal, discount: cachedDiscount,
-                    depositDeduction: actualDeduction, // ★ ยอดหักจริง
+                    items: orderLines, totalBags: borrowQty, subtotal: cachedSubtotal, discount: actualDiscount,
+                    promoCreditsDeduction: promoCreditsUsed, // ★ เครดิตโปรที่หัก
+                    depositDeduction: actualDeduction, // ★ ยอดฝากที่หัก
                     total: grandTotal,
                     orderDate: document.getElementById('orderDate').value, orderTime: document.getElementById('orderTime').value,
                     deliveryRound: selectedRound, pickupTime: selectedRound === 'pickup' ? getPickupTime() : null,
@@ -2283,10 +2380,45 @@
                 
                 const data = await response.json(); 
                 let invoiceNo = data.invoiceNo;
+                const orderId = data.orderId || invoiceNo;
 
-                // ★★★ ส่ง amountToUse ไป API หักยอดฝาก ★★★
+                // ★★★ Post-order tasks ★★★
                 const postOrderTasks = [];
                 
+                // 1. หักเครดิตโปร (ถ้ามี)
+                if (promoCreditsUsed > 0 && currentCustomerId) {
+                    postOrderTasks.push(
+                        fetch(`${BASE_URL}/use-promo-credits`, { 
+                            method: 'POST', 
+                            headers: { 'Content-Type': 'application/json' }, 
+                            body: JSON.stringify({ 
+                                customerId: currentCustomerId, 
+                                orderId: orderId,
+                                amountToUse: promoCreditsUsed
+                            }) 
+                        })
+                    );
+                }
+                
+                // 2. เพิ่มเครดิตโปรใหม่ (ถ้าโปรบิลแรกเกินยอดสั่ง)
+                const firstBillRemaining = cachedFirstBillRemaining || 0;
+                if (firstBillRemaining > 0 && currentCustomerId) {
+                    postOrderTasks.push(
+                        fetch(`${BASE_URL}/add-promo-credit`, { 
+                            method: 'POST', 
+                            headers: { 'Content-Type': 'application/json' }, 
+                            body: JSON.stringify({ 
+                                customerId: currentCustomerId, 
+                                orderId: orderId,
+                                amount: firstBillRemaining,
+                                sourceType: 'first_bill_free',
+                                note: 'เครดิตจากโปรบิลแรกที่เหลือ'
+                            }) 
+                        })
+                    );
+                }
+                
+                // 3. หักยอดฝาก (ถ้ามี)
                 if (actualDeduction > 0 && currentCustomerId) {
                     postOrderTasks.push(
                         fetch(`${BASE_URL}/use-deposit`, { 
@@ -2294,8 +2426,8 @@
                             headers: { 'Content-Type': 'application/json' }, 
                             body: JSON.stringify({ 
                                 customerId: currentCustomerId, 
-                                orderId: data.orderId || invoiceNo,
-                                amountToUse: actualDeduction // ★★★ ส่งยอดที่ต้องหักจริง ★★★
+                                orderId: orderId,
+                                amountToUse: actualDeduction
                             }) 
                         })
                     );
@@ -2317,14 +2449,21 @@
                 const thaiDate = formatDateThai(document.getElementById('orderDate').value);
                 const selectedTime = document.getElementById('orderTime').value;
 
-                // ★★★ แสดงยอดฝากคงเหลือในข้อความ ★★★
+                // ★★★ สร้างข้อความแสดงเครดิตโปรและยอดฝาก ★★★
+                let promoCreditsMsg = promoCreditsUsed > 0 ? `🎫 หักเครดิตโปร: -${promoCreditsUsed.toLocaleString()} บาท\n` : '';
+                
+                // แสดงโปรคงเหลือ (ถ้าโปรบิลแรกเกินยอดสั่ง)
+                if (firstBillRemaining > 0) {
+                    promoCreditsMsg += `🎁 โปรคงเหลือ (บิลหน้า): ${firstBillRemaining.toLocaleString()} บาท\n`;
+                }
+                
                 const depositRemaining = depositTotal - actualDeduction;
                 let depositMsg = actualDeduction > 0 ? `📦 หักยอดฝาก: -${actualDeduction.toLocaleString()} บาท\n` : '';
                 if (depositRemaining > 0) {
                     depositMsg += `💰 ยอดฝากคงเหลือ: ${depositRemaining.toLocaleString()} บาท\n`;
                 }
 
-                let messageText = `🧾 บิลเลขที่: ${invoiceNo}\n👤 ลูกค้า: ${finalCustomerName}\n📋 วันที่: ${thaiDate} (${selectedTime} น.)\n🚚 ${getRoundText(selectedRound)}\n------------------\n${orderLines.join("\n")}\n------------------\n💰 รวม: ${cachedSubtotal.toLocaleString()} บาท\n${cachedDiscount > 0 ? '🎁 ส่วนลด: -' + cachedDiscount.toLocaleString() + ' บาท\n' : ''}${depositMsg}✅ สุทธิ: ${grandTotal.toLocaleString()} บาท`;
+                let messageText = `🧾 บิลเลขที่: ${invoiceNo}\n👤 ลูกค้า: ${finalCustomerName}\n📋 วันที่: ${thaiDate} (${selectedTime} น.)\n🚚 ${getRoundText(selectedRound)}\n------------------\n${orderLines.join("\n")}\n------------------\n💰 รวม: ${cachedSubtotal.toLocaleString()} บาท\n${actualDiscount > 0 ? '🎁 ส่วนลด: -' + actualDiscount.toLocaleString() + ' บาท\n' : ''}${promoCreditsMsg}${depositMsg}✅ สุทธิ: ${grandTotal.toLocaleString()} บาท`;
 
                 closeConfirmModal();
 
@@ -2405,13 +2544,16 @@
             cachedSubtotal = 0;
             cachedDiscount = 0;
             cachedActualDeduction = 0;
+            cachedPromoCreditsDeduction = 0;
+            cachedFirstBillRemaining = 0;
             
             // อัพเดท UI
             updateTotals();
             
-            // โหลด deposit ใหม่ (เพราะอาจถูกหักไปแล้ว)
+            // โหลด deposit และ promo credits ใหม่ (เพราะอาจถูกหักไปแล้ว)
             if (currentCustomerId) {
                 loadPendingDeposits(currentCustomerId);
+                loadPromoCredits(currentCustomerId);
             }
         }
     </script>
