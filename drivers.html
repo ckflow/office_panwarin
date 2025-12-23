@@ -797,28 +797,62 @@
         }
 
         function renderLinkedCard(a, isAdminCard = false) {
-            const icon = isAdminCard ? '👑' : '👤';
-            const cardClass = isAdminCard ? 'admin' : 'linked';
-            const infoClass = isAdminCard ? 'admin-info' : '';
-            return `
-                <div class="line-card ${cardClass}">
-                    <div class="line-header">
-                        <div class="line-avatar ${isAdminCard ? 'admin' : 'linked'}">${icon}</div>
-                        <div class="line-info">
-                            <div class="line-name">${escapeHtml(a.alias_name)}</div>
-                            <div class="line-id">${a.line_id}</div>
-                        </div>
+    const icon = isAdminCard ? '👑' : '👤';
+    const cardClass = isAdminCard ? 'admin' : 'linked';
+    const infoClass = isAdminCard ? 'admin-info' : '';
+    
+    // Parse linked customers (เฉพาะ use_for = customer)
+    let linkedCustomersHtml = '';
+    if (a.use_for === 'customer' && a.linked_customers) {
+        const customers = a.linked_customers.split('||').map(c => {
+            const [id, name] = c.split(':');
+            return { id, name };
+        }).filter(c => c.name);
+        
+        if (customers.length > 0) {
+            linkedCustomersHtml = `
+                <div style="margin-top: 10px; padding: 8px 12px; background: #f0fdf4; border-radius: 8px; font-size: 12px;">
+                    <div style="color: #166534; font-weight: bold; margin-bottom: 4px;">
+                        🏪 ผูกกับร้าน (${customers.length}):
                     </div>
-                    <div class="linked-info ${infoClass}">
-                        <div><div class="linked-name">✅ ผูกแล้ว</div></div>
-                        <div>
-                            <button class="unlink-btn" onclick="editAlias(${a.id}, '${escapeHtml(a.alias_name)}', '${a.use_for}')"><i class="fas fa-edit"></i> แก้ไข</button>
-                            <button class="unlink-btn" onclick="unlinkAlias(${a.id}, '${escapeHtml(a.alias_name)}')"><i class="fas fa-unlink"></i> ยกเลิก</button>
-                        </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                        ${customers.map(c => `
+                            <span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px;">
+                                ${escapeHtml(c.name)}
+                            </span>
+                        `).join('')}
                     </div>
                 </div>
             `;
+        } else {
+            linkedCustomersHtml = `
+                <div style="margin-top: 10px; padding: 8px 12px; background: #fef9c3; border-radius: 8px; font-size: 12px; color: #854d0e;">
+                    ⚠️ ยังไม่ได้ผูกกับร้านค้าในระบบ
+                </div>
+            `;
         }
+    }
+    
+    return `
+        <div class="line-card ${cardClass}">
+            <div class="line-header">
+                <div class="line-avatar ${isAdminCard ? 'admin' : 'linked'}">${icon}</div>
+                <div class="line-info">
+                    <div class="line-name">${escapeHtml(a.alias_name)}</div>
+                    <div class="line-id">${a.line_id}</div>
+                </div>
+            </div>
+            <div class="linked-info ${infoClass}">
+                <div><div class="linked-name">✅ ผูกแล้ว</div></div>
+                <div>
+                    <button class="unlink-btn" onclick="editAlias(${a.id}, '${escapeHtml(a.alias_name)}', '${a.use_for}')"><i class="fas fa-edit"></i> แก้ไข</button>
+                    <button class="unlink-btn" onclick="unlinkAlias(${a.id}, '${escapeHtml(a.alias_name)}')"><i class="fas fa-unlink"></i> ยกเลิก</button>
+                </div>
+            </div>
+            ${linkedCustomersHtml}
+        </div>
+    `;
+}
 
         function renderDrivers() {
             const search = document.getElementById('searchDriver').value.toLowerCase();
@@ -1213,3 +1247,4 @@
     </script>
 </body>
 </html>
+
