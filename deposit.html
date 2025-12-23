@@ -170,6 +170,77 @@
         .mode-toggle-btn .icon {
             font-size: 16px;
         }
+        
+        /* Date Range Filter */
+        .date-range-filter {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .date-range-filter input[type="date"] {
+            width: 140px;
+            font-size: 13px;
+            padding: 6px 8px;
+        }
+        .date-range-filter .date-separator {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        /* Date Columns View */
+        .date-columns-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 12px;
+            padding: 10px 0;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+        }
+        .date-column {
+            flex: 0 0 auto;
+            min-width: 200px;
+            max-width: 280px;
+            scroll-snap-align: start;
+            background: white;
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .date-column-header {
+            font-weight: bold;
+            font-size: 14px;
+            color: #667eea;
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+            border-bottom: 2px solid #e9ecef;
+            text-align: center;
+        }
+        .date-column-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+        .date-column-item:last-child {
+            margin-bottom: 0;
+        }
+        .date-column-empty {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            padding: 15px 0;
+        }
+        
+        /* Scroll Hint */
+        .scroll-hint {
+            text-align: center;
+            font-size: 11px;
+            color: #999;
+            margin-top: 5px;
+        }
+        
         @keyframes slideDown {
             from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
             to { transform: translateX(-50%) translateY(0); opacity: 1; }
@@ -270,13 +341,15 @@
                 </div>
             </div>
 
-            <!-- เลือกวันที่ -->
+            <!-- เลือกช่วงวันที่ -->
             <div id="dateFilterSection" style="display: none;">
                 <div class="card" style="background: #f8f9fa; border: 1px solid #dee2e6;">
                     <div class="card-body py-2">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <span style="font-size: 14px;">📅 ดูข้อมูลวันที่:</span>
-                            <input type="date" id="filterDate" class="form-control" style="width: 160px; font-size: 14px;" onchange="onDateChange()">
+                        <div class="date-range-filter">
+                            <span style="font-size: 14px;">📅</span>
+                            <input type="date" id="dateFrom" class="form-control" onchange="onDateRangeChange()">
+                            <span class="date-separator">ถึง</span>
+                            <input type="date" id="dateTo" class="form-control" onchange="onDateRangeChange()">
                         </div>
                     </div>
                 </div>
@@ -289,7 +362,7 @@
                 <!-- ยอดเหลือล่าสุด -->
                 <div class="card leftover-card">
                     <div class="card-header bg-info text-white">
-                        <i class="fas fa-clipboard-list"></i> บันทึกเหลือล่าสุด
+                        <i class="fas fa-clipboard-list"></i> บันทึกเหลือ
                     </div>
                     <div class="card-body" id="leftoverList">
                         <div class="text-center text-muted">- ไม่มีบันทึก -</div>
@@ -431,8 +504,6 @@
         const MY_LIFF_ID = "2008689090-CnrdxM5k";
         const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
         
-        // Admin check via API (no hardcoded IDs)
-
         const DEPOSIT_PRODUCTS = ['tube_l', 'tube_s', 'crush_white', 'crush_sack'];
         const LEFTOVER_PRODUCTS = ['tube_l', 'tube_s', 'pack_s', 'crush_white', 'crush_sack'];
         
@@ -467,10 +538,11 @@
         let isAdmin = false;
         let isCustomer = false;
         let isDualRole = false;
-        let currentViewMode = 'admin'; // 'admin' or 'customer'
+        let currentViewMode = 'admin';
         let depositCustomers = [];
         let myShops = [];
-        let selectedDate = null;
+        let dateFrom = null;
+        let dateTo = null;
 
         async function main() {
             try {
@@ -502,24 +574,20 @@
                 myShops = await shopsRes.json();
                 isCustomer = Array.isArray(myShops) && myShops.length > 0;
                 
-                // Check if dual role (both admin and customer)
                 isDualRole = isAdmin && isCustomer;
                 
-                // Get saved view mode from localStorage (only for dual role)
                 if (isDualRole) {
                     const savedMode = localStorage.getItem('viewMode');
                     if (savedMode === 'customer' || savedMode === 'admin') {
                         currentViewMode = savedMode;
                     } else {
-                        currentViewMode = 'customer'; // Default to customer view for dual role
+                        currentViewMode = 'customer';
                     }
                     
-                    // Show toggle button
                     document.getElementById('modeToggleContainer').classList.add('show');
                     updateModeToggleButton();
                 }
 
-                // Decide which view to show
                 if (isDualRole) {
                     if (currentViewMode === 'admin') {
                         await initAdminView();
@@ -533,7 +601,6 @@
                     currentViewMode = 'customer';
                     await initCustomerView();
                 } else {
-                    // Neither admin nor customer
                     document.getElementById('loadingScreen').style.display = 'none';
                     document.getElementById('noPermissionScreen').style.display = 'block';
                 }
@@ -585,14 +652,8 @@
         
         function toggleViewMode() {
             if (!isDualRole) return;
-            
-            // Toggle mode
             currentViewMode = currentViewMode === 'admin' ? 'customer' : 'admin';
-            
-            // Save to localStorage
             localStorage.setItem('viewMode', currentViewMode);
-            
-            // Reload page to apply new mode
             location.reload();
         }
         
@@ -610,25 +671,9 @@
         }
         main();
 
-        // Helper function for local timezone date
         function getTodayStr() {
             const today = new Date();
             return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        }
-
-        // โหลดร้านของลูกค้า (for refresh purposes)
-        async function loadMyShops() {
-            try {
-                const res = await fetch(`${BASE_URL}/get-my-shops`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lineId: currentUserId })
-                });
-                myShops = await res.json();
-                isCustomer = Array.isArray(myShops) && myShops.length > 0;
-            } catch (e) {
-                console.error('Error loading my shops:', e);
-            }
         }
 
         async function onMyShopSelect() {
@@ -652,8 +697,10 @@
 
         async function showCustomerData() {
             const today = getTodayStr();
-            document.getElementById('filterDate').value = today;
-            selectedDate = today;
+            document.getElementById('dateFrom').value = today;
+            document.getElementById('dateTo').value = today;
+            dateFrom = today;
+            dateTo = today;
             
             document.getElementById('customerNameDisplay').textContent = currentCustomerName;
             document.getElementById('customerInfoSection').style.display = 'block';
@@ -662,10 +709,9 @@
             document.getElementById('leftoverSection').style.display = 'block';
             document.getElementById('depositSection').style.display = 'block';
             
-            // ✅ OPTIMIZED: Load in parallel
             await Promise.all([
-                loadLeftoverData(currentCustomerId, selectedDate),
-                loadDepositData(currentCustomerId, selectedDate)
+                loadLeftoverData(currentCustomerId, dateFrom, dateTo),
+                loadDepositData(currentCustomerId, dateFrom, dateTo)
             ]);
             
             document.getElementById('loadingScreen').style.display = 'none';
@@ -714,37 +760,77 @@
             currentCustomerName = select.options[select.selectedIndex].dataset.name;
 
             const today = getTodayStr();
-            document.getElementById('filterDate').value = today;
-            selectedDate = today;
+            document.getElementById('dateFrom').value = today;
+            document.getElementById('dateTo').value = today;
+            dateFrom = today;
+            dateTo = today;
 
             document.getElementById('dateFilterSection').style.display = 'block';
             document.getElementById('leftoverSection').style.display = 'block';
             document.getElementById('depositSection').style.display = 'block';
 
-            // ✅ OPTIMIZED: Load in parallel
             await Promise.all([
-                loadLeftoverData(currentCustomerId, selectedDate),
-                loadDepositData(currentCustomerId, selectedDate)
+                loadLeftoverData(currentCustomerId, dateFrom, dateTo),
+                loadDepositData(currentCustomerId, dateFrom, dateTo)
             ]);
         }
 
-        async function onDateChange() {
-            selectedDate = document.getElementById('filterDate').value;
+        async function onDateRangeChange() {
+            dateFrom = document.getElementById('dateFrom').value;
+            dateTo = document.getElementById('dateTo').value;
+            
+            // Validate: dateTo >= dateFrom
+            if (dateTo < dateFrom) {
+                document.getElementById('dateTo').value = dateFrom;
+                dateTo = dateFrom;
+            }
+            
             if (currentCustomerId) {
-                // ✅ OPTIMIZED: Load in parallel
                 await Promise.all([
-                    loadLeftoverData(currentCustomerId, selectedDate),
-                    loadDepositData(currentCustomerId, selectedDate)
+                    loadLeftoverData(currentCustomerId, dateFrom, dateTo),
+                    loadDepositData(currentCustomerId, dateFrom, dateTo)
                 ]);
             }
         }
 
-        async function loadDepositData(customerId, filterDate = null) {
+        // Generate date array between two dates
+        function getDateRange(from, to) {
+            const dates = [];
+            const start = new Date(from);
+            const end = new Date(to);
+            
+            while (start <= end) {
+                dates.push(start.toISOString().split('T')[0]);
+                start.setDate(start.getDate() + 1);
+            }
+            return dates;
+        }
+
+        // Format date for column header
+        function formatDateHeader(dateStr) {
+            const d = new Date(dateStr);
+            const days = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+            const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+            return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
+        }
+
+        // Group data by date
+        function groupByDate(items) {
+            const grouped = {};
+            items.forEach(item => {
+                const dateKey = item.created_at ? item.created_at.split('T')[0] : 'unknown';
+                if (!grouped[dateKey]) grouped[dateKey] = [];
+                grouped[dateKey].push(item);
+            });
+            return grouped;
+        }
+
+        async function loadDepositData(customerId, fromDate, toDate) {
             try {
                 const res = await fetch(`${BASE_URL}/get-deposits`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ customerId, filterDate })
+                    body: JSON.stringify({ customerId, dateFrom: fromDate, dateTo: toDate })
                 });
                 const deposits = await res.json();
 
@@ -752,103 +838,183 @@
                 const usedDeposits = deposits.filter(d => d.status === 'used');
                 const allDeposits = [...pendingDeposits, ...usedDeposits];
 
+                const isSingleDay = fromDate === toDate;
                 const today = getTodayStr();
-                const isToday = filterDate === today;
-                const noDataText = isToday ? '- วันนี้ยังไม่มีข้อมูล -' : '- ไม่มีข้อมูล -';
 
                 if (allDeposits.length === 0) {
+                    const noDataText = (fromDate === today && toDate === today) ? '- วันนี้ยังไม่มีข้อมูล -' : '- ไม่มีข้อมูล -';
                     document.getElementById('pendingDepositList').innerHTML = 
                         `<div class="text-center text-muted">${noDataText}</div>`;
+                } else if (isSingleDay) {
+                    // Single day: show as list
+                    document.getElementById('pendingDepositList').innerHTML = allDeposits.map(d => renderDepositItem(d)).join('');
                 } else {
-                    document.getElementById('pendingDepositList').innerHTML = allDeposits.map(d => {
-                        const pCode = d.product_code || '';
-                        const pName = productNames[pCode] || pCode || 'ไม่ระบุสินค้า';
-                        const pIcon = productIcons[pCode] || '📦';
-                        const isUsed = d.status === 'used';
-                        
-                        const statusBadge = isUsed 
-                            ? '<span class="status-badge status-used">✅ หักไปแล้ว</span>' 
-                            : '<span class="status-badge status-pending">⏳ รอหัก</span>';
-                        
-                        const shiftBadge = d.shift 
-                            ? `<span class="shift-badge shift-${d.shift}">${shiftNames[d.shift] || d.shift}</span>`
-                            : '';
-                        
-                        // ปุ่มลบ - แสดงเฉพาะ Admin และยังไม่ถูกใช้
-                        const deleteBtn = (isAdmin && !isUsed) 
-                            ? `<button class="delete-btn" onclick="deleteDeposit(${d.id})"><i class="fas fa-trash"></i></button>` 
-                            : '';
-                        
-                        return `
-                            <div class="history-item ${isUsed ? 'used' : ''}">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <span class="history-product">${pIcon} ${pName}</span>
-                                        <span class="history-qty ms-2">${d.quantity || 0} ถุง</span>
-                                        ${shiftBadge}
-                                        ${statusBadge}
-                                    </div>
-                                    ${deleteBtn}
-                                </div>
-                                <div class="history-date">${formatDate(d.created_at)} ${d.note ? '| ' + d.note : ''}</div>
+                    // Multiple days: show as columns
+                    const dateRange = getDateRange(fromDate, toDate);
+                    const grouped = groupByDate(allDeposits);
+                    
+                    let html = '<div class="date-columns-container">';
+                    dateRange.forEach(date => {
+                        const items = grouped[date] || [];
+                        html += `
+                            <div class="date-column">
+                                <div class="date-column-header">${formatDateHeader(date)}</div>
+                                ${items.length === 0 
+                                    ? '<div class="date-column-empty">ไม่มีข้อมูล</div>'
+                                    : items.map(d => renderDepositItemCompact(d)).join('')
+                                }
                             </div>
                         `;
-                    }).join('');
+                    });
+                    html += '</div>';
+                    if (dateRange.length > 2) {
+                        html += '<div class="scroll-hint">← เลื่อนดูวันอื่น →</div>';
+                    }
+                    document.getElementById('pendingDepositList').innerHTML = html;
                 }
             } catch (e) {
                 console.error('Error loading deposits:', e);
             }
         }
 
-        async function loadLeftoverData(customerId, filterDate = null) {
+        function renderDepositItem(d) {
+            const pCode = d.product_code || '';
+            const pName = productNames[pCode] || pCode || 'ไม่ระบุสินค้า';
+            const pIcon = productIcons[pCode] || '📦';
+            const isUsed = d.status === 'used';
+            
+            const statusBadge = isUsed 
+                ? '<span class="status-badge status-used">✅ หักไปแล้ว</span>' 
+                : '<span class="status-badge status-pending">⏳ รอหัก</span>';
+            
+            const shiftBadge = d.shift 
+                ? `<span class="shift-badge shift-${d.shift}">${shiftNames[d.shift] || d.shift}</span>`
+                : '';
+            
+            const deleteBtn = (isAdmin && !isUsed) 
+                ? `<button class="delete-btn" onclick="deleteDeposit(${d.id})"><i class="fas fa-trash"></i></button>` 
+                : '';
+            
+            return `
+                <div class="history-item ${isUsed ? 'used' : ''}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="history-product">${pIcon} ${pName}</span>
+                            <span class="history-qty ms-2">${d.quantity || 0} ถุง</span>
+                            ${shiftBadge}
+                            ${statusBadge}
+                        </div>
+                        ${deleteBtn}
+                    </div>
+                    <div class="history-date">${formatDate(d.created_at)} ${d.note ? '| ' + d.note : ''}</div>
+                </div>
+            `;
+        }
+
+        function renderDepositItemCompact(d) {
+            const pCode = d.product_code || '';
+            const pName = productNames[pCode] || pCode || '?';
+            const pIcon = productIcons[pCode] || '📦';
+            const isUsed = d.status === 'used';
+            const shiftIcon = d.shift === 'morning' ? '🌅' : d.shift === 'afternoon' ? '🌤️' : '';
+            const statusIcon = isUsed ? '✅' : '⏳';
+            
+            return `
+                <div class="date-column-item" style="${isUsed ? 'opacity: 0.6;' : ''}">
+                    <div>${pIcon} ${pName} <strong>${d.quantity || 0}</strong> ถุง</div>
+                    <div style="font-size: 11px; color: #888;">${shiftIcon} ${statusIcon}</div>
+                </div>
+            `;
+        }
+
+        async function loadLeftoverData(customerId, fromDate, toDate) {
             try {
                 const res = await fetch(`${BASE_URL}/get-leftovers`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ customerId, filterDate })
+                    body: JSON.stringify({ customerId, dateFrom: fromDate, dateTo: toDate })
                 });
                 const leftovers = await res.json();
 
+                const isSingleDay = fromDate === toDate;
                 const today = getTodayStr();
-                const isToday = filterDate === today;
-                const noDataText = isToday ? '- วันนี้ยังไม่มีข้อมูล -' : '- ไม่มีข้อมูล -';
 
                 if (leftovers.length === 0) {
+                    const noDataText = (fromDate === today && toDate === today) ? '- วันนี้ยังไม่มีข้อมูล -' : '- ไม่มีข้อมูล -';
                     document.getElementById('leftoverList').innerHTML = 
                         `<div class="text-center text-muted">${noDataText}</div>`;
+                } else if (isSingleDay) {
+                    // Single day: show as list
+                    document.getElementById('leftoverList').innerHTML = leftovers.slice(0, 20).map(l => renderLeftoverItem(l)).join('');
                 } else {
-                    document.getElementById('leftoverList').innerHTML = leftovers.slice(0, 20).map(l => {
-                        const pCode = l.product_code || '';
-                        const pName = productNames[pCode] || pCode || 'ไม่ระบุสินค้า';
-                        const pIcon = productIcons[pCode] || '📦';
-                        
-                        const shiftBadge = l.shift 
-                            ? `<span class="shift-badge shift-${l.shift}">${shiftNames[l.shift] || l.shift}</span>`
-                            : '';
-                        
-                        // ปุ่มลบ - แสดงเฉพาะ Admin
-                        const deleteBtn = isAdmin 
-                            ? `<button class="delete-btn" onclick="deleteLeftover(${l.id})"><i class="fas fa-trash"></i></button>` 
-                            : '';
-                        
-                        return `
-                            <div class="history-item">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <span class="history-product">${pIcon} ${pName}</span>
-                                        <span class="history-qty ms-2">${l.quantity || 0} ถุง</span>
-                                        ${shiftBadge}
-                                    </div>
-                                    ${deleteBtn}
-                                </div>
-                                <div class="history-date">${formatDate(l.created_at)} ${l.note ? '| ' + l.note : ''}</div>
+                    // Multiple days: show as columns
+                    const dateRange = getDateRange(fromDate, toDate);
+                    const grouped = groupByDate(leftovers);
+                    
+                    let html = '<div class="date-columns-container">';
+                    dateRange.forEach(date => {
+                        const items = grouped[date] || [];
+                        html += `
+                            <div class="date-column">
+                                <div class="date-column-header">${formatDateHeader(date)}</div>
+                                ${items.length === 0 
+                                    ? '<div class="date-column-empty">ไม่มีข้อมูล</div>'
+                                    : items.map(l => renderLeftoverItemCompact(l)).join('')
+                                }
                             </div>
                         `;
-                    }).join('');
+                    });
+                    html += '</div>';
+                    if (dateRange.length > 2) {
+                        html += '<div class="scroll-hint">← เลื่อนดูวันอื่น →</div>';
+                    }
+                    document.getElementById('leftoverList').innerHTML = html;
                 }
             } catch (e) {
                 console.error('Error loading leftovers:', e);
             }
+        }
+
+        function renderLeftoverItem(l) {
+            const pCode = l.product_code || '';
+            const pName = productNames[pCode] || pCode || 'ไม่ระบุสินค้า';
+            const pIcon = productIcons[pCode] || '📦';
+            
+            const shiftBadge = l.shift 
+                ? `<span class="shift-badge shift-${l.shift}">${shiftNames[l.shift] || l.shift}</span>`
+                : '';
+            
+            const deleteBtn = isAdmin 
+                ? `<button class="delete-btn" onclick="deleteLeftover(${l.id})"><i class="fas fa-trash"></i></button>` 
+                : '';
+            
+            return `
+                <div class="history-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="history-product">${pIcon} ${pName}</span>
+                            <span class="history-qty ms-2">${l.quantity || 0} ถุง</span>
+                            ${shiftBadge}
+                        </div>
+                        ${deleteBtn}
+                    </div>
+                    <div class="history-date">${formatDate(l.created_at)} ${l.note ? '| ' + l.note : ''}</div>
+                </div>
+            `;
+        }
+
+        function renderLeftoverItemCompact(l) {
+            const pCode = l.product_code || '';
+            const pName = productNames[pCode] || pCode || '?';
+            const pIcon = productIcons[pCode] || '📦';
+            const shiftIcon = l.shift === 'morning' ? '🌅' : l.shift === 'afternoon' ? '🌤️' : '';
+            
+            return `
+                <div class="date-column-item">
+                    <div>${pIcon} ${pName} <strong>${l.quantity || 0}</strong> ถุง</div>
+                    <div style="font-size: 11px; color: #888;">${shiftIcon}</div>
+                </div>
+            `;
         }
 
         async function saveDeposit() {
@@ -880,7 +1046,6 @@
             }
 
             try {
-                // ✅ OPTIMIZED: Save all deposits in PARALLEL
                 await Promise.all(deposits.map(d => 
                     fetch(`${BASE_URL}/add-deposit`, {
                         method: 'POST',
@@ -895,7 +1060,6 @@
                     })
                 ));
 
-                // ✅ Toast instead of alert
                 showToast('✅ บันทึกฝากสำเร็จ!');
                 
                 DEPOSIT_PRODUCTS.forEach(code => {
@@ -905,7 +1069,7 @@
                 document.getElementById('depositShift').value = '';
                 document.getElementById('depositShiftSelector').querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
 
-                await loadDepositData(currentCustomerId, selectedDate);
+                await loadDepositData(currentCustomerId, dateFrom, dateTo);
             } catch (e) {
                 console.error('Error saving deposit:', e);
                 alert('เกิดข้อผิดพลาด');
@@ -947,7 +1111,6 @@
             }
 
             try {
-                // ✅ OPTIMIZED: Save all leftovers in PARALLEL
                 await Promise.all(leftovers.map(l => 
                     fetch(`${BASE_URL}/add-leftover`, {
                         method: 'POST',
@@ -962,7 +1125,6 @@
                     })
                 ));
 
-                // ✅ Toast instead of alert
                 showToast('✅ บันทึกเหลือสำเร็จ!');
                 
                 LEFTOVER_PRODUCTS.forEach(code => {
@@ -973,7 +1135,7 @@
                 document.getElementById('leftoverShift').value = '';
                 document.getElementById('leftoverShiftSelector').querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
 
-                await loadLeftoverData(currentCustomerId, selectedDate);
+                await loadLeftoverData(currentCustomerId, dateFrom, dateTo);
             } catch (e) {
                 console.error('Error saving leftover:', e);
                 alert('เกิดข้อผิดพลาด');
@@ -989,7 +1151,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ depositId: id })
                 });
-                await loadDepositData(currentCustomerId, selectedDate);
+                await loadDepositData(currentCustomerId, dateFrom, dateTo);
             } catch (e) {
                 console.error('Error deleting deposit:', e);
                 alert('เกิดข้อผิดพลาด');
@@ -1005,7 +1167,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ leftoverId: id })
                 });
-                await loadLeftoverData(currentCustomerId, selectedDate);
+                await loadLeftoverData(currentCustomerId, dateFrom, dateTo);
             } catch (e) {
                 console.error('Error deleting leftover:', e);
                 alert('เกิดข้อผิดพลาด');
@@ -1018,7 +1180,6 @@
             return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
         }
         
-        // ✅ Toast notification for smooth UX
         function showToast(message, type = 'success') {
             const toast = document.createElement('div');
             toast.style.cssText = `
