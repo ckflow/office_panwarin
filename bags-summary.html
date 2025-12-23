@@ -220,6 +220,36 @@
             justify-content: center;
         }
         
+        /* Mode Toggle Button */
+        .mode-toggle-container {
+            display: none;
+            justify-content: center;
+            margin: 10px 15px;
+        }
+        .mode-toggle-container.show {
+            display: flex;
+        }
+        .mode-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            border-radius: 25px;
+            background: white;
+            color: #667eea;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .mode-toggle-btn:hover {
+            background: #f0f4ff;
+        }
+        .mode-toggle-btn .icon {
+            font-size: 16px;
+        }
+        
         .modal-content {
             background: white;
             width: 100%;
@@ -428,6 +458,14 @@
             <a href="deposit.html" class="tab-btn nav-link" style="text-decoration:none;">📦 ฝาก-เหลือ</a>
         </div>
 
+        <!-- Mode Toggle Button (สำหรับคนที่เป็นทั้ง admin และ customer) -->
+        <div class="mode-toggle-container" id="modeToggleContainer">
+            <button class="mode-toggle-btn" id="modeToggleBtn" onclick="toggleViewMode()">
+                <span class="icon" id="modeToggleIcon">👤</span>
+                <span id="modeToggleText">สลับเป็นโหมดลูกค้า</span>
+            </button>
+        </div>
+
         <!-- Admin: Tab Navigation (ภาพรวม/รายละเอียด) -->
         <div class="admin-tabs" id="adminTabs">
             <button class="admin-tab-btn active" onclick="switchTab('all')">📊 ภาพรวม</button>
@@ -577,6 +615,9 @@
         let currentCustomerId = null;
         let currentCustomerName = null;
         let isAdmin = false;
+        let isCustomer = false;
+        let isDualRole = false;
+        let currentViewMode = 'admin'; // 'admin' or 'customer'
         let allCustomers = [];
         let myShops = [];
 
@@ -601,16 +642,30 @@
                 const adminData = await adminRes.json();
                 isAdmin = adminData.isAdmin === true;
                 
-                // Test mode: ?mode=customer เพื่อทดสอบมุมมองลูกค้า
-                const urlParams = new URLSearchParams(window.location.search);
-                if (urlParams.get('mode') === 'customer') {
-                    isAdmin = false;
-                    console.log('🧪 Test Mode: Customer View');
+                // Check customer (has shops?) via API
+                const shopsRes = await fetch(`${BASE_URL}/get-my-shops`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lineId: currentUserId })
+                });
+                myShops = await shopsRes.json();
+                isCustomer = Array.isArray(myShops) && myShops.length > 0;
+                
+                // Check if dual role (both admin and customer)
+                isDualRole = isAdmin && isCustomer;
+                
+                // Get saved view mode from localStorage (only for dual role)
+                if (isDualRole) {
+                    const savedMode = localStorage.getItem('viewMode');
+                    if (savedMode === 'customer' || savedMode === 'admin') {
+                        currentViewMode = savedMode;
+                    } else {
+                        currentViewMode = 'customer'; // Default to customer view for dual role
+                    }
                     
-                    // รักษา parameter ไว้ในลิงก์ทั้งหมด
-                    document.querySelectorAll('.nav-link').forEach(link => {
-                        link.href += '?mode=customer';
-                    });
+                    // Show toggle button
+                    document.getElementById('modeToggleContainer').classList.add('show');
+                    updateModeToggleButton();
                 }
 
                 // Set default dates
@@ -622,29 +677,96 @@
                 document.getElementById('detailDateTo').value = formatDateInput(today);
                 document.getElementById('returnDate').value = formatDateInput(today);
 
-                if (isAdmin) {
-                    // Admin mode
-                    document.getElementById('adminTabs').classList.add('show');
-                    document.getElementById('btnAddReturn').style.display = 'inline-block';
-                    document.getElementById('adminPageNav').classList.add('show');
-                    
-                    await loadAllCustomers();
-                    await loadAllSummary();
-                    
-                    document.getElementById('loadingScreen').style.display = 'none';
-                    document.getElementById('mainContent').style.display = 'block';
+                // Decide which view to show
+                if (isDualRole) {
+                    if (currentViewMode === 'admin') {
+                        await initAdminView();
+                    } else {
+                        await initCustomerView();
+                    }
+                } else if (isAdmin) {
+                    currentViewMode = 'admin';
+                    await initAdminView();
+                } else if (isCustomer) {
+                    currentViewMode = 'customer';
+                    await initCustomerView();
                 } else {
-                    // Customer mode - แสดง tabNav
-                    document.getElementById('tabNav').classList.add('show');
-                    document.getElementById('tabAll').classList.remove('active');
-                    document.getElementById('tabDetail').classList.add('active');
-                    
-                    await loadMyShops();
+                    // Neither admin nor customer
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('noPermissionScreen').style.display = 'block';
                 }
 
             } catch (err) {
                 console.error(err);
                 document.getElementById('loadingScreen').innerHTML = '<h4>❌ เกิดข้อผิดพลาด</h4>';
+            }
+        }
+        
+        async function initAdminView() {
+            document.getElementById('adminTabs').classList.add('show');
+            document.getElementById('btnAddReturn').style.display = 'inline-block';
+            document.getElementById('adminPageNav').classList.add('show');
+            document.getElementById('tabNav').classList.remove('show');
+            
+            await loadAllCustomers();
+            await loadAllSummary();
+            
+            document.getElementById('loadingScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+        }
+        
+        async function initCustomerView() {
+            document.getElementById('tabNav').classList.add('show');
+            document.getElementById('adminPageNav').classList.remove('show');
+            document.getElementById('adminTabs').classList.remove('show');
+            document.getElementById('btnAddReturn').style.display = 'none';
+            document.getElementById('tabAll').classList.remove('active');
+            document.getElementById('tabDetail').classList.add('active');
+            
+            if (myShops.length === 0) {
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('noPermissionScreen').style.display = 'block';
+            } else if (myShops.length === 1) {
+                currentCustomerId = myShops[0].id;
+                currentCustomerName = myShops[0].name;
+                await showCustomerView();
+            } else {
+                // Multiple shops
+                const select = document.getElementById('myShopSelect');
+                select.innerHTML = '<option value="">-- เลือกร้าน --</option>';
+                myShops.forEach(s => {
+                    select.innerHTML += `<option value="${s.id}" data-name="${s.name}">${s.name}</option>`;
+                });
+                
+                document.getElementById('shopSelectSection').style.display = 'block';
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+            }
+        }
+        
+        function toggleViewMode() {
+            if (!isDualRole) return;
+            
+            // Toggle mode
+            currentViewMode = currentViewMode === 'admin' ? 'customer' : 'admin';
+            
+            // Save to localStorage
+            localStorage.setItem('viewMode', currentViewMode);
+            
+            // Reload page to apply new mode
+            location.reload();
+        }
+        
+        function updateModeToggleButton() {
+            const icon = document.getElementById('modeToggleIcon');
+            const text = document.getElementById('modeToggleText');
+            
+            if (currentViewMode === 'admin') {
+                icon.textContent = '👤';
+                text.textContent = 'สลับเป็นโหมดลูกค้า';
+            } else {
+                icon.textContent = '👑';
+                text.textContent = 'สลับเป็นโหมดแอดมิน';
             }
         }
         main();
