@@ -647,25 +647,40 @@
         async function loadData() {
             showLoading(true);
             try {
-                const res1 = await fetch(`${BASE_URL}/get-line-aliases`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({})
-                });
+                // ✅ OPTIMIZED: Load all data in PARALLEL
+                const [res1, res2, res3] = await Promise.all([
+                    fetch(`${BASE_URL}/get-line-aliases`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({})
+                    }),
+                    fetch(`${BASE_URL}/get-all-driver-rounds`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({})
+                    }).catch(e => ({ ok: false, error: e })),
+                    fetch(`${BASE_URL}/get-all-customer-rounds`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({})
+                    }).catch(e => ({ ok: false, error: e }))
+                ]);
+                
+                // Process aliases
                 allAliases = await res1.json();
                 if (!Array.isArray(allAliases)) allAliases = [];
                 allAliases = allAliases.filter(a => a && a.id);
                 
+                // Process driver rounds
                 try {
-                    const res2 = await fetch(`${BASE_URL}/get-all-driver-rounds`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({})
-                    });
-                    const text2 = await res2.text();
-                    if (text2) {
-                        let drData = JSON.parse(text2);
-                        allDriverRounds = Array.isArray(drData) ? drData : (drData && drData.id ? [drData] : []);
+                    if (res2.ok) {
+                        const text2 = await res2.text();
+                        if (text2) {
+                            let drData = JSON.parse(text2);
+                            allDriverRounds = Array.isArray(drData) ? drData : (drData && drData.id ? [drData] : []);
+                        } else {
+                            allDriverRounds = [];
+                        }
                     } else {
                         allDriverRounds = [];
                     }
@@ -674,16 +689,16 @@
                     allDriverRounds = [];
                 }
                 
+                // Process customer rounds
                 try {
-                    const res3 = await fetch(`${BASE_URL}/get-all-customer-rounds`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({})
-                    });
-                    const text3 = await res3.text();
-                    if (text3) {
-                        let crData = JSON.parse(text3);
-                        allCustomerRounds = Array.isArray(crData) ? crData : (crData && crData.id ? [crData] : []);
+                    if (res3.ok) {
+                        const text3 = await res3.text();
+                        if (text3) {
+                            let crData = JSON.parse(text3);
+                            allCustomerRounds = Array.isArray(crData) ? crData : (crData && crData.id ? [crData] : []);
+                        } else {
+                            allCustomerRounds = [];
+                        }
                     } else {
                         allCustomerRounds = [];
                     }
