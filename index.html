@@ -688,6 +688,11 @@
                         <span class="text-muted">📦 หักยอดฝาก</span>
                         <span id="confirmDeposit" style="color: #0d6efd; font-weight: bold;">-0 บาท</span>
                     </div>
+                    <!-- ★★★ เพิ่มแถวแสดงยอดฝากคงเหลือ ★★★ -->
+                    <div class="justify-content-between mb-2" id="confirmDepositRemainingRow" style="display: none;">
+                        <span class="text-muted">💰 ยอดฝากคงเหลือ</span>
+                        <span id="confirmDepositRemaining" style="color: #f59e0b; font-weight: bold;">0 บาท</span>
+                    </div>
                     <div class="d-flex justify-content-between" style="border-top: 2px solid #198754; padding-top: 10px; margin-top: 10px;">
                         <span style="font-size: 18px; font-weight: bold;">✅ รวมสุทธิ</span>
                         <span id="confirmGrandTotal" style="font-size: 20px; font-weight: bold; color: #198754;">0 บาท</span>
@@ -746,6 +751,7 @@
         let myShops = [];
         let pendingDeposits = [];
         let depositTotal = 0;
+        let cachedActualDeduction = 0; // ★★★ เพิ่มตัวแปรเก็บยอดหักจริง ★★★
         let selectedRound = null;
         let customerRounds = [];
         let myOrders = [];
@@ -1848,14 +1854,32 @@
             } catch (e) { console.error('Error loading multipliers:', e); customerMultipliers = {}; }
         }
 
+        // ★★★ แก้ไข loadPendingDeposits - คำนวณ remaining_qty ★★★
         async function loadPendingDeposits(customerId) {
             try {
-                const res = await fetch(`${BASE_URL}/get-pending-deposits`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customerId }) });
+                const res = await fetch(`${BASE_URL}/get-pending-deposits`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ customerId }) 
+                });
                 const data = await res.json();
                 pendingDeposits = Array.isArray(data) ? data : [];
+                
+                // ★★★ คำนวณยอดฝากคงเหลือ (quantity - quantity_used) * price ★★★
                 depositTotal = 0;
-                pendingDeposits.forEach(d => { const price = customerPrices[d.product_code]?.price || 0; depositTotal += (parseInt(d.quantity) || 0) * price; });
-            } catch (e) { console.error('Error loading pending deposits:', e); pendingDeposits = []; depositTotal = 0; }
+                pendingDeposits.forEach(d => { 
+                    const price = customerPrices[d.product_code]?.price || d.price || 0;
+                    const remainingQty = (parseInt(d.quantity) || 0) - (parseInt(d.quantity_used) || 0);
+                    d.remaining_qty = remainingQty; // เก็บไว้ใช้ตอนส่ง API
+                    d.unit_price = price;
+                    d.remaining_value = remainingQty * price;
+                    depositTotal += d.remaining_value;
+                });
+            } catch (e) { 
+                console.error('Error loading pending deposits:', e); 
+                pendingDeposits = []; 
+                depositTotal = 0; 
+            }
         }
 
         async function loadBagBalance(customerId) {
@@ -2013,6 +2037,7 @@
 
         function calculateAll() { updateTotals(); }
 
+        // ★★★ แก้ไข updateTotals - แสดงยอดหักจริง (ไม่เกินยอดที่ต้องจ่าย) ★★★
         function updateTotals() {
             let subtotal = 0, totalDiscount = 0;
             
@@ -2045,14 +2070,19 @@
                 if (promoEl) { if (promoText) { promoEl.textContent = promoText; promoEl.style.display = 'block'; } else promoEl.style.display = 'none'; }
             }
             
+            // ★★★ คำนวณยอดหักจริง (ไม่เกินยอดที่ต้องจ่าย) ★★★
+            const amountBeforeDeposit = subtotal - totalDiscount;
             const safeDepositTotal = depositTotal && !isNaN(depositTotal) ? depositTotal : 0;
-            const grandTotal = Math.max(0, subtotal - totalDiscount - safeDepositTotal);
+            const actualDeduction = Math.min(safeDepositTotal, amountBeforeDeposit);
+            const grandTotal = amountBeforeDeposit - actualDeduction; // ไม่ติดลบแล้ว
+            
             document.getElementById('grandTotalDisplay').textContent = grandTotal.toLocaleString() + ' บาท';
             autoCalculateBags();
         }
 
         let cachedSubtotal = 0, cachedDiscount = 0;
 
+        // ★★★ แก้ไข openConfirmModal - คำนวณ actualDeduction ★★★
         function openConfirmModal() {
             if (selectedRound !== 'pickup' && customerRounds.length === 0) { alert("⚠️ ยังไม่ได้ตั้งรอบจัดส่ง\nกรุณาเลือก 'รับเองหน้าโรง' หรือติดต่อโรงงาน 0949592455"); return; }
             if (!selectedRound) { alert("กรุณาเลือกรอบจัดส่งก่อนครับ"); return; }
@@ -2091,6 +2121,7 @@
 
             const quotaCheck = checkQuota();
             if (!quotaCheck.valid) { alert(quotaCheck.message); return; }
+            
             const orderDate = document.getElementById('orderDate').value;
             const orderTime = document.getElementById('orderTime').value;
             document.getElementById('confirmDateText').textContent = formatDateThai(orderDate) + ' (' + orderTime + ' น.)';
@@ -2099,15 +2130,31 @@
             document.getElementById('confirmSubtotal').textContent = cachedSubtotal.toLocaleString() + ' บาท';
             document.getElementById('confirmDiscount').textContent = cachedDiscount > 0 ? '-' + cachedDiscount.toLocaleString() + ' บาท' : '-';
             
-            const validDeposit = depositTotal && !isNaN(depositTotal) && depositTotal > 0;
-            document.getElementById('confirmDeposit').textContent = validDeposit ? '-' + depositTotal.toLocaleString() + ' บาท' : '-';
+            // ★★★ คำนวณยอดหักจริง (ไม่เกินยอดที่ต้องจ่าย) ★★★
+            const amountBeforeDeposit = cachedSubtotal - cachedDiscount;
+            const actualDeduction = Math.min(depositTotal, amountBeforeDeposit);
+            const grandTotal = amountBeforeDeposit - actualDeduction;
             
-            const safeDepositTotal = validDeposit ? depositTotal : 0;
-            const grandTotal = Math.max(0, cachedSubtotal - cachedDiscount - safeDepositTotal);
+            // เก็บไว้ใช้ตอน submit
+            cachedActualDeduction = actualDeduction;
+            
+            document.getElementById('confirmDeposit').textContent = actualDeduction > 0 ? '-' + actualDeduction.toLocaleString() + ' บาท' : '-';
             document.getElementById('confirmGrandTotal').textContent = grandTotal.toLocaleString() + ' บาท';
 
             document.getElementById('confirmDiscountRow').style.display = cachedDiscount > 0 ? 'flex' : 'none';
-            document.getElementById('confirmDepositRow').style.display = validDeposit ? 'flex' : 'none';
+            document.getElementById('confirmDepositRow').style.display = actualDeduction > 0 ? 'flex' : 'none';
+            
+            // ★★★ แสดงยอดฝากคงเหลือ (ถ้ามี) ★★★
+            const depositRemaining = depositTotal - actualDeduction;
+            const depositRemainingRow = document.getElementById('confirmDepositRemainingRow');
+            if (depositRemainingRow) {
+                if (depositRemaining > 0) {
+                    document.getElementById('confirmDepositRemaining').textContent = depositRemaining.toLocaleString() + ' บาท';
+                    depositRemainingRow.style.display = 'flex';
+                } else {
+                    depositRemainingRow.style.display = 'none';
+                }
+            }
 
             document.getElementById('confirmModal').style.display = 'block';
             document.body.style.overflow = 'hidden';
@@ -2179,6 +2226,7 @@
             bagInput.value = Math.max(0, (parseInt(bagInput.value) || 0) + amount);
         }
 
+        // ★★★ แก้ไข submitOrder - ส่ง amountToUse ไป API ★★★
         async function submitOrder() {
             let orderLines = [], hasItems = false;
             
@@ -2213,15 +2261,18 @@
 
             try {
                 let finalCustomerName = currentCustomerName || "ลูกค้าหน้าร้าน";
-                const safeDepositTotal = depositTotal && !isNaN(depositTotal) ? depositTotal : 0;
-                const grandTotal = Math.max(0, cachedSubtotal - cachedDiscount - safeDepositTotal);
+                
+                // ★★★ ใช้ยอดหักจริงที่คำนวณไว้ ★★★
+                const actualDeduction = cachedActualDeduction || 0;
+                const grandTotal = cachedSubtotal - cachedDiscount - actualDeduction;
 
                 const profile = await liff.getProfile();
 
                 let payload = {
                     lineId: currentUserId, customerId: currentCustomerId, customerName: finalCustomerName,
                     items: orderLines, totalBags: borrowQty, subtotal: cachedSubtotal, discount: cachedDiscount,
-                    depositDeduction: safeDepositTotal, total: grandTotal,
+                    depositDeduction: actualDeduction, // ★ ยอดหักจริง
+                    total: grandTotal,
                     orderDate: document.getElementById('orderDate').value, orderTime: document.getElementById('orderTime').value,
                     deliveryRound: selectedRound, pickupTime: selectedRound === 'pickup' ? getPickupTime() : null,
                     createdBy: isAdmin ? adminName : null
@@ -2233,12 +2284,20 @@
                 const data = await response.json(); 
                 let invoiceNo = data.invoiceNo;
 
-                // ✅ OPTIMIZED: Run post-order tasks in PARALLEL
+                // ★★★ ส่ง amountToUse ไป API หักยอดฝาก ★★★
                 const postOrderTasks = [];
                 
-                if (pendingDeposits.length > 0 && currentCustomerId) {
+                if (actualDeduction > 0 && currentCustomerId) {
                     postOrderTasks.push(
-                        fetch(`${BASE_URL}/use-deposit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customerId: currentCustomerId, orderId: data.orderId || invoiceNo }) })
+                        fetch(`${BASE_URL}/use-deposit`, { 
+                            method: 'POST', 
+                            headers: { 'Content-Type': 'application/json' }, 
+                            body: JSON.stringify({ 
+                                customerId: currentCustomerId, 
+                                orderId: data.orderId || invoiceNo,
+                                amountToUse: actualDeduction // ★★★ ส่งยอดที่ต้องหักจริง ★★★
+                            }) 
+                        })
                     );
                 }
 
@@ -2258,12 +2317,44 @@
                 const thaiDate = formatDateThai(document.getElementById('orderDate').value);
                 const selectedTime = document.getElementById('orderTime').value;
 
-                let messageText = `🧾 บิลเลขที่: ${invoiceNo}\n👤 ลูกค้า: ${finalCustomerName}\n📋 วันที่: ${thaiDate} (${selectedTime} น.)\n🚚 ${getRoundText(selectedRound)}\n------------------\n${orderLines.join("\n")}\n------------------\n💰 รวม: ${cachedSubtotal.toLocaleString()} บาท\n${cachedDiscount > 0 ? '🎁 ส่วนลด: -' + cachedDiscount.toLocaleString() + ' บาท\n' : ''}${safeDepositTotal > 0 ? '📦 หักยอดฝาก: -' + safeDepositTotal.toLocaleString() + ' บาท\n' : ''}✅ สุทธิ: ${grandTotal.toLocaleString()} บาท`;
+                // ★★★ แสดงยอดฝากคงเหลือในข้อความ ★★★
+                const depositRemaining = depositTotal - actualDeduction;
+                let depositMsg = actualDeduction > 0 ? `📦 หักยอดฝาก: -${actualDeduction.toLocaleString()} บาท\n` : '';
+                if (depositRemaining > 0) {
+                    depositMsg += `💰 ยอดฝากคงเหลือ: ${depositRemaining.toLocaleString()} บาท\n`;
+                }
+
+                let messageText = `🧾 บิลเลขที่: ${invoiceNo}\n👤 ลูกค้า: ${finalCustomerName}\n📋 วันที่: ${thaiDate} (${selectedTime} น.)\n🚚 ${getRoundText(selectedRound)}\n------------------\n${orderLines.join("\n")}\n------------------\n💰 รวม: ${cachedSubtotal.toLocaleString()} บาท\n${cachedDiscount > 0 ? '🎁 ส่วนลด: -' + cachedDiscount.toLocaleString() + ' บาท\n' : ''}${depositMsg}✅ สุทธิ: ${grandTotal.toLocaleString()} บาท`;
 
                 closeConfirmModal();
 
-                if (liff.isInClient()) { await liff.sendMessages([{ type: 'text', text: messageText }]); liff.closeWindow(); }
-                else { alert("บันทึกสำเร็จ!\n" + messageText); location.reload(); }
+                // ส่งข้อความไป LINE (ถ้าอยู่ใน LIFF)
+                if (liff.isInClient()) { 
+                    try {
+                        await liff.sendMessages([{ type: 'text', text: messageText }]); 
+                    } catch (e) {
+                        console.log('ไม่สามารถส่งข้อความได้:', e);
+                    }
+                }
+                
+                // ★★★ แสดง toast และพาไปหน้าออเดอร์ ★★★
+                showToast('✅ สั่งซื้อสำเร็จ!');
+                
+                // รีเซ็ตฟอร์ม
+                resetOrderForm();
+                
+                // พาไปหน้าออเดอร์ของฉัน
+                setTimeout(() => {
+                    switchTab('myorders');
+                    
+                    // ถ้ามีหลายร้าน ให้ filter เฉพาะร้านที่เพิ่งสั่ง
+                    if (myShops && myShops.length > 1 && currentCustomerId) {
+                        document.getElementById('myOrderShopFilter').value = currentCustomerId;
+                    }
+                    
+                    // โหลดออเดอร์ใหม่
+                    loadMyOrders();
+                }, 500);
 
             } catch (err) { alert("เกิดข้อผิดพลาด: " + err.message); btn.innerText = oldText; btn.disabled = false; }
         }
@@ -2285,6 +2376,43 @@
                 toast.style.transition = 'opacity 0.3s';
                 setTimeout(() => toast.remove(), 300);
             }, 1500);
+        }
+        
+        // ★★★ ฟังก์ชันรีเซ็ตฟอร์มหลังสั่งสำเร็จ ★★★
+        function resetOrderForm() {
+            // รีเซ็ตจำนวนสินค้าทั้งหมด
+            for (const code in customerPrices) {
+                const qtyEl = document.getElementById(`qty_${code}`);
+                if (qtyEl) qtyEl.value = '';
+            }
+            
+            // รีเซ็ตถุง
+            const bagReturn = document.getElementById('qty_bag_return');
+            const bagBorrow = document.getElementById('qty_bag_borrow');
+            if (bagReturn) bagReturn.value = '';
+            if (bagBorrow) bagBorrow.value = 0;
+            
+            // รีเซ็ตรอบจัดส่ง
+            selectedRound = null;
+            document.querySelectorAll('.round-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.round === 'pickup') {
+                    btn.innerHTML = '<span class="round-icon">🏭</span>รับเอง';
+                }
+            });
+            
+            // รีเซ็ต cached values
+            cachedSubtotal = 0;
+            cachedDiscount = 0;
+            cachedActualDeduction = 0;
+            
+            // อัพเดท UI
+            updateTotals();
+            
+            // โหลด deposit ใหม่ (เพราะอาจถูกหักไปแล้ว)
+            if (currentCustomerId) {
+                loadPendingDeposits(currentCustomerId);
+            }
         }
     </script>
 </body>
