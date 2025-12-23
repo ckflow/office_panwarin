@@ -1271,14 +1271,16 @@
             renderEditItems();
             calculateEditTotal();
         }
-        
-        allProducts.forEach(p => {
-            const code = p.product_code;
-            const name = p.name;
-            const unit = p.unit;
-            const price = customerPrices[code]?.price || 0;
-            select.innerHTML += `<option value="${code}" data-price="${price}" data-unit="${unit}" data-name="${name}">${name} (${price} บาท/${unit})</option>`;
-        });
+        function populateAddItemDropdown() {
+            const select = document.getElementById('addItemSelect');
+            select.innerHTML = '<option value="">-- เลือกสินค้า --</option>';
+            allProducts.forEach(p => {
+                const code = p.product_code;
+                const name = p.name;
+                const unit = p.unit;
+                const price = customerPrices[code]?.price || 0;
+                select.innerHTML += `<option value="${code}" data-price="${price}" data-unit="${unit}" data-name="${name}">${name} (${price} บาท/${unit})</option>`;
+            });
         
         function addNewItem() {
             const select = document.getElementById('addItemSelect');
@@ -1820,13 +1822,25 @@
                     body: JSON.stringify({ customerId: customerId })
                 });
                 const data = await res.json();
+                allProducts = data;
                 
                 customerPrices = {};
                 data.forEach(item => {
                     if (item.product_code) {
-                        customerPrices[item.product_code] = { price: parseFloat(item.price) || 0, promo_type: item.promo_type, buy_qty: item.buy_qty, free_qty: item.free_qty };
+                        customerPrices[item.product_code] = { 
+                            price: parseFloat(item.price) || 0, 
+                            promo_type: item.promo_type, 
+                            buy_qty: item.buy_qty, 
+                            free_qty: item.free_qty,
+                            name: item.name,
+                            unit: item.unit,
+                            category: item.category,
+                            icon: item.icon,
+                            uses_bag: item.uses_bag
+                        };
                     }
                 });
+                buildProductsUseBag();
                 
                 // ✅ OPTIMIZED: Load all customer data in PARALLEL
                 await Promise.all([
@@ -2525,4 +2539,5 @@
     </script>
 </body>
 </html>
+
 
