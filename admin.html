@@ -128,6 +128,22 @@
             background: #667eea;
             color: white;
         }
+        
+        /* Loading spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -162,7 +178,7 @@
                 <button class="btn btn-sm btn-outline-secondary ms-1" onclick="window.location.reload()"><i class="fas fa-sync"></i></button>
             </div>
         </div>
-        <div id="customer-list"><div class="text-center text-muted mt-5">⏳ กำลังโหลดข้อมูล...</div></div>
+        <div id="customer-list"><div class="text-center text-muted mt-5"><span class="loading-spinner"></span> กำลังโหลดข้อมูล...</div></div>
     </div>
 
     <!-- Modal: จัดการ LINE ID -->
@@ -385,8 +401,6 @@
         const MY_LIFF_ID = "2008689090-CnrdxM5k";
         const BASE_URL = "https://n8n.ckflowsystem.com/webhook";
         
-        // Admin check via API (no hardcoded IDs)
-
         const API = {
             GET_PRICES: `${BASE_URL}/get-prices`,
             GET_PRODUCTS: `${BASE_URL}/get-products`,
@@ -418,6 +432,7 @@
         let multipliersCache = {};
         let roundsCache = {};
         let lineAliasesCache = [];
+        let lineAliasesLoaded = false; // ✅ NEW: track if loaded
 
         const MULTIPLIER_PRODUCTS = {
             'crush_sachet': { name: 'บด(ซอง)', options: [6, 7, 8] },
@@ -448,9 +463,12 @@
                 document.getElementById('auth-check').style.display = 'none';
                 document.getElementById('content').style.display = 'block';
                 
-                await loadProducts();
-                await loadLineAliases();
-                await loadCustomers();
+                // ✅ OPTIMIZED: Load all initial data in PARALLEL
+                await Promise.all([
+                    loadProducts(),
+                    loadLineAliases(),
+                    loadCustomers()
+                ]);
                 
                 // Start auto-refresh
                 startAutoRefresh();
@@ -480,8 +498,10 @@
             }
         });
         
-        // Also check on focus (when user returns to this tab)
+        // ✅ NEW: Reload LINE aliases when user returns to this tab
         window.addEventListener('focus', function() {
+            loadLineAliases(true); // force reload to get latest data
+            
             const lastDeleted = localStorage.getItem('customerDeleted');
             if (lastDeleted && (Date.now() - parseInt(lastDeleted)) < 30000) {
                 localStorage.removeItem('customerDeleted');
@@ -514,7 +534,11 @@
             });
         }
 
-        async function loadLineAliases() {
+        // ✅ OPTIMIZED: Add forceReload parameter
+        async function loadLineAliases(forceReload = false) {
+            // Skip if already loaded (unless forced)
+            if (lineAliasesLoaded && !forceReload) return;
+            
             try {
                 const res = await fetch(API.GET_LINE_ALIASES, {
                     method: 'POST',
@@ -523,7 +547,8 @@
                 });
                 const data = await res.json();
                 lineAliasesCache = (data || []).filter(a => a && a.id && a.alias_name && a.use_for === 'customer');
-                console.log('Loaded line aliases:', lineAliasesCache);
+                lineAliasesLoaded = true;
+                console.log('Loaded line aliases:', lineAliasesCache.length);
                 initLineAliasDropdowns();
             } catch (e) {
                 console.error('Error loading line aliases:', e);
@@ -565,7 +590,11 @@
             }
         }
 
-        async function loadMultipliers(customerId) {
+        // ✅ OPTIMIZED: Add cache check
+        async function loadMultipliers(customerId, forceReload = false) {
+            if (multipliersCache[customerId] && !forceReload) {
+                return multipliersCache[customerId];
+            }
             try {
                 const res = await fetch(API.GET_MULTIPLIERS, {
                     method: 'POST',
@@ -581,7 +610,11 @@
             }
         }
 
-        async function loadRounds(customerId) {
+        // ✅ OPTIMIZED: Add cache check
+        async function loadRounds(customerId, forceReload = false) {
+            if (roundsCache[customerId] && !forceReload) {
+                return roundsCache[customerId];
+            }
             try {
                 const res = await fetch(API.GET_ROUNDS, {
                     method: 'POST',
@@ -631,6 +664,8 @@
             }
 
             const customerIds = Object.keys(grouped);
+            
+            // ✅ OPTIMIZED: Load all data in parallel (uses cache if available)
             await Promise.all([
                 ...customerIds.map(id => loadMultipliers(id)),
                 ...customerIds.map(id => loadRounds(id))
@@ -787,6 +822,7 @@
                 `;
                 container.insertAdjacentHTML('beforeend', cardHtml);
 
+                // ✅ KEPT: Original function calls
                 loadAndRenderMultipliers(customer.id);
                 loadAndRenderRounds(customer.id);
             });
@@ -945,6 +981,8 @@
                 });
                 alert("✅ บันทึกรอบแล้ว");
                 closeModal('addRoundModal');
+                // ✅ Force reload
+                roundsCache[currentCustomer.id] = null;
                 loadAndRenderRounds(currentCustomer.id);
             } catch (e) {
                 alert("Error: " + e);
@@ -961,6 +999,8 @@
                     body: JSON.stringify({ roundId })
                 });
                 alert("✅ ลบแล้ว");
+                // ✅ Force reload
+                roundsCache[customerId] = null;
                 loadAndRenderRounds(customerId);
             } catch (e) {
                 alert("Error: " + e);
@@ -975,6 +1015,8 @@
                     body: JSON.stringify({ roundId, unlock })
                 });
                 alert(unlock ? "✅ ปลดล็อครอบเสริมแล้ว" : "🔒 ล็อครอบเสริมแล้ว");
+                // ✅ Force reload
+                roundsCache[customerId] = null;
                 loadAndRenderRounds(customerId);
             } catch (e) {
                 alert("Error: " + e);
@@ -1068,6 +1110,8 @@
                 });
                 alert("✅ บันทึกแล้ว");
                 closeModal('addMultiplierModal');
+                // ✅ Force reload
+                multipliersCache[currentCustomer.id] = null;
                 loadAndRenderMultipliers(currentCustomer.id);
             } catch (e) {
                 alert("Error: " + e);
@@ -1084,6 +1128,8 @@
                     body: JSON.stringify({ multiplierId })
                 });
                 alert("✅ ลบแล้ว");
+                // ✅ Force reload
+                multipliersCache[customerId] = null;
                 loadAndRenderMultipliers(customerId);
             } catch (e) {
                 alert("Error: " + e);
@@ -1150,11 +1196,16 @@
             currentCustomer = { id: customerId, name };
             document.getElementById('lineModalCustomerName').textContent = name;
             document.getElementById('manageLineModal').style.display = 'flex';
-            document.getElementById('lineIdList').innerHTML = 'กำลังโหลด...';
+            document.getElementById('lineIdList').innerHTML = '<span class="loading-spinner"></span> กำลังโหลด...';
             document.getElementById('newLineIdInput').value = '';
             document.getElementById('lineAliasSelect').value = '';
             
-            await loadLineAliases();
+            // ✅ Don't reload if already loaded
+            if (!lineAliasesLoaded) {
+                await loadLineAliases();
+            } else {
+                initLineAliasDropdowns();
+            }
             
             try {
                 const res = await fetch(API.GET_LINES, {
