@@ -424,6 +424,10 @@
         .mode-toggle-btn .icon {
             font-size: 16px;
         }
+        @keyframes slideDown {
+            from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -1409,8 +1413,8 @@
                 const result = await res.json();
                 
                 if (result.success) {
-                    alert('✅ บันทึกการแก้ไขแล้ว');
                     closeEditModalDirect();
+                    showToast('✅ บันทึกการแก้ไขแล้ว');
                     loadMyOrders();
                 } else {
                     alert('❌ ' + (result.message || 'ไม่สามารถบันทึกได้'));
@@ -2229,13 +2233,26 @@
                 const data = await response.json(); 
                 let invoiceNo = data.invoiceNo;
 
+                // ✅ OPTIMIZED: Run post-order tasks in PARALLEL
+                const postOrderTasks = [];
+                
                 if (pendingDeposits.length > 0 && currentCustomerId) {
-                    await fetch(`${BASE_URL}/use-deposit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customerId: currentCustomerId, orderId: data.orderId || invoiceNo }) });
+                    postOrderTasks.push(
+                        fetch(`${BASE_URL}/use-deposit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customerId: currentCustomerId, orderId: data.orderId || invoiceNo }) })
+                    );
                 }
 
                 if (selectedRound === 'extra') {
                     const roundData = customerRounds.find(r => r.round_number === 'extra');
-                    if (roundData) await fetch(`${BASE_URL}/toggle-extra-round`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ roundId: roundData.id, unlock: false }) });
+                    if (roundData) {
+                        postOrderTasks.push(
+                            fetch(`${BASE_URL}/toggle-extra-round`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ roundId: roundData.id, unlock: false }) })
+                        );
+                    }
+                }
+                
+                if (postOrderTasks.length > 0) {
+                    await Promise.all(postOrderTasks);
                 }
 
                 const thaiDate = formatDateThai(document.getElementById('orderDate').value);
@@ -2249,6 +2266,25 @@
                 else { alert("บันทึกสำเร็จ!\n" + messageText); location.reload(); }
 
             } catch (err) { alert("เกิดข้อผิดพลาด: " + err.message); btn.innerText = oldText; btn.disabled = false; }
+        }
+        
+        // ✅ Toast notification for smooth UX
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+                background: ${type === 'success' ? '#198754' : '#dc3545'}; color: white;
+                padding: 12px 24px; border-radius: 8px; font-size: 14px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999;
+                animation: slideDown 0.3s ease;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 1500);
         }
     </script>
 </body>
