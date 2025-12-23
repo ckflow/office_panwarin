@@ -827,12 +827,20 @@
 
         async function loadDepositData(customerId, fromDate, toDate) {
             try {
+                // ส่งทั้ง filterDate (เดิม) และ dateFrom/dateTo (ใหม่) เพื่อ backward compatibility
+                const isSingleDay = fromDate === toDate;
                 const res = await fetch(`${BASE_URL}/get-deposits`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ customerId, dateFrom: fromDate, dateTo: toDate })
+                    body: JSON.stringify({ 
+                        customerId, 
+                        filterDate: isSingleDay ? fromDate : null,  // แบบเดิม
+                        dateFrom: fromDate,  // แบบใหม่
+                        dateTo: toDate       // แบบใหม่
+                    })
                 });
                 const deposits = await res.json();
+                console.log('📦 Deposits API response:', deposits);
 
                 const pendingDeposits = deposits.filter(d => d.status === 'pending');
                 const usedDeposits = deposits.filter(d => d.status === 'used');
@@ -929,12 +937,20 @@
 
         async function loadLeftoverData(customerId, fromDate, toDate) {
             try {
+                // ส่งทั้ง filterDate (เดิม) และ dateFrom/dateTo (ใหม่) เพื่อ backward compatibility
+                const isSingleDay = fromDate === toDate;
                 const res = await fetch(`${BASE_URL}/get-leftovers`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ customerId, dateFrom: fromDate, dateTo: toDate })
+                    body: JSON.stringify({ 
+                        customerId, 
+                        filterDate: isSingleDay ? fromDate : null,  // แบบเดิม
+                        dateFrom: fromDate,  // แบบใหม่
+                        dateTo: toDate       // แบบใหม่
+                    })
                 });
                 const leftovers = await res.json();
+                console.log('📋 Leftovers API response:', leftovers);
 
                 const isSingleDay = fromDate === toDate;
                 const today = getTodayStr();
